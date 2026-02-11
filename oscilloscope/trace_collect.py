@@ -1,84 +1,103 @@
+import os
+import time
 import pyvisa
 import numpy as np
- 
- 
- 
-def print_stat(scope):
-              print(scope.query("*IDN?"))
-              print("Error:", scope.query(":SYST:ERR?"))
-              #print("ACQ state:", scope.query(":ACQ:STATE?"))      # must be 0
-              #print("TRIG state:", scope.query(":TRIG:STAT?"))     # must be STOP
-              #print("WAV points:", scope.query(":WAV:POIN?"))      # must be > 0
-              #print("WAV mode:", scope.query(":WAV:MODE?"))        # must be RAW or NORM
-              #print("WAV source:", scope.query(":WAV:SOUR?"))      # must be CHAN1
-              #print("CHAN1 disp:", scope.query(":CHAN1:DISP?"))    # must be 1
- 
-# -----------------------
-# 1) Connect to scope
-# -----------------------
+
 IP = "169.254.41.7"
-rm = pyvisa.ResourceManager("@py")   # use pyvisa-py backend
-scope = rm.open_resource(f"TCPIP::{IP}::5025::SOCKET")
- 
-scope.timeout = 10000  # 30s, increase if needed
-scope.read_termination = "\n"
-scope.write_termination = "\n"
- 
-print("IDN:", scope.query("*IDN?"))
- 
-# Clear errors
-scope.write("*RST")
-print("RSTError:", scope.query(":SYST:ERR?"))
-scope.write("*CLS")
-print("CLSError:", scope.query(":SYST:ERR?"))
- 
-# -----------------------
-# 2) Channel 1 settings
-# -----------------------
-scope.write(":CHAN1:STATe ON")     # turn on channel 1
-scope.write(":CHAN1:SCAL 0.5")    # volts/div (adjust as needed)
-scope.write(":CHAN1:OFFS 0")      # vertical offset
-print_stat(scope)
- 
-# -----------------------
-# 3) Trigger settings
-# -----------------------
-scope.write(":TRIGger:MEVents:MODE SINGle")
-scope.write(":TRIG:EVEN1:SOUR CHANNEL1")        # edge trigger
-scope.write(":CHAN1:SCAL 0.005")        # normal trigger mode
-print_stat(scope)
- 
-# -----------------------
-# 4) Timebase
-# -----------------------
-scope.write(":TIM:SCAL 0.0005")  # 10 ms/div, adjust total capture length
-print_stat(scope)
- 
-# -----------------------
-# 5) Single acquisition
-# -----------------------
-scope.write(":SING")          # arm single acquisition
-#scope.write(":TRIG:FORCE")        # force trigger immediately
-print("OPC: ", scope.query("*OPC?"))          # wait until acquisition completes
-print_stat(scope)
- 
-# -----------------------
-# 6) Waveform setup
-# -----------------------
-scope.write(":EXPort:WAVeform:SOUR C1")    # select channel 1
-print_stat(scope)
- 
- 
-scope.write(":EXPort:WAVeform:DATA:HEADer")
- 
-scope.write("FORMat:DATA REAL,32")
-scope.write("EXPort:WAVeform:SOURce C1")
-scope.write("EXPort:WAVeform:SCOPe DISP")
-scope.write("EXPort:WAVeform:DATA:VALues?")
-raw = scope.read_binary_values(
-    datatype="f",
-    container=np.array
-)
-raw.tofile("C1.bin")
-scope.close()
-print("Trace saved as trace_ch1.csv")
+PORT = 5025
+
+
+# Connect
+def connect_scope(ip: str, port: int = 5025):
+    rm = pyvisa.ResourceManager("@py")
+    scope = rm.open_resource(f"TCPIP::{ip}::{port}::SOCKET")
+    scope.read_termination = "\n"
+    scope.write_termination = "\n"
+    scope.timeout = 50000  
+    print("IDN:", scope.query("*IDN?").strip())
+    scope.write("*CLS")
+    return rm, scope
+
+
+
+# Osci intial setup
+def setup_scope(scope):
+    scope.write("*RST")
+    scope.query("*OPC?")
+    scope.write("*CLS")
+    print("reset finish")
+
+    # CH1 set
+    scope.write(":CHAN1:STATe ON")
+    scope.write(":CHAN1:SCAL 0.5")
+    scope.write(":CHAN1:OFFS 0")
+
+    # CH2 set , CH2 read power from MCU
+    scope.write(":CHAN2:STATe ON")
+    scope.write(":CHAN2:SCAL 0.01")
+    scope.write(":CHAN2:OFFS -0.555")
+
+    # intial trigger CH 1 normal mode and rasing edge trigger
+    scope.write(":TRIGger:MODE NORMal")
+    scope.write(":TRIG:EVEN1:SOUR CHANNEL1")
+    scope.write(":TRIGger:EVENt1:EDGE:SLOPe POSitive")
+    scope.write(":TRIG:EVEN1:LEV -1.7")  
+
+    # set the sampling duration
+    scope.write(":TIM:SCAL 0.002")
+    scope.write(":TIM:POSITION 0.0036")
+
+    # float32, read power voltage from CH2
+    scope.write("FORMat:DATA REAL,32")
+    #scope.write("EXPort:WAVeform:SOURce C1")
+    scope.write("EXPort:WAVeform:SOURce C2")
+    scope.write("EXPort:WAVeform:SCOPe DISP")
+
+
+
+# Capture one trace
+def acquire_one(scope) -> np.ndarray:
+    scope.write("*CLS")
+    scope.write(":SING")
+
+    # Wait for the trigger
+    scope.query("*OPC?")
+    print("trigger come")
+
+    # 
+    scope.write("EXPort:WAVeform:DATA:VALues?")
+    y = scope.read_binary_values(datatype="f", container=np.array)
+    return y
+
+
+
+# Loop and save
+def collect_loop(scope, n_traces: int, out_dir: str):
+    os.makedirs(out_dir, exist_ok=True)
+
+    for i in range(n_traces):
+        
+        y = acquire_one(scope)
+
+        # save
+        np.save(os.path.join(out_dir, f"trace_{i:06d}.npy"), y)
+
+        #if i % 20 == 0:
+        print(f"[{i}/{n_traces}] saved, points={y.size}")
+
+
+def main():
+    rm, scope = connect_scope(IP, PORT)
+    try:
+        setup_scope(scope)
+        collect_loop(scope, n_traces=100, out_dir="traces_mxo5")
+        print("finish")
+    finally:
+        try:
+            scope.close()
+        finally:
+            rm.close()
+
+
+if __name__ == "__main__":
+    main()
