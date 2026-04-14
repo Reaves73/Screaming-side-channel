@@ -1,1 +1,32 @@
 # Screaming-side-channel
+
+## Workflow for sharppeak capturing system(draft system)
+
+* `collect_sharppeak.py` is the Python flowgraph generated from the GNU Radio `.grc` file.
+* `run_collect_sharppeak.py` is used to control `collect_sharppeak.py`.
+
+### How it works
+
+* `run_collect_sharppeak.py` starts the GNU Radio flowgraph and keeps it running.
+* By default, GNU Radio does **not** save data.
+* `run_collect_sharppeak.py` listens on a local port.
+* The origin ChipWhisperer capture script is modified to send trigger commands to this port before each AES encryption.
+
+
+For each AES execution:
+
+* before the AES operation starts, the ChipWhisperer script sends a **start** signal to `run_collect_sharppeak.py`
+* GNU Radio then starts writing data to file
+* after a short delay(currently it is a guessed value, it should cover all AES encryption), the ChipWhisperer script sends a **stop** signal
+* GNU Radio stops saving
+
+
+* `"1"` means start saving
+* `"0"` means stop saving
+
+### Running order
+
+1. Run `run_collect_sharppeak.py`
+2. Run the ChipWhisperer capture script
+3. During each AES trace, the ChipWhisperer script triggers GNU Radio to start and stop saving
+
