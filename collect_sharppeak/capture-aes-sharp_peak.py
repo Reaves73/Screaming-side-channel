@@ -5,7 +5,6 @@ import time
 import signal
 import socket
 import threading
-from PyQt5 import Qt
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import numpy as np
@@ -79,8 +78,6 @@ key, text = ktp.next()
 
 print("Capturing traces...")
 
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.connect(("127.0.0.1", 9999))
 
 trigger_en = "1"
 trigger_dis = "0"
@@ -119,9 +116,9 @@ for i in tqdm(range(n_traces)):
 hw.disconnect()
 
 #np.save("data/traces.npy", traces)
-np.save("data/keys.npy", keys)
-np.save("data/plaintexts.npy", plaintexts)
-np.save("data/ciphertexts.npy", ciphertexts)
+np.save("data_sharppeak/keys.npy", keys)
+np.save("data_sharppeak/plaintexts.npy", plaintexts)
+np.save("data_sharppeak/ciphertexts.npy", ciphertexts)
 
 #plt.plot(np.average(traces, axis=0))
 #plt.plot(avg)
