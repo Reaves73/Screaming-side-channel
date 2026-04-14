@@ -79,9 +79,6 @@ key, text = ktp.next()
 print("Capturing traces...")
 
 
-trigger_en = "1"
-trigger_dis = "0"
-
 for i in tqdm(range(n_traces)):
     while True:
         send_trigger("1")
