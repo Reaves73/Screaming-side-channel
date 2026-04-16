@@ -21,6 +21,7 @@ def set_recording(tb, enabled):
 
 
 def control_server(tb, host="127.0.0.1", port=9999):
+    #open a server to listen
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.bind((host, port))
@@ -54,9 +55,11 @@ def main():
 
     tb = collect_sharppeak()
 
+    #start running and show gui
     tb.start()
     tb.show()
-    set_recording(tb, False)
+
+    set_recording(tb, False) #not save by default
 
     threading.Thread(target=control_server, args=(tb,), daemon=True).start()
 
