@@ -18,6 +18,7 @@
 
 #include "aes-independant.h"
 #include "hal.h"
+#include "hal_extra.h"
 #include "simpleserial.h"
 #include <stdint.h>
 #include <stdlib.h>
@@ -146,16 +147,17 @@ int main(void)
     set_dac(0);
 
     //set dac output
-    delay_cycles(100000/1000);
+    delay_cycles(100000);
     //set_dac(806); // 0.65V
-    //set_dac(866); // 0.7V
+    set_dac(866); // 0.7V
+    //switcher_set(1);
     delay_cycles(200000);
     //set_dac(372); // 0.3V
     set_dac(434); // 0.35V
     //set_dac(559); // 0.45V
     //set_dac(496); //0.4 - 496
     delay_cycles(20000);
-    switcher_set(1);
+    //switcher_set(1);
     //while (1);
 	aes_indep_init();
 	aes_indep_key(tmp);

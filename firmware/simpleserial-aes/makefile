@@ -36,8 +36,11 @@ TARGET = simpleserial-aes
 # Header files (.h) are automatically pulled in.
 #CPPSRC += simpleserial-aes.cpp
 SRC += simpleserial-aes.c
+SRC += hal_extra.c
 
 # -----------------------------------------------------------------------------
+MCUDIR = ../../env/chipwhisperer/firmware/mcu
+
 EXTRA_OPTS = NO_EXTRA_OPTS
 CFLAGS += -D$(EXTRA_OPTS)
 
@@ -50,8 +53,8 @@ endif
 ${info Building for platform ${PLATFORM} with CRYPTO_TARGET=$(CRYPTO_TARGET)}
 
 #Add simpleserial project to build
-include ../simpleserial/Makefile.simpleserial
+include ${MCUDIR}/simpleserial/Makefile.simpleserial
 
-FIRMWAREPATH = ../.
+FIRMWAREPATH = ${MCUDIR}
 include $(FIRMWAREPATH)/Makefile.inc
 
