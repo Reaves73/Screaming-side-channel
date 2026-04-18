@@ -1,6 +1,23 @@
 # Screaming-side-channel
 
-## Workflow for sharppeak capturing system(draft system)
+## Basic usage
+
+1. Setup:
+```
+# as root: ./scripts/env_setup_root.sh
+./scripts/env_setup.sh
+```
+1. Run Jupyter notebook: `./scripts/run_jupyter.sh`
+1. Get chipwhisperer python environment: `source ./scripts/env.sh`
+
+## Project structure
+- `script` - general setup and environment scripts
+- `env` - target directory of setup step (chipwhisperer repository and python virtual environment)
+- `firmware` - source code for target firmware
+- `software` - everything running on the computer for (managing probing, processing and communicating with the target)
+- `testing` - support for checking that things work
+
+## Workflow for sharppeak capturing system(draft system) - in `software/collect_sharppeak`
 
 * `collect_sharppeak.py` is the Python flowgraph generated from the GNU Radio `.grc` file.
 * `run_collect_sharppeak.py` is used to control `collect_sharppeak.py`.
