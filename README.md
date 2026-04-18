@@ -11,7 +11,7 @@
 1. Get chipwhisperer python environment: `source ./scripts/env.sh`
 
 ## Project structure
-- `script` - general setup and environment scripts
+- `scripts` - general setup and environment scripts
 - `env` - target directory of setup step (chipwhisperer repository and python virtual environment)
 - `firmware` - source code for target firmware
 - `software` - everything running on the computer for (managing probing, processing and communicating with the target)
