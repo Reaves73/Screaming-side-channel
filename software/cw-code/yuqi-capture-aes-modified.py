@@ -11,16 +11,18 @@ PLATFORM = "CW308_STM32F0"
 #fw_path = 'simpleserial-base-CW308_STM32F0.hex'
 
 #yuqi_try
-fw_path = 'simpleserial-aes-CW308_STM32F0.hex'
+#fw_path = 'simpleserial-aes-CW308_STM32F0_dac2.hex'
+#fw_path = 'simpleserial-aes-CW308_STM32F0_sharppeak.hex'   #0.3 dac output
+#fw_path = 'simpleserial-aes-CW308_STM32F0_sharppeak_0.4.hex' #0.4  dac output
+fw_path = '/home/parallels/Desktop/chipwhisperer/firmware/mcu/simpleserial-aes/simpleserial-aes-CW308_STM32F0.hex'
 
+#fw_path = 'simpleserial-aes-CW308_STM32F0.hex'
 
-#n_samples = 24000
-#post_len = int(n_samples - 11171/4)   # 只保留触发点后的 12000 点
 
 #yuqi_try
 n_samples = 12000
 
-n_traces = 500
+n_traces = 5000
 
 print("PLATFORM: ", PLATFORM)
 print("fw_path: ", fw_path)

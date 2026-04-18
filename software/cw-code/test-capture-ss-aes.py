@@ -7,10 +7,18 @@ import numpy as np
 
 
 PLATFORM = "CW308_STM32F0"
+#origin
 fw_path = 'simpleserial-base-CW308_STM32F0.hex'
 
+#yuqi_try
+#fw_path = 'simpleserial-aes-CW308_STM32F0.hex'
+
 n_samples = 24000
-n_traces = 5000
+
+#yuqi_try
+#n_samples = 12000
+
+n_traces = 50
 
 print("PLATFORM: ", PLATFORM)
 print("fw_path: ", fw_path)
@@ -26,7 +34,11 @@ hw.connect(PLATFORM)
 # Confiture scope
 hw.scope.default_setup();
 hw.scope.adc.samples = n_samples
+
+#yuqi_try
 hw.scope.adc.decimate = 4
+
+#hw.scope.adc.decimate = 4
 hw.scope.clock.adc_src = "clkgen_x1"
 time.sleep(0.1)
 
@@ -56,6 +68,11 @@ print("Capturing traces...")
 for i in tqdm(range(n_traces)):
     while True:
         ret = hw.capture(text, key)
+        
+        #yuqi_try: add trigger signal
+        #tc = hw.scope.adc.trig_count/4
+
+
         if ret is not None:
             break
 
@@ -84,5 +101,8 @@ np.save("data/plaintexts.npy", plaintexts)
 np.save("data/ciphertexts.npy", ciphertexts)
 
 plt.plot(np.average(traces, axis=0))
+
+#yuqi_try: draw line of trigger.
+#plt.axvline(x=tc, color='red', linewidth=2)
 
 plt.show()
