@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# get env directory path
+# get repo directory path
 REPO_DIR=$(dirname "${BASH_SOURCE[0]:-${(%):-%x}}")/..
 REPO_DIR=$(readlink -f "${REPO_DIR}")
 
