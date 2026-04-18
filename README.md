@@ -17,6 +17,10 @@
 - `software` - everything running on the computer for (managing probing, processing and communicating with the target)
 - `testing` - support for checking that things work
 
+## Collected data (like traces)
+- don't commit data files or compiler outputs
+- store them in `/mnt/storage1tb/sharpattack-data` on the remote computer
+
 ## Workflow for sharppeak capturing system(draft system) - in `software/collect_sharppeak`
 
 * `collect_sharppeak.py` is the Python flowgraph generated from the GNU Radio `.grc` file.
