@@ -18,7 +18,6 @@
 
 #include "aes-independant.h"
 #include "hal.h"
-#include "hal_extra.h"
 #include "simpleserial.h"
 #include <stdint.h>
 #include <stdlib.h>
@@ -86,6 +85,28 @@ uint8_t enc_multi_setnum(uint8_t* t, uint8_t len)
     return 0;
 }
 
+//buffer and len were given.
+// get relay info and set.
+uint8_t get_relay(uint8_t* u, uint8_t len)
+{
+    //set relay state
+    switcher_set((uint8_t)(u[0]));
+    uint8_t flag = 1;
+    simpleserial_put('g', 1, &flag);
+    return 0x00;
+}
+
+//get dac value and set.
+uint8_t get_dac(uint8_t* d, uint8_t len)
+{
+    //set dac value
+    set_dac((uint16_t)(d[0] << 8 | d[1]));
+    uint8_t flag = 1;
+    simpleserial_put('g', 1, &flag);
+    return 0x00;
+};
+
+
 #if SS_VER == SS_VER_2_1
 uint8_t aes(uint8_t cmd, uint8_t scmd, uint8_t len, uint8_t *buf)
 {
@@ -140,23 +161,26 @@ int main(void)
     init_uart();
     trigger_setup();
     switcher_init();
-    switcher_set(0);
+    switcher_set(0);// set relay off by default
+
     dac_init();
     dac_gpio_init_first();
     dac_gpio_init();
-    set_dac(0);
+    set_dac(0);// set dac to 0 by default  
 
     //set dac output
-    delay_cycles(100000);
+    //delay_cycles(100000/1000);
+
     //set_dac(806); // 0.65V
-    set_dac(866); // 0.7V
-    //switcher_set(1);
-    delay_cycles(200000);
+    //set_dac(866); // 0.7V
+    //delay_cycles(200000);
+
     //set_dac(372); // 0.3V
-    set_dac(434); // 0.35V
+    //set_dac(434); // 0.35V
     //set_dac(559); // 0.45V
     //set_dac(496); //0.4 - 496
-    delay_cycles(20000);
+    //delay_cycles(20000);
+
     //switcher_set(1);
     //while (1);
 	aes_indep_init();
@@ -181,7 +205,10 @@ int main(void)
     simpleserial_addcmd_flags('m', 18, get_mask, CMD_FLAG_LEN);
     simpleserial_addcmd('s', 2, enc_multi_setnum);
     simpleserial_addcmd('f', 16, enc_multi_getpt);
+    simpleserial_addcmd('u', 1, get_relay);
+    simpleserial_addcmd('d', 2, get_dac);
     #endif
     while(1)
         simpleserial_get();
 }
+

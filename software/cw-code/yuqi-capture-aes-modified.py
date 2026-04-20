@@ -14,7 +14,7 @@ PLATFORM = "CW308_STM32F0"
 #fw_path = 'simpleserial-aes-CW308_STM32F0_dac2.hex'
 #fw_path = 'simpleserial-aes-CW308_STM32F0_sharppeak.hex'   #0.3 dac output
 #fw_path = 'simpleserial-aes-CW308_STM32F0_sharppeak_0.4.hex' #0.4  dac output
-fw_path = '/home/parallels/Desktop/chipwhisperer/firmware/mcu/simpleserial-aes/simpleserial-aes-CW308_STM32F0.hex'
+fw_path = '../../firmware/simpleserial-aes/simpleserial-aes-CW308_STM32F0.hex'
 
 #fw_path = 'simpleserial-aes-CW308_STM32F0.hex'
 
