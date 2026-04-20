@@ -18,6 +18,7 @@
 
 #include "aes-independant.h"
 #include "hal.h"
+#include "hal_extra.h"
 #include "simpleserial.h"
 #include <stdint.h>
 #include <stdlib.h>
@@ -86,8 +87,8 @@ uint8_t enc_multi_setnum(uint8_t* t, uint8_t len)
 }
 
 //buffer and len were given.
-// get relay info and set.
-uint8_t get_relay(uint8_t* u, uint8_t len)
+// set relay info and set.
+uint8_t simpserial_set_relay(uint8_t* u, uint8_t len)
 {
     //set relay state
     switcher_set((uint8_t)(u[0]));
@@ -96,8 +97,8 @@ uint8_t get_relay(uint8_t* u, uint8_t len)
     return 0x00;
 }
 
-//get dac value and set.
-uint8_t get_dac(uint8_t* d, uint8_t len)
+//set dac value and set.
+uint8_t simpserial_set_dac(uint8_t* d, uint8_t len)
 {
     //set dac value
     set_dac((uint16_t)(d[0] << 8 | d[1]));
@@ -205,8 +206,8 @@ int main(void)
     simpleserial_addcmd_flags('m', 18, get_mask, CMD_FLAG_LEN);
     simpleserial_addcmd('s', 2, enc_multi_setnum);
     simpleserial_addcmd('f', 16, enc_multi_getpt);
-    simpleserial_addcmd('u', 1, get_relay);
-    simpleserial_addcmd('d', 2, get_dac);
+    simpleserial_addcmd('u', 1, simpserial_get_relay);
+    simpleserial_addcmd('d', 2, simpserial_get_dac);
     #endif
     while(1)
         simpleserial_get();
