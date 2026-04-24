@@ -9,19 +9,30 @@ import numpy as np
 def set_relay(target, enabled):
     if enabled:
         target.simpleserial_write('u', bytearray([1]))
-        print(f"Relay set to 1.")
+        #print(f"Relay set to 1.")
     else:
         target.simpleserial_write('u', bytearray([0]))
-        print(f"Relay set to 0.")
+        #print(f"Relay set to 0.")
     resp = target.simpleserial_read('g', 1)
-    return resp
+    assert resp[0] == 1
+    #return resp
 
 def set_dac(target, value):
     payload = bytearray([(value >> 8) & 0xFF, value & 0xFF])
     target.simpleserial_write('d', payload)
     print(f"DAC set to {value}.")
     resp = target.simpleserial_read('g', 1)
-    return resp
+    assert resp[0] == 1
+    #return resp
+
+def get_adc(target):
+    payload = bytearray([])
+    target.simpleserial_write('e', payload)
+    print(f"ADC value requested.")
+    resp = target.simpleserial_read('g', 2)
+    #print(resp)
+    
+    return int.from_bytes(resp, byteorder='big')
 
 
 
@@ -55,7 +66,7 @@ def main():
     print("relay intialized!!!\n")
     set_dac(hw.target, 0)
     print("dac intialized!!!\n")
-    print("give u to set relay, d to set dac, p to program hex, c to capture traces, q to quit")
+    print("u - set relay\nd - set dac\ne - get adc\np - program hex\nc - capture traces\nq - quit")
 
 
     while True:
@@ -71,16 +82,21 @@ def main():
                 continue
 
             resp = set_relay(hw.target, value == "1")#give true or false to set_relay
-            print("Relay reply:", resp[0])
+            #print("Relay reply:", )
             continue
 
         if cmd == "d":
             value = int(input("Which value? ").strip())
-            if not 0 <= value <= 1000:
+            if not 0 <= value <= 1000:#700:
                 raise ValueError("error value")
 
             resp = set_dac(hw.target, int(value))
-            print("DAC reply:", resp[0])
+            #print("DAC reply:", resp[0])
+            continue
+
+        if cmd == "e":
+            resp = get_adc(hw.target)
+            print("ADC reply:", resp)
             continue
 
         if cmd == "p":

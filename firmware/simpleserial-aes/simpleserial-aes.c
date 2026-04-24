@@ -107,6 +107,17 @@ uint8_t simpserial_set_dac(uint8_t* d, uint8_t len)
     return 0x00;
 };
 
+//get adc value.
+uint8_t simpserial_get_adc(uint8_t* d, uint8_t len)
+{
+    uint16_t v = adc_get();
+    uint8_t data[2];
+    data[0] = (uint8_t)((v >> 8) & 0xff);
+    data[1] = (uint8_t)((v >> 0) & 0xff);
+    simpleserial_put('g', 2, data);
+    return 0x00;
+};
+
 
 #if SS_VER == SS_VER_2_1
 uint8_t aes(uint8_t cmd, uint8_t scmd, uint8_t len, uint8_t *buf)
@@ -170,6 +181,9 @@ int main(void)
     dac_init();
     dac_set(0);// set dac to 0 by default  
 
+    // init adc
+    adc_init();
+
     //set dac output
     //delay_cycles(100000/1000);
 
@@ -209,6 +223,7 @@ int main(void)
     simpleserial_addcmd('f', 16, enc_multi_getpt);
     simpleserial_addcmd('u', 1, simpserial_set_relay);
     simpleserial_addcmd('d', 2, simpserial_set_dac);
+    simpleserial_addcmd('e', 0, simpserial_get_adc);
     #endif
     while(1)
         simpleserial_get();
