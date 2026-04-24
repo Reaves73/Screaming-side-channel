@@ -29,10 +29,7 @@ for i in range(n_traces):
     print("Trace", i)
     
     send_trigger("1")
-    time.sleep(0.3)
-    send_trigger("0")
-
     trace_fname = f"{traces_fname_prefix}{i}.bin"
     shutil.copy(sharppeak_trace_fname, trace_fname)
 
-
+send_trigger("0")

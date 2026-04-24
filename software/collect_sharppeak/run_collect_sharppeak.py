@@ -20,7 +20,22 @@ def set_recording(tb, enabled):
         print("stop save")
 
 
-def control_server(tb, host="127.0.0.1", port=9999):
+def start_qapp():
+    qapp = Qt.QApplication(sys.argv)
+    timer = Qt.QTimer()
+    timer.start(500)
+    timer.timeout.connect(lambda: None)
+    qapp.exec_()
+
+def stop_qapp():
+    Qt.QApplication.quit()
+        
+
+def start_qapp_async():
+    threading.Thread(target=start_qapp, daemon=True).start()
+
+
+def control_server(host="127.0.0.1", port=9999):
     #open a server to listen
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -37,13 +52,21 @@ def control_server(tb, host="127.0.0.1", port=9999):
             print(f"received: {data} from {addr}")
 
             if data == "1":
+                print("Starting qapp")
+                start_qapp_async()
+                tb = collect_sharppeak()
                 tb.start()
                 set_recording(tb, True)
-                conn.sendall(b"OK START\n")
-            elif data == "0":
+                time.sleep(0.3)
                 set_recording(tb, False)
                 tb.stop()
-                conn.sendall(b"OK STOP\n")
+                tb.wait()
+                print("Stopping qapp")
+                stop_qapp()
+                
+                conn.sendall(b"OK START\n")
+            elif data == "0":
+                break
             else:
                 conn.sendall(b"UNKNOWN CMD\n")
         except Exception as e:
@@ -52,33 +75,5 @@ def control_server(tb, host="127.0.0.1", port=9999):
             conn.close()
 
 
-def main():
-    qapp = Qt.QApplication(sys.argv)
-
-    tb = collect_sharppeak()
-
-    #start running and show gui
-    #tb.start()
-    #tb.show()
-
-    #set_recording(tb, False) #not save by default
-
-    threading.Thread(target=control_server, args=(tb,), daemon=True).start()
-
-    def sig_handler(sig=None, frame=None):
-        tb.stop()
-        tb.wait()
-        Qt.QApplication.quit()
-
-    signal.signal(signal.SIGINT, sig_handler)
-    signal.signal(signal.SIGTERM, sig_handler)
-
-    timer = Qt.QTimer()
-    timer.start(500)
-    timer.timeout.connect(lambda: None)
-
-    qapp.exec_()
-
-
 if __name__ == "__main__":
-    main()
+    control_server()
