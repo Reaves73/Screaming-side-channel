@@ -161,12 +161,13 @@ int main(void)
     platform_init();
     init_uart();
     trigger_setup();
+    
+    // init relay
     switcher_init();
     switcher_set(0);// set relay off by default
 
+    // init dac
     dac_init();
-    dac_gpio_init_first();
-    dac_gpio_init();
     dac_set(0);// set dac to 0 by default  
 
     //set dac output

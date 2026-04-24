@@ -4,8 +4,6 @@
 #include "stdint.h"
 
 void dac_init(void);
-void dac_gpio_init_first(void);
-void dac_gpio_init(void);
 void dac_set(uint16_t value);
 void dac_set_mv(uint16_t value);
 

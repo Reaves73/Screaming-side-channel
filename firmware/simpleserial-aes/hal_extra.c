@@ -8,31 +8,6 @@
 #include "stm32f0xx_hal_uart.h"
 #include "stm32f0xx_hal_flash.h"
 
-void delay_cycles(volatile uint32_t count)
-{
-    while(count--) {
-        __asm__("nop");
-    }
-}
-
-void switcher_init(void) {
-	__HAL_RCC_GPIOB_CLK_ENABLE();
-	GPIO_InitTypeDef gpio;
-	gpio.Pin  = GPIO_PIN_9;
- 	gpio.Mode = GPIO_MODE_OUTPUT_OD;
-    gpio.Pull = GPIO_NOPULL;
-	HAL_GPIO_Init(GPIOB, &gpio);
-}
-
-void switcher_set(int i) {
-	if(i==1){
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, RESET);
-	}
-	else if(i==0){
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, SET);
-	}
-}
-
 void dac_gpio_init_first(void){
 	GPIO_InitTypeDef gpio;
     gpio.Pin  = GPIO_PIN_4;
@@ -54,7 +29,7 @@ void dac_init(void)
     // 1) Enable GPIOA clock
     __HAL_RCC_GPIOA_CLK_ENABLE();
     // 2) PA4 analog mode
-	//dac_gpio_init();
+    dac_gpio_init();
     // 3) Enable DAC clock
     RCC->APB1ENR |= RCC_APB1ENR_DACEN;
 	DAC->DHR12R1 = 0;
@@ -84,10 +59,39 @@ void dac_set_mv(uint16_t value)
     }
     if (value > 700) {
         dac_set(0);
-        printf("\n!!!overshooting!!!\n", dac_value);
+        printf("\n!!!overshooting!!! %d\n", dac_value);
         while (1);
     }
     //printf("dac_value: %d\n", dac_value);
     dac_set(dac_value);
+}
+
+// -------------------------------
+
+void delay_cycles(volatile uint32_t count)
+{
+    while(count--) {
+        __asm__("nop");
+    }
+}
+
+// -------------------------------
+
+void switcher_init(void) {
+	__HAL_RCC_GPIOB_CLK_ENABLE();
+	GPIO_InitTypeDef gpio;
+	gpio.Pin  = GPIO_PIN_9;
+ 	gpio.Mode = GPIO_MODE_OUTPUT_OD;
+    gpio.Pull = GPIO_NOPULL;
+	HAL_GPIO_Init(GPIOB, &gpio);
+}
+
+void switcher_set(int i) {
+	if(i==1){
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, RESET);
+	}
+	else if(i==0){
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, SET);
+	}
 }
 
