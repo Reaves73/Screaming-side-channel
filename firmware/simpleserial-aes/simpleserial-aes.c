@@ -91,7 +91,7 @@ uint8_t enc_multi_setnum(uint8_t* t, uint8_t len)
 uint8_t simpserial_set_relay(uint8_t* u, uint8_t len)
 {
     //set relay state
-    switcher_set((uint8_t)(u[0]));
+    relay_set((uint8_t)(u[0]));
     uint8_t flag = 1;
     simpleserial_put('g', 1, &flag);
     return 0x00;
