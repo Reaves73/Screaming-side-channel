@@ -37,10 +37,12 @@ def control_server(tb, host="127.0.0.1", port=9999):
             print(f"received: {data} from {addr}")
 
             if data == "1":
+                tb.start()
                 set_recording(tb, True)
                 conn.sendall(b"OK START\n")
             elif data == "0":
                 set_recording(tb, False)
+                tb.stop()
                 conn.sendall(b"OK STOP\n")
             else:
                 conn.sendall(b"UNKNOWN CMD\n")
@@ -56,10 +58,10 @@ def main():
     tb = collect_sharppeak()
 
     #start running and show gui
-    tb.start()
-    tb.show()
+    #tb.start()
+    #tb.show()
 
-    set_recording(tb, False) #not save by default
+    #set_recording(tb, False) #not save by default
 
     threading.Thread(target=control_server, args=(tb,), daemon=True).start()
 
