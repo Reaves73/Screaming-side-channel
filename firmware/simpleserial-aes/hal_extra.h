@@ -6,11 +6,13 @@
 void dac_init(void);
 void dac_gpio_init_first(void);
 void dac_gpio_init(void);
-void switcher_init(void);
-void switcher_set(int i);
+void dac_set(uint16_t value);
+void dac_set_mv(uint16_t value);
 
 void delay_cycles(volatile uint32_t count);
-void set_dac(int value);
+
+void switcher_init(void);
+void switcher_set(int i);
 
 #endif // HAL_EXTRA_H
 

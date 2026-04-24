@@ -63,12 +63,31 @@ void dac_init(void)
     // 5) Set mid-scale output
 }
 
-void set_dac(int value){
-	if(value>2048){
-	DAC->DHR12R1 = 2048;
-	}
-	else{
-	DAC->DHR12R1 = value;
-	}
+void dac_set(uint16_t value){
+	if (value > 956) // 0.7V safety
+	      value = 956;
+        DAC->DHR12R1 = (value & (1024-1)); // 0,75V safety
+}
+
+//#define operating_voltage (3300)
+#define operating_voltage (2960)
+#define operating_voltage_dac (operating_voltage-50)
+void dac_set_mv(uint16_t value)
+{
+    //dac_set(1383); // 1.0V (@VDD 2.96V)
+    //dac_set(692);  // 0.5V (@VDD 2.96V)
+    uint16_t dac_value;
+    if (value > operating_voltage_dac) {
+        dac_value = 4095;
+    } else {
+        dac_value = (((uint32_t)value) * (4095*1000/operating_voltage_dac)) / (1000);
+    }
+    if (value > 700) {
+        dac_set(0);
+        printf("\n!!!overshooting!!!\n", dac_value);
+        while (1);
+    }
+    //printf("dac_value: %d\n", dac_value);
+    dac_set(dac_value);
 }
 
