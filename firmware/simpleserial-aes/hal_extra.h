@@ -9,8 +9,8 @@ void dac_set_mv(uint16_t value);
 
 void delay_cycles(volatile uint32_t count);
 
-void switcher_init(void);
-void switcher_set(int i);
+void relay_init(void);
+void relay_set(int i);
 
 #endif // HAL_EXTRA_H
 

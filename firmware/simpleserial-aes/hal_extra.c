@@ -77,7 +77,7 @@ void delay_cycles(volatile uint32_t count)
 
 // -------------------------------
 
-void switcher_init(void) {
+void relay_init(void) {
 	__HAL_RCC_GPIOB_CLK_ENABLE();
 	GPIO_InitTypeDef gpio;
 	gpio.Pin  = GPIO_PIN_9;
@@ -86,7 +86,7 @@ void switcher_init(void) {
 	HAL_GPIO_Init(GPIOB, &gpio);
 }
 
-void switcher_set(int i) {
+void relay_set(int i) {
 	if(i==1){
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, RESET);
 	}

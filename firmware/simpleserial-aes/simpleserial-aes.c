@@ -98,7 +98,7 @@ uint8_t simpserial_set_relay(uint8_t* u, uint8_t len)
 }
 
 //set dac value and set.
-uint8_t simpserial_dac_set(uint8_t* d, uint8_t len)
+uint8_t simpserial_set_dac(uint8_t* d, uint8_t len)
 {
     //set dac value
     dac_set((uint16_t)(d[0] << 8 | d[1]));
@@ -163,8 +163,8 @@ int main(void)
     trigger_setup();
     
     // init relay
-    switcher_init();
-    switcher_set(0);// set relay off by default
+    relay_init();
+    relay_set(0);// set relay off by default
 
     // init dac
     dac_init();
@@ -208,7 +208,7 @@ int main(void)
     simpleserial_addcmd('s', 2, enc_multi_setnum);
     simpleserial_addcmd('f', 16, enc_multi_getpt);
     simpleserial_addcmd('u', 1, simpserial_set_relay);
-    simpleserial_addcmd('d', 2, simpserial_dac_set);
+    simpleserial_addcmd('d', 2, simpserial_set_dac);
     #endif
     while(1)
         simpleserial_get();
