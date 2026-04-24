@@ -68,6 +68,77 @@ void dac_set_mv(uint16_t value)
 
 // -------------------------------
 
+void adc_init()
+{
+    // measure ouput voltage with ADC_IN4 (also on PA4)
+
+    // Enable GPIOA clock
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+
+    // PA4 analog mode
+    GPIO_InitTypeDef gpio;
+    gpio.Pin  = GPIO_PIN_4;
+    gpio.Mode = GPIO_MODE_ANALOG;
+    gpio.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOA, &gpio);
+
+    // Enable ADC clock
+    RCC->APB2ENR |= RCC_APB2ENR_ADCEN; //BIT9
+    //or32(RCC_CR2, BIT0); // HSI14ON
+    //while ((rd32(RCC_CR2) & BIT1) == 0); // HSI14RDY
+
+    // Disable ADC if enabled
+    if (ADC1->CR & ADC_CR_ADEN) // BIT0
+    {
+        //printf("ADC turning off %x\n", rd32(ADC_CR));
+        ADC1->CR |= ADC_CR_ADDIS; // BIT1
+        while (ADC1->CR & ADC_CR_ADDIS);
+    }
+    //printf("ADC turned off\n");
+
+    // ADC clock = ADCCLK
+    ADC1->CFGR2 &= ~ADC_CFGR2_CKMODE; // (BIT31 | BIT30)
+
+    // Select channel 4 (PA4)
+    ADC1->CHSELR = ADC_CHSELR_CHSEL4; // BIT4
+
+    // Long sampling time (239.5 cycles)
+    ADC1->SMPR = (ADC_SMPR_SMP_0 | ADC_SMPR_SMP_1 | ADC_SMPR_SMP_2); // 0x7
+
+    // Calibrate ADC (recommended)
+    ADC1->CR |= ADC_CR_ADCAL; // BIT31
+    
+    while (ADC1->CR & ADC_CR_ADCAL); // BIT31
+    //printf("ADC calibrated\n");
+
+    // Enable ADC
+    ADC1->CR |= ADC_CR_ADEN; // BIT0
+
+    while (!(ADC1->ISR & ADC_ISR_ADRDY)); // BIT0
+    //printf("ADC enabled\n");
+}
+
+uint16_t adc_get()
+{
+    // Start conversion
+    ADC1->CR |= ADC_CR_ADSTART; // BIT2
+
+    // Wait for end of conversion
+    while (!(ADC1->ISR & ADC_ISR_EOC)); // BIT2
+
+    // Read result
+    return (uint16_t)(ADC1->DR);
+}
+
+uint16_t adc_get_mv()
+{
+    uint16_t adc_val = adc_get();
+    printf("adc raw: %d\n", adc_val);
+    return (uint16_t)(((uint32_t)adc_val) * operating_voltage / 4095);
+}
+
+// -------------------------------
+
 void delay_cycles(volatile uint32_t count)
 {
     while(count--) {
