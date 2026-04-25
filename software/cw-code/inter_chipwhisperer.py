@@ -18,6 +18,7 @@ def set_relay(target, enabled):
     #return resp
 
 def set_dac(target, value):
+    assert 0 <= value <= 700
     payload = bytearray([(value >> 8) & 0xFF, value & 0xFF])
     target.simpleserial_write('d', payload)
     print(f"DAC set to {value}.")
@@ -87,7 +88,7 @@ def main():
 
         if cmd == "d":
             value = int(input("Which value? ").strip())
-            if not 0 <= value <= 1000:#700:
+            if not 0 <= value <= 700:
                 raise ValueError("error value")
 
             resp = set_dac(hw.target, int(value))

@@ -101,7 +101,7 @@ uint8_t simpserial_set_relay(uint8_t* u, uint8_t len)
 uint8_t simpserial_set_dac(uint8_t* d, uint8_t len)
 {
     //set dac value
-    dac_set((uint16_t)(d[0] << 8 | d[1]));
+    dac_set_mv((uint16_t)(d[0] << 8 | d[1]));
     uint8_t flag = 1;
     simpleserial_put('g', 1, &flag);
     return 0x00;
@@ -110,7 +110,7 @@ uint8_t simpserial_set_dac(uint8_t* d, uint8_t len)
 //get adc value.
 uint8_t simpserial_get_adc(uint8_t* d, uint8_t len)
 {
-    uint16_t v = adc_get();
+    uint16_t v = adc_get_mv();
     uint8_t data[2];
     data[0] = (uint8_t)((v >> 8) & 0xff);
     data[1] = (uint8_t)((v >> 0) & 0xff);
