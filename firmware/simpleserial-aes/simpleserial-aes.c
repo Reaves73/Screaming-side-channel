@@ -18,10 +18,13 @@
 
 #include "aes-independant.h"
 #include "hal.h"
-#include "hal_extra.h"
 #include "simpleserial.h"
 #include <stdint.h>
 #include <stdlib.h>
+
+// our drivers
+#include "dacadc.h"
+#include "miscgpio.h"
 
 uint8_t get_mask(uint8_t* m, uint8_t len)
 {
@@ -91,7 +94,7 @@ uint8_t enc_multi_setnum(uint8_t* t, uint8_t len)
 uint8_t simpserial_set_relay(uint8_t* u, uint8_t len)
 {
     //set relay state
-    relay_set((uint8_t)(u[0]));
+    miscgpio_led_set((uint8_t)(u[0]));
     uint8_t flag = 1;
     simpleserial_put('g', 1, &flag);
     return 0x00;
@@ -173,16 +176,13 @@ int main(void)
     init_uart();
     trigger_setup();
     
-    // init relay
-    relay_init();
-    relay_set(0);// set relay off by default
+    // init miscgpio
+    miscgpio_init();
+    miscgpio_led_set(0); // set relay off by default
 
-    // init dac
-    dac_init();
-    dac_set(0);// set dac to 0 by default  
-
-    // init adc
-    adc_init();
+    // init dac and adc
+    dacadc_init();
+    dac_set(0);// set dac to 0 by default
 
     //set dac output
     //delay_cycles(100000/1000);

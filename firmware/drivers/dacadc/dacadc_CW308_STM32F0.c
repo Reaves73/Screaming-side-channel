@@ -1,5 +1,5 @@
 #include "stdint.h"
-#include "hal_extra.h"
+#include "dacadc.h"
 
 #include "stm32f0_hal_lowlevel.h"
 #include "stm32f0xx_hal_rcc.h"
@@ -24,7 +24,7 @@ void dac_gpio_init(void){
     HAL_GPIO_Init(GPIOA, &gpio);
 }
 
-void dac_init(void)
+void dac_init()
 {
     // 1) Enable GPIOA clock
     __HAL_RCC_GPIOA_CLK_ENABLE();
@@ -59,7 +59,7 @@ void dac_set_mv(uint16_t value)
     }
     if (value > 700) {
         dac_set(0);
-        printf("\n!!!overshooting!!! %d\n", dac_value);
+        //printf("\n!!!overshooting!!! %d\n", dac_value);
         while (1);
     }
     //printf("dac_value: %d\n", dac_value);
@@ -133,36 +133,12 @@ uint16_t adc_get()
 uint16_t adc_get_mv()
 {
     uint16_t adc_val = adc_get();
-    printf("adc raw: %d\n", adc_val);
+    //printf("adc raw: %d\n", adc_val);
     return (uint16_t)(((uint32_t)adc_val) * operating_voltage / 4095);
 }
 
-// -------------------------------
-
-void delay_cycles(volatile uint32_t count)
-{
-    while(count--) {
-        __asm__("nop");
-    }
-}
-
-// -------------------------------
-
-void relay_init(void) {
-	__HAL_RCC_GPIOB_CLK_ENABLE();
-	GPIO_InitTypeDef gpio;
-	gpio.Pin  = GPIO_PIN_9;
- 	gpio.Mode = GPIO_MODE_OUTPUT_OD;
-    gpio.Pull = GPIO_NOPULL;
-	HAL_GPIO_Init(GPIOB, &gpio);
-}
-
-void relay_set(int i) {
-	if(i==1){
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, RESET);
-	}
-	else if(i==0){
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, SET);
-	}
+void dacadc_init() {
+    dac_init();
+    adc_init();
 }
 

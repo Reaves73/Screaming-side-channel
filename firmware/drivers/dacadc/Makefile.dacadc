@@ -1,0 +1,6 @@
+VPATH += :$(DRIVERSDIR)/dacadc
+EXTRAINCDIRS += $(DRIVERSDIR)/dacadc
+
+SRC += dacadc_$(PLATFORM).c
+#CDEFS += -DPLATFORM=$(PLATFORM)
+

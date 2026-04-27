@@ -1,0 +1,5 @@
+VPATH += :$(DRIVERSDIR)/miscgpio
+EXTRAINCDIRS += $(DRIVERSDIR)/miscgpio
+
+SRC += miscgpio.c miscgpio_$(PLATFORM).c
+
