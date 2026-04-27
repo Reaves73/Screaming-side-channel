@@ -72,8 +72,9 @@ def main():
     print("relay intialized!!!\n")
     set_dac(hw.target, 0)
     print("dac intialized!!!\n")
-    print(
-    """
+    def print_usage():
+	    print(
+	    """
     u           - set relay
     d           - set dac
     e           - get adc
@@ -81,8 +82,9 @@ def main():
     r           - do some random stuff
     p           - program hex
     c           - capture traces
+    power       - control target power
     q           - quit
-    """)
+	    """)
 
 
     try:
@@ -92,10 +94,20 @@ def main():
         if cmd == "q":
             break
 
+        if cmd == "power":
+            value = input("turn on or off?").strip()
+            if (value == "on"):
+              hw.scope.io.target_pwr = True
+            elif (value == "off"):
+              hw.scope.io.target_pwr = False
+            else:
+              print("- you must write on or off")
+            continue
+
         if cmd == "u":
             value = input("0 or 1? ").strip()
             if value not in {"0", "1"}:
-                print("Relay value must be 0 or 1.")
+                print("- Relay value must be 0 or 1.")
                 continue
 
             resp = set_relay(hw.target, value == "1")#give true or false to set_relay
@@ -105,7 +117,7 @@ def main():
         if cmd == "d":
             value = int(input("Which value? ").strip())
             if not 0 <= value <= 700:
-                print("bad value")
+                print("- bad value")
                 continue
 
             resp = set_dac(hw.target, int(value))
@@ -122,7 +134,7 @@ def main():
                 v -= 50
 
             resp = get_adc(hw.target)
-            print("ADC value:", resp)
+            print("- ADC value:", resp)
             continue
 
         if cmd == "init2":
@@ -135,31 +147,32 @@ def main():
                 v -= 50
 
             resp = get_adc(hw.target)
-            print("ADC value:", resp)
+            print("- ADC value:", resp)
             continue
 
         if cmd == "e":
             resp = get_adc(hw.target)
-            print("ADC reply:", resp)
+            print("- ADC reply:", resp)
             continue
 
         if cmd == "r":
-            print("doing random stuff")
+            print("- doing random stuff")
             do_random_stuff(hw.target)
             continue
 
         if cmd == "p":
-            print("progromming hex to target chip")
+            print("- progromming hex to target chip")
             hw.program_target(fw_path)
             continue
 
         if cmd == "c":
-            print("Capturing trace...")
+            print("- Capturing trace...")
             # todo
     
             continue
     
-        print("Unknown command. Use 'u', 'd', or 'q'.")
+        print("Unknown command.")
+        print_usage()
 
     finally:
       set_dac(hw.target, 0)
