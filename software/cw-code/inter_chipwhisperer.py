@@ -5,6 +5,9 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import numpy as np
 
+import os
+REPOPATH = os.path.realpath(os.path.dirname(os.path.realpath(__file__)) + "/../..")
+
 # 1 - relay on, sharppeak connected;  0 - relay off, sharppeak diconnected
 def set_relay(target, enabled):
     if enabled:
@@ -42,10 +45,13 @@ def do_random_stuff(target):
     resp = target.simpleserial_read('g', 1, timeout=10000) # timeout is in ms
     assert resp[0] == 1
 
+def set_target_power(scope, on):
+    scope.io.target_pwr = on
+
 def main():
     hw = cwhardware.CWHardware()
     PLATFORM = "CW308_STM32F3"
-    fw_path = f'../../firmware/simpleserial-aes/simpleserial-aes-{PLATFORM}.hex'
+    fw_path = f'{REPOPATH}/firmware/simpleserial-aes/simpleserial-aes-{PLATFORM}.hex'
 
     print("PLATFORM: ", PLATFORM)
     hw.connect(PLATFORM)
@@ -67,11 +73,27 @@ def main():
     print("Target clock freq:", hw.scope.clock.clkgen_freq)
     print("Sampling rate:", hw.scope.clock.adc_rate)
 
-    print("\nintial relay state: off, dac value: 0\n")
-    set_relay(hw.target, False)
-    print("relay intialized!!!\n")
-    set_dac(hw.target, 0)
-    print("dac intialized!!!\n")
+    try:
+	    print("\nintial relay state: off, dac value: 0\n")
+	    set_relay(hw.target, False)
+	    print("relay intialized!!!\n")
+	    set_dac(hw.target, 0)
+	    print("dac intialized!!!\n")
+    except:
+    	print("could not initialize board")
+    	value = input("try programming it?").strip()
+    	if (value == "yes"):
+    		set_target_power(hw.scope, False)
+    		time.sleep(0.5)
+    		set_target_power(hw.scope, True)
+    		time.sleep(0.5)
+    		print("- progromming hex to target chip")
+    		print(f"- firmware: {fw_path}")
+    		hw.program_target(fw_path)
+    	else:
+    		print("quitting")
+    		return
+
     def print_usage():
 	    print(
 	    """
@@ -97,9 +119,9 @@ def main():
         if cmd == "power":
             value = input("turn on or off?").strip()
             if (value == "on"):
-              hw.scope.io.target_pwr = True
+              set_target_power(hw.scope, True)
             elif (value == "off"):
-              hw.scope.io.target_pwr = False
+              set_target_power(hw.scope, False)
             else:
               print("- you must write on or off")
             continue
@@ -162,6 +184,7 @@ def main():
 
         if cmd == "p":
             print("- progromming hex to target chip")
+            print(f"- firmware: {fw_path}")
             hw.program_target(fw_path)
             continue
 
