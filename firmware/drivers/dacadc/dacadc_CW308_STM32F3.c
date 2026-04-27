@@ -8,20 +8,8 @@
 #include "stm32f3xx_hal_uart.h"
 #include "stm32f3xx_hal_flash.h"
 
-void dac_gpio_init(){
-    GPIO_InitTypeDef gpio;
-    gpio.Pin  = GPIO_PIN_4;
-    gpio.Mode = GPIO_MODE_ANALOG;
-    gpio.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOA, &gpio);
-}
-
 void dac_init()
 {
-    // 1) Enable GPIOA clock
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    // 2) PA4 analog mode
-    dac_gpio_init();
     // 3) Enable DAC clock
     RCC->APB1ENR |= RCC_APB1ENR_DAC1EN;
 	DAC->DHR12R1 = 0;
@@ -39,7 +27,8 @@ void dac_set(uint16_t value){
 //#define operating_voltage (3300)
 //#define operating_voltage (2960)
 #define operating_voltage (3200)
-#define operating_voltage_dac (operating_voltage-50)
+#define operating_voltage_dac operating_voltage
+//(operating_voltage-50)
 void dac_set_mv(uint16_t value)
 {
     //dac_set(1383); // 1.0V (@VDD 2.96V)
@@ -65,24 +54,12 @@ void adc_init()
 {
     // measure ouput voltage with ADC2_IN1 (also on PA4)
 
-    // Enable GPIOA clock
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-
-    // PA4 analog mode
-    GPIO_InitTypeDef gpio;
-    gpio.Pin  = GPIO_PIN_4;
-    gpio.Mode = GPIO_MODE_ANALOG;
-    gpio.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOA, &gpio);
-
-  RCC->CFGR2 |= (0b10000 << 4); // Prescaler
-  //RCC->CFGR2 |= (0b10000 << 9); // Prescaler
+    //RCC->CFGR2 |= (0b10000 << RCC_CFGR2_ADCPRE12_Pos); // Prescaler
 
     // Enable ADC clock
     __HAL_RCC_ADC12_CLK_ENABLE();
-    //RCC->AHBENR |= RCC_AHBENR_ADC12EN;
 
-ADC12_COMMON->CCR |= (0b01 << 16); // 0b01
+    ADC12_COMMON->CCR |= (0b01 << ADC12_CCR_CKMODE_Pos); // 0b01
 
     // Disable ADC if enabled
     if (ADC2->CR & ADC_CR_ADEN) // BIT0
@@ -93,51 +70,30 @@ ADC12_COMMON->CCR |= (0b01 << 16); // 0b01
     }
     //printf("ADC turned off\n");
 
-/*
-    // ADC clock = ADCCLK
-    ADC2->CFGR2 &= ~ADC_CFGR2_CKMODE; // (BIT31 | BIT30)
-
-    // Select channel 4 (PA4)
-    ADC2->CHSELR = ADC_CHSELR_CHSEL4; // BIT4
-
-    // Long sampling time (239.5 cycles)
-    ADC2->SMPR = (ADC_SMPR_SMP_0 | ADC_SMPR_SMP_1 | ADC_SMPR_SMP_2); // 0x7
-
-    // Calibrate ADC (recommended)
-    ADC2->CR |= ADC_CR_ADCAL; // BIT31
-    
-    while (ADC2->CR & ADC_CR_ADCAL); // BIT31
-    //printf("ADC calibrated\n");
-
-    // Enable ADC
-    ADC2->CR |= ADC_CR_ADEN; // BIT0
-
-    while (!(ADC2->ISR & ADC_ISR_ADRDY)); // BIT0
-    //printf("ADC enabled\n");
-*/
     // Enable ADC voltage regulator
     ADC2->CR &= ~ADC_CR_ADVREGEN;
     ADC2->CR |= ADC_CR_ADVREGEN_0;
     for (volatile int i = 0; i < 100000; i++); // small delay
 
-
     // Calibrate ADC
     ADC2->CR &= ~ADC_CR_ADCALDIF; // single-ended
     ADC2->CR |= ADC_CR_ADCAL;
     while (ADC2->CR & ADC_CR_ADCAL);
+    //printf("ADC calibrated\n");
 
     // Configure ADC
     ADC2->CFGR = 0; // default settings
 
-    // Sampling time (long)
-    ADC2->SMPR1 |= ADC_SMPR1_SMP4; // max sample time
+    // Sampling time (long - 601.5 clock cycles) at channel 1 (SMP1)
+    ADC2->SMPR1 |= ADC_SMPR1_SMP1; // max sample time (0x7)
 
-    // Regular sequence: channel 4
+    // Regular sequence: channel 1
     ADC2->SQR1 = (1 << ADC_SQR1_SQ1_Pos);
 
     // Enable ADC
     ADC2->CR |= ADC_CR_ADEN;
     while (!(ADC2->ISR & ADC_ISR_ADRDY));
+    //printf("ADC enabled\n");
 }
 
 uint16_t adc_get()
@@ -160,6 +116,16 @@ uint16_t adc_get_mv()
 }
 
 void dacadc_init() {
+    // Enable GPIOA clock
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+
+    // PA4 analog mode
+    GPIO_InitTypeDef gpio;
+    gpio.Pin  = GPIO_PIN_4;
+    gpio.Mode = GPIO_MODE_ANALOG;
+    gpio.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOA, &gpio);
+
     dac_init();
     adc_init();
 }
