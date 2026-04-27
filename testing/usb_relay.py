@@ -39,4 +39,6 @@ try:
 except KeyboardInterrupt:
 	print("")
 	print("")
+finally:
+	set_relay(False)
 
