@@ -89,7 +89,8 @@ def main():
         if cmd == "d":
             value = int(input("Which value? ").strip())
             if not 0 <= value <= 700:
-                raise ValueError("error value")
+                print("bad value")
+                continue
 
             resp = set_dac(hw.target, int(value))
             #print("DAC reply:", resp[0])
