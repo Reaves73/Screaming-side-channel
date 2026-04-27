@@ -9,5 +9,6 @@ export MCUDIR=$(readlink -f "${FIRMWARE_DIR}/../env/chipwhisperer/firmware/mcu")
 export DRIVERSDIR=$(readlink -f "${FIRMWARE_DIR}/drivers")
 
 cd simpleserial-aes
-make PLATFORM=CW308_STM32F0 CRYPTO_TARGET=TINYAES128C clean all
+#make PLATFORM=CW308_STM32F0 CRYPTO_TARGET=TINYAES128C clean all
+make PLATFORM=CW308_STM32F3 CRYPTO_TARGET=TINYAES128C clean all
 
