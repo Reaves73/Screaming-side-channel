@@ -121,6 +121,21 @@ uint8_t simpserial_get_adc(uint8_t* d, uint8_t len)
     return 0x00;
 };
 
+//some computation
+#include <stdio.h>
+uint8_t simpserial_do_random_stuff(uint8_t* d, uint8_t len)
+{
+    char buffer[500];
+    uint32_t* stp = (uint32_t*)(((uint32_t)buffer) & (~0x255));
+    for (int i = 0; i < 10000; i++) {
+        sprintf(buffer, "hello random text %lu with %lu values %lu from memory", (uint32_t)(*(stp+0)), (uint32_t)(*(stp+10)), (uint32_t)(*(stp+30)));
+    }
+    
+    uint8_t flag = 1;
+    simpleserial_put('g', 1, &flag);
+    return 0x00;
+};
+
 
 #if SS_VER == SS_VER_2_1
 uint8_t aes(uint8_t cmd, uint8_t scmd, uint8_t len, uint8_t *buf)
@@ -184,20 +199,6 @@ int main(void)
     dacadc_init();
     dac_set(0);// set dac to 0 by default
 
-    //set dac output
-    //delay_cycles(100000/1000);
-
-    //dac_set(806); // 0.65V
-    //dac_set(866); // 0.7V
-    //delay_cycles(200000);
-
-    //dac_set(372); // 0.3V
-    //dac_set(434); // 0.35V
-    //dac_set(559); // 0.45V
-    //dac_set(496); //0.4 - 496
-    //delay_cycles(20000);
-
-    //switcher_set(1);
     //while (1);
 	aes_indep_init();
 	aes_indep_key(tmp);
@@ -224,6 +225,7 @@ int main(void)
     simpleserial_addcmd('u', 1, simpserial_set_relay);
     simpleserial_addcmd('d', 2, simpserial_set_dac);
     simpleserial_addcmd('e', 0, simpserial_get_adc);
+    simpleserial_addcmd('r', 0, simpserial_do_random_stuff);
     #endif
     while(1)
         simpleserial_get();

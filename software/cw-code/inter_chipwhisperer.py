@@ -35,12 +35,17 @@ def get_adc(target):
     
     return int.from_bytes(resp, byteorder='big')
 
-
+def do_random_stuff(target):
+    payload = bytearray([])
+    target.simpleserial_write('r', payload)
+    print(f"doing random stuff requested.")
+    resp = target.simpleserial_read('g', 1, timeout=10000) # timeout is in ms
+    assert resp[0] == 1
 
 def main():
     hw = cwhardware.CWHardware()
-    PLATFORM = "CW308_STM32F0"
-    fw_path = '../../firmware/simpleserial-aes/simpleserial-aes-CW308_STM32F0.hex'
+    PLATFORM = "CW308_STM32F3"
+    fw_path = f'../../firmware/simpleserial-aes/simpleserial-aes-{PLATFORM}.hex'
 
     print("PLATFORM: ", PLATFORM)
     hw.connect(PLATFORM)
@@ -67,10 +72,21 @@ def main():
     print("relay intialized!!!\n")
     set_dac(hw.target, 0)
     print("dac intialized!!!\n")
-    print("u - set relay\nd - set dac\ne - get adc\np - program hex\nc - capture traces\nq - quit")
+    print(
+    """
+    u           - set relay
+    d           - set dac
+    e           - get adc
+    init1/init2 - run sharppeak init sequence
+    r           - do some random stuff
+    p           - program hex
+    c           - capture traces
+    q           - quit
+    """)
 
 
-    while True:
+    try:
+      while True:
         cmd = input("dd> ").strip().lower()
 
         if cmd == "q":
@@ -96,9 +112,40 @@ def main():
             #print("DAC reply:", resp[0])
             continue
 
+        if cmd == "init1":
+            set_dac(hw.target, 0)
+            time.sleep(2)
+            v = 700
+            while v >= 400:
+                set_dac(hw.target, v)
+                time.sleep(0.5)
+                v -= 50
+
+            resp = get_adc(hw.target)
+            print("ADC value:", resp)
+            continue
+
+        if cmd == "init2":
+            set_dac(hw.target, 0)
+            time.sleep(2)
+            v = 700
+            while v >= 350:
+                set_dac(hw.target, v)
+                time.sleep(0.5)
+                v -= 50
+
+            resp = get_adc(hw.target)
+            print("ADC value:", resp)
+            continue
+
         if cmd == "e":
             resp = get_adc(hw.target)
             print("ADC reply:", resp)
+            continue
+
+        if cmd == "r":
+            print("doing random stuff")
+            do_random_stuff(hw.target)
             continue
 
         if cmd == "p":
@@ -113,8 +160,10 @@ def main():
             continue
     
         print("Unknown command. Use 'u', 'd', or 'q'.")
-    
-    hw.disconnect()
+
+    finally:
+      set_dac(hw.target, 0)
+      hw.disconnect()
 
 
 
