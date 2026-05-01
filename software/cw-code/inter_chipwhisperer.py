@@ -74,29 +74,29 @@ def main():
     print("Sampling rate:", hw.scope.clock.adc_rate)
 
     try:
-	    print("\nintial relay state: off, dac value: 0\n")
-	    set_relay(hw.target, False)
-	    print("relay intialized!!!\n")
-	    set_dac(hw.target, 0)
-	    print("dac intialized!!!\n")
+        print("\nintial relay state: off, dac value: 0\n")
+        set_relay(hw.target, False)
+        print("relay intialized!!!\n")
+        set_dac(hw.target, 0)
+        print("dac intialized!!!\n")
     except:
-    	print("could not initialize board")
-    	value = input("try programming it?").strip()
-    	if (value == "yes"):
-    		set_target_power(hw.scope, False)
-    		time.sleep(0.5)
-    		set_target_power(hw.scope, True)
-    		time.sleep(0.5)
-    		print("- progromming hex to target chip")
-    		print(f"- firmware: {fw_path}")
-    		hw.program_target(fw_path)
-    	else:
-    		print("quitting")
-    		return
+        print("could not initialize board")
+        value = input("try programming it?").strip()
+        if (value == "yes"):
+            set_target_power(hw.scope, False)
+            time.sleep(0.5)
+            set_target_power(hw.scope, True)
+            time.sleep(0.5)
+            print("- progromming hex to target chip")
+            print(f"- firmware: {fw_path}")
+            hw.program_target(fw_path)
+        else:
+            print("quitting")
+            return
 
     def print_usage():
-	    print(
-	    """
+        print(
+        """
     u           - set relay
     d           - set dac
     e           - get adc
@@ -106,8 +106,8 @@ def main():
     c           - capture traces
     power       - control target power
     q           - quit
-	    """)
-
+        """)
+    print_usage()
 
     try:
       while True:
