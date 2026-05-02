@@ -11,7 +11,7 @@ options:
     gen_linking: dynamic
     generate_options: qt_gui
     hier_block_src_path: '.:'
-    id: collect_sharppeak
+    id: recorder_server
     max_nouts: '0'
     output_language: python
     placement: (0,0)
@@ -22,7 +22,7 @@ options:
     run_options: prompt
     sizing_mode: fixed
     thread_safe_setters: ''
-    title: collect_sharppeak
+    title: recorder_server
     window_size: (1000,1000)
   states:
     bus_sink: false
@@ -91,7 +91,7 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: 15e6
+    value: 5e6
   states:
     bus_sink: false
     bus_source: false
@@ -159,7 +159,7 @@ blocks:
     bus_structure: null
     coordinate: [72, 248.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: analog_quadrature_demod_cf_0
   id: analog_quadrature_demod_cf
   parameters:
@@ -173,7 +173,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [488, 360.0]
+    coordinate: [496, 316.0]
     rotation: 0
     state: enabled
 - name: analog_sig_source_x_0
@@ -214,9 +214,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [912, 384.0]
+    coordinate: [968, 292.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: blocks_null_sink_0
   id: blocks_null_sink
   parameters:
@@ -231,9 +231,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [912, 328.0]
+    coordinate: [976, 224.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: blocks_selector_0
   id: blocks_selector
   parameters:
@@ -254,9 +254,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [688, 328.0]
+    coordinate: [744, 244.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: blocks_throttle2_0
   id: blocks_throttle2
   parameters:
@@ -276,6 +276,41 @@ blocks:
     bus_source: false
     bus_structure: null
     coordinate: [296, 256.0]
+    rotation: 0
+    state: disabled
+- name: epy_block_0
+  id: epy_block
+  parameters:
+    _source_code: "from gnuradio import gr\nimport numpy as np\n\nimport os\nimport\
+      \ sys\n#print(f\"cwd: {os.getcwd()}\")\n#sys.path.append(\"/home/lindnera/data/SharpWhisperer/software/collect_sharppeak/recorder\"\
+      )\nsys.path.append(os.getcwd())\nimport importlib\n#import mygoodcode\n\nnon_exportdata_printed=False\n\
+      def non_exportdata(data):\n    global non_exportdata_printed\n    if not non_exportdata_printed:\n\
+      \        print(f\"NO EXPORT MODULE SELECTED\")\n        non_exportdata_printed=True\n\
+      \nclass PythonExportBlock(gr.sync_block):\n    def __init__(self, exportmodulename=None):\n\
+      \        gr.sync_block.__init__(\n            self,\n            name=\"PythonExportBlock\"\
+      ,\n            in_sig=[np.float32],\n            out_sig=None\n        )\n \
+      \       #self.exportmodulename = exportmodulename\n        if (exportmodulename\
+      \ is None):\n            self.exportmodule = None\n            self.processdata_func\
+      \ = non_exportdata\n        else:\n            self.exportmodule = importlib.import_module(exportmodulename)\n\
+      \            (getattr(self.exportmodule, \"init\"))()\n            self.processdata_func\
+      \ = getattr(self.exportmodule, \"exportdata\")\n\n    def work(self, input_items,\
+      \ output_items):\n        data = input_items[0]        \n        #print(len(data))\n\
+      \        #mygoodcode.processdata(data)\n        self.processdata_func(data)\n\
+      \        #print(data[:10])  # do whatever you want\n        return len(data)\n\
+      \n"
+    affinity: ''
+    alias: ''
+    comment: ''
+    exportmodulename: '"recorder_server_export"'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    _io_cache: ('PythonExportBlock', 'PythonExportBlock', [('exportmodulename', 'None')],
+      [('0', 'float', 1)], [], '', [])
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [792, 456.0]
     rotation: 0
     state: enabled
 - name: note_0
@@ -1032,11 +1067,12 @@ blocks:
     bus_structure: null
     coordinate: [176, 332.0]
     rotation: 0
-    state: disabled
+    state: enabled
 
 connections:
 - [analog_noise_source_x_0, '0', blocks_throttle2_0, '0']
 - [analog_quadrature_demod_cf_0, '0', blocks_selector_0, '0']
+- [analog_quadrature_demod_cf_0, '0', epy_block_0, '0']
 - [analog_sig_source_x_0, '0', uhd_usrp_sink_0, '0']
 - [blocks_selector_0, '0', blocks_null_sink_0, '0']
 - [blocks_selector_0, '1', blocks_file_sink_1, '0']
@@ -1046,4 +1082,4 @@ connections:
 
 metadata:
   file_format: 1
-  grc_version: 3.10.9.2
+  grc_version: 3.10.12.0
