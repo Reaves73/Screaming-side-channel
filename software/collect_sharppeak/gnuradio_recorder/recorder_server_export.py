@@ -6,7 +6,9 @@ exportrunning = False
 exportbuffers = [] # TODO: maybe better to send this in a queue?
 exportfishedevent = threading.Event()
 
-CAPTURE_STOP_CMD_PREFIX="capture_stop:"
+CAPTURE_START_CMD_PREFIX="CAP START:"
+CAPTURE_START_CMD_SUFFIX=":"
+CAPTURE_STOP_CMD="CAP STOP"
 def control_server(host="127.0.0.1", port=9999):
     global exportrunning
 
@@ -22,45 +24,54 @@ def control_server(host="127.0.0.1", port=9999):
 
     while True:
         conn, addr = s.accept()
+        print(f"connected: {addr}")
         try:
-            data = conn.recv(1024).decode().strip()
-            #print(f"received: {data} from {addr}")
+            export_filename = None
+            while True:
+                data = conn.recv(1024).decode().strip()
+                if len(data) == 0:
+                    break
+                #print(f"received: {data} from {addr}")
 
-            if data == "capture_start":
-                exportbuffers.clear()
-                exportrunning = True
-                print(f"start capturing")
-                conn.sendall(b"OK CAP START\n")
+                if data.startswith(CAPTURE_START_CMD_PREFIX) and data.endswith(CAPTURE_START_CMD_SUFFIX):
+                    exportbuffers.clear()
+                    exportrunning = True
+                    print(f"start capturing")
+                    export_filename = data[len(CAPTURE_START_CMD_PREFIX):-len(CAPTURE_START_CMD_SUFFIX)]
+                    print(f"registered filename: {export_filename}")
+                    conn.sendall(b"OK CAP START\n")
 
-            elif data.startswith(CAPTURE_STOP_CMD_PREFIX):
-                print(f"stop capturing")
-                # signal stopping
-                exportrunning = False
-                # wait for ack, then clear it for next capture
-                exportfishedevent.wait()
-                exportfishedevent.clear()
-                # process buffers
-                print(f"collected {len(exportbuffers)} buffers")
-                #print(type(exportbuffers[0]))
-                #print(exportbuffers[0].shape)
-                trace = np.concatenate(exportbuffers).astype(np.float32)
-                # save to file
-                export_filename = data[len(CAPTURE_STOP_CMD_PREFIX):]
-                try:
-                    np.save(export_filename, trace)
-                    print(f"saved to: {export_filename}")
-                    conn.sendall(b"OK CAP STOP\n")
-                except:
-                    print(f"saving failed: {export_filename}")
-                    conn.sendall(b"FAIL CAP STOP: saving\n")
+                elif data == CAPTURE_STOP_CMD:
+                    print(f"stop capturing")
+                    # signal stopping
+                    exportrunning = False
+                    # wait for ack, then clear it for next capture
+                    exportfishedevent.wait()
+                    exportfishedevent.clear()
+                    # process buffers
+                    print(f"collected {len(exportbuffers)} buffers")
+                    #print(type(exportbuffers[0]))
+                    #print(exportbuffers[0].shape)
+                    trace = np.concatenate(exportbuffers).astype(np.float32)
+                    #print(trace.shape)
+                    # save to file
+                    try:
+                        np.save(export_filename, trace)
+                        print(f"saved to: {export_filename}")
+                        conn.sendall(b"OK CAP STOP\n")
+                    except:
+                        print(f"saving failed: {export_filename}")
+                        conn.sendall(b"FAIL CAP STOP: saving\n")
 
-            else:
-                conn.sendall(b"UNKNOWN CMD\n")
-                print(f"unknown command: {data}")
+                else:
+                    conn.sendall(b"UNKNOWN CMD\n")
+                    print(f"unknown command: {data}")
+                    break
         except Exception as e:
             print("socket error:", e)
         finally:
             conn.close()
+            print(f"disconnected: {addr}")
 
 def init():
     print("initing")
