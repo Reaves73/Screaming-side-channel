@@ -4,12 +4,12 @@ import signal
 import socket
 import threading
 import shutil
-
+import os
 
 n_traces = 5
-traces_fname_prefix = "traces/tr_"
-sharppeak_trace_fname = "/home/parallels/Desktop/cw-code/data_sharppeak/sharppeak"
-
+tracesdir = (os.getcwd()) + "/traces"
+os.makedirs(tracesdir, exist_ok=True)
+traces_fname_prefix = f"{tracesdir}/tr_"
 
 def send_trigger(cmd):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
