@@ -91,7 +91,7 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: 15e6
+    value: 5e6
   states:
     bus_sink: false
     bus_source: false
@@ -159,7 +159,7 @@ blocks:
     bus_structure: null
     coordinate: [72, 248.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: analog_quadrature_demod_cf_0
   id: analog_quadrature_demod_cf
   parameters:
@@ -206,7 +206,7 @@ blocks:
     alias: ''
     append: 'False'
     comment: ''
-    file: /home/parallels/Desktop/cw-code/data_sharppeak/sharppeak
+    file: /home/lindnera/data/TestSharpWhisperer/software/cw-code/data_sharppeak/sharppeak
     type: float
     unbuffered: 'False'
     vlen: '1'
@@ -277,7 +277,7 @@ blocks:
     bus_structure: null
     coordinate: [296, 256.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: note_0
   id: note
   parameters:
@@ -1032,7 +1032,7 @@ blocks:
     bus_structure: null
     coordinate: [176, 332.0]
     rotation: 0
-    state: disabled
+    state: enabled
 
 connections:
 - [analog_noise_source_x_0, '0', blocks_throttle2_0, '0']
@@ -1046,4 +1046,4 @@ connections:
 
 metadata:
   file_format: 1
-  grc_version: 3.10.9.2
+  grc_version: 3.10.12.0
