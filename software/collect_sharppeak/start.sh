@@ -7,7 +7,8 @@ FIRST_SCRIPT="collect-test.py"
 DELAY_SECONDS=3
 
 # Start second program first
-python3 "$SECOND_SCRIPT" > log2.txt 2>&1 &
+# > log2.txt 2>&1 
+python3 "$SECOND_SCRIPT" &
 second_pid=$!
 
 sleep "$DELAY_SECONDS"

@@ -31,8 +31,8 @@ def stop_qapp():
     Qt.QApplication.quit()
         
 
-def start_qapp_async():
-    threading.Thread(target=start_qapp, daemon=True).start()
+#def start_qapp_async():
+#    threading.Thread(target=start_qapp, daemon=True).start()
 
 
 def control_server(host="127.0.0.1", port=9999):
@@ -45,35 +45,38 @@ def control_server(host="127.0.0.1", port=9999):
     print(f"listening on {host}:{port}")
     print("send 1 to start saving, send 0 to stop saving")
 
-    while True:
-        conn, addr = s.accept()
-        try:
-            data = conn.recv(1024).decode().strip()
-            print(f"received: {data} from {addr}")
+    try:
+        while True:
+            conn, addr = s.accept()
+            try:
+                data = conn.recv(1024).decode().strip()
+                print(f"received: {data} from {addr}")
 
-            if data == "1":
-                print("Starting qapp")
-                start_qapp_async()
-                tb = collect_sharppeak()
-                tb.start()
-                set_recording(tb, True)
-                time.sleep(0.3)
-                set_recording(tb, False)
-                tb.stop()
-                tb.wait()
-                print("Stopping qapp")
-                stop_qapp()
-                
-                conn.sendall(b"OK START\n")
-            elif data == "0":
-                break
-            else:
-                conn.sendall(b"UNKNOWN CMD\n")
-        except Exception as e:
-            print("socket error:", e)
-        finally:
-            conn.close()
-
+                if data == "1":
+                    #print("Starting qapp")
+                    tb = collect_sharppeak()
+                    tb.start()
+                    print("start recording")
+                    set_recording(tb, True)
+                    time.sleep(1)
+                    print("stop recording")
+                    set_recording(tb, False)
+                    tb.stop()
+                    tb.wait()
+                    
+                    conn.sendall(b"OK START\n")
+                elif data == "0":
+                    break
+                else:
+                    conn.sendall(b"UNKNOWN CMD\n")
+            except Exception as e:
+                print("socket error:", e)
+            finally:
+                conn.close()
+    finally:
+        print("Stopping qapp")
+        stop_qapp()
 
 if __name__ == "__main__":
-    control_server()
+    threading.Thread(target=control_server, daemon=True).start()
+    start_qapp()
