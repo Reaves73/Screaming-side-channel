@@ -11,5 +11,8 @@ source ${ENV_DIR}/.cwvenv/bin/activate
 
 python -m pip install nanpy
 
+#python -m pip install gnuradio
+#python -m pip install PyQt5
+
 echo ""
 echo "env_setup_extra.sh completed!"

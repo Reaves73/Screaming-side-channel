@@ -1,20 +1,59 @@
 import socket
+import subprocess
+import threading
+import os
+
+def print_recorder_server(p):
+    for line in p.stdout:
+        print(f"------ {line}", end="", flush=True)
+
+def start_recorder_server():
+    cmd_script = f"{os.path.dirname(os.path.realpath(__file__))}/gnuradio_recorder/recorder_server.py"
+    cmd = ["/usr/bin/python3", "-u", cmd_script]
+
+    p = None
+    try:
+        p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
+        for line in p.stdout:
+            print(f"------ {line}", end="", flush=True)
+            if "listening on " in line:
+                break
+    except:
+        if not (p is None):
+            p.kill()
+        raise
+    # create thread that collects lines from p.stdout and prints to own stdout
+    threading.Thread(target=print_recorder_server, args=(p,), daemon=True).start()
+    return p
+
+def stop_recorder_server(p):
+    p.kill()
 
 CAPTURE_START_CMD_PREFIX="CAP START:"
 CAPTURE_START_CMD_SUFFIX=":"
 CAPTURE_STOP_CMD="CAP STOP"
 class Recorder:
     def __init__(self, server=None):
-        assert server != None # TODO: this is for trying to start the server in the background
+        if server is None:
+            print("running recorder_server in background")
         self._server = server
         self._s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._p = None
 
     def __enter__(self):
-        self._s.connect((self._server, 9999))
+        server_address = self._server
+        if server_address is None:
+            # start the server in the background
+            server_address = "127.0.0.1"
+            self._p = start_recorder_server()
+        self._s.connect((server_address, 9999))
         return self
 
     def __exit__(self, type, value, traceback):
         self._s.close()
+        p = self._p
+        if not(p is None):
+            stop_recorder_server(p)
 
     def _send_cmd(self, cmd):
         #print(f"- sending '{cmd}'")
@@ -40,7 +79,9 @@ if __name__ == '__main__':
     os.makedirs(tracesdir, exist_ok=True)
     traces_fname_prefix = f"{tracesdir}/tr_"
 
-    with Recorder("127.0.0.1") as r:
+    server_address = None
+    #server_address = "127.0.0.1"
+    with Recorder(server_address) as r:
         print("Capturing traces...")
 
         for i in range(n_traces):
