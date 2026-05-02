@@ -1,6 +1,7 @@
 import threading
 import socket
 import numpy as np
+import time
 
 exportrunning = False
 exportbuffers = [] # TODO: maybe better to send this in a queue?
@@ -11,6 +12,9 @@ CAPTURE_START_CMD_SUFFIX=":"
 CAPTURE_STOP_CMD="CAP STOP"
 def control_server(host="127.0.0.1", port=9999):
     global exportrunning
+
+    while lastbuffer is None:
+        time.sleep(0.1)
 
     #open a server to listen
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -95,6 +99,7 @@ def exportdata(d):
 
     # collect one more buffer in the beginning (the last one)
     if len(exportbuffers) == 0:
+        assert not (lastbuffer is None)
         exportbuffers.append(lastbuffer)
         lastbuffer = None
         exportrunning_onemore = True
