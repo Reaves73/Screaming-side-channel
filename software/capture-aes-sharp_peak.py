@@ -18,11 +18,16 @@ PLATFORM = "CW308_STM32F3"
 FIRMWARE = "simpleserial-aes"
 fw_path = sharpwhisperer.get_firmware(PLATFORM, FIRMWARE)
 
+CAPTURE_SOURCE = "CW"
+#CAPTURE_SOURCE = "gnuradio"
 
 #yuqi_try
 n_samples = 12000
+#n_samples = 24000
 
 n_traces = 5
+#n_traces = 50
+#n_traces = 5000
 
 print("PLATFORM: ", PLATFORM)
 print("fw_path: ", fw_path)
@@ -48,7 +53,8 @@ time.sleep(0.1)
 print("Target clock freq:", hw.scope.clock.clkgen_freq)
 print("Sampling rate:", hw.scope.clock.adc_rate)
 
-hw.program_target(fw_path)
+#sharpwhisperer.init_target(hw)
+sharpwhisperer.program_target(PLATFORM, FIRMWARE, hw)
 
 
 #
@@ -57,7 +63,10 @@ hw.program_target(fw_path)
 
 ktp = cw.ktp.Basic()
 
-#traces = np.zeros([n_traces, n_samples], dtype=np.float32)
+traces = None
+if CAPTURE_SOURCE == "CW":
+    traces = np.zeros([n_traces, n_samples], dtype=np.float32)
+
 plaintexts = np.zeros([n_traces, 16], dtype=np.uint8)
 ciphertexts = np.zeros([n_traces, 16], dtype=np.uint8)
 keys = np.zeros([n_traces, 16], dtype=np.uint8)
@@ -66,37 +75,46 @@ key, text = ktp.next()
 
 #target.set_key(key)
 
-with Recorder() as r:
+def capture_fun(cap_handle):
     print("Capturing traces...")
 
-    tempdir = tempfile.gettempdir()
+    if CAPTURE_SOURCE == "gnuradio":
+        tempdir = tempfile.gettempdir()
     for i in tqdm(range(n_traces)):
-        tracefile = f"{tempdir}/traces_{i}.npy"
+        if CAPTURE_SOURCE == "gnuradio":
+            tracefile = f"{tempdir}/traces_{i}.npy"
         while True:
-            r.record_start(tracefile)
+            if CAPTURE_SOURCE == "gnuradio":
+                cap_handle.record_start(tracefile)
             ret = hw.capture(text, key)
-            time.sleep(0.02)
-            r.record_stop()
+            if CAPTURE_SOURCE == "gnuradio":
+                time.sleep(0.02)
+                cap_handle.record_stop()
 
             if ret is not None:
                 break
         k = np.array(list(ret.key), dtype=np.uint8)
         c = np.array(list(ret.textout), dtype=np.uint8)
         p = np.array(list(ret.textin), dtype=np.uint8)
-        #t = np.array(list(ret.wave), dtype=np.float32)
+        if CAPTURE_SOURCE == "CW":
+            t = np.array(list(ret.wave), dtype=np.float32)
+            #t = np.array(ret.wave, dtype=np.float32)
+            #tc = hw.scope.adc.trig_count
+            #seg = t[int(tc/4): int(tc/4) + post_len]
 
-        #t = np.array(ret.wave, dtype=np.float32)
-        #tc = hw.scope.adc.trig_count
-        #seg = t[int(tc/4): int(tc/4) + post_len]
-
-        #traces[i] = t
-        #traces[i, :len(seg)] = seg
+            #traces[i] = t
+            #traces[i, :len(seg)] = seg
         plaintexts[i] = p
         ciphertexts[i] = c
         keys[i] = k
         
         key, text = ktp.next() 
 
+if CAPTURE_SOURCE == "CW":
+    capture_fun(None)
+elif CAPTURE_SOURCE == "gnuradio":
+    with Recorder() as r:
+        capture_fun(r)
 
 #
 # DISCONNECT
@@ -104,14 +122,16 @@ with Recorder() as r:
 
 hw.disconnect()
 
-#np.save("data/traces.npy", traces)
+if CAPTURE_SOURCE == "CW":
+    np.save("data/traces.npy", traces)
 np.save("data_sharppeak/keys.npy", keys)
 np.save("data_sharppeak/plaintexts.npy", plaintexts)
 np.save("data_sharppeak/ciphertexts.npy", ciphertexts)
 
-#plt.plot(np.average(traces, axis=0))
-#plt.plot(avg)
-#yuqi_try: draw line of trigger.
-#plt.axvline(x=0, color='red', linewidth=1)
+if CAPTURE_SOURCE == "CW":
+    plt.plot(np.average(traces, axis=0))
+    #plt.plot(avg)
+    #yuqi_try: draw line of trigger.
+    #plt.axvline(x=0, color='red', linewidth=1)
 
-plt.show()
+    plt.show()

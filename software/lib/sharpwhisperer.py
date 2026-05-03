@@ -3,9 +3,7 @@ REPOPATH = os.path.realpath(os.path.dirname(os.path.realpath(__file__)) + "/../.
 
 import time
 
-def get_firmware(PLATFORM, FIRMWARE):
-    # TODO: run compilation
-    return f'{REPOPATH}/firmware/{FIRMWARE}/{FIRMWARE}-{PLATFORM}.hex'
+# ---------------------------
 
 # 1 - relay on, sharppeak connected;  0 - relay off, sharppeak diconnected
 def set_relay(target, enabled):
@@ -44,6 +42,11 @@ def do_random_stuff(target):
     resp = target.simpleserial_read('g', 1, timeout=10000) # timeout is in ms
     assert resp[0] == 1
 
+# ---------------------------
+
+def get_firmware(PLATFORM, FIRMWARE):
+    return f'{REPOPATH}/firmware/{FIRMWARE}/{FIRMWARE}-{PLATFORM}.hex'
+
 def set_target_power(scope, on):
     scope.io.target_pwr = on
 
@@ -52,3 +55,56 @@ def reset_target(scope):
     time.sleep(0.5)
     set_target_power(scope, True)
     time.sleep(0.5)
+
+def init_target(hw):
+    reset_target(hw.scope)
+    hw.target.flush()
+    hw.reset_target()
+    time.sleep(0.1)
+
+    # test at the end
+    resp = get_adc(hw.target)
+    print("- ADC reply:", resp)
+
+def program_target(PLATFORM, FIRMWARE, hw, compile=True):
+    fw_path = get_firmware(PLATFORM, FIRMWARE)
+    #if compile:
+    # TODO: run compilation
+    reset_target(hw.scope)
+    print("- progromming hex to target chip")
+    print(f"- firmware: {fw_path}")
+    hw.program_target(fw_path)
+
+    # run an init at the end
+    init_target(hw)
+
+# ---------------------------
+
+def init_sharppeak(target, i = 0):
+    if i == 0:
+        set_dac(target, 0)
+        time.sleep(2)
+        v = 700
+        while v >= 350:
+            set_dac(target, v)
+            time.sleep(0.5)
+            v -= 50
+
+        resp = get_adc(target)
+        print("- ADC value:", resp)
+        return True
+
+    elif i == 1:
+        set_dac(target, 0)
+        time.sleep(2)
+        v = 700
+        while v >= 400:
+            set_dac(target, v)
+            time.sleep(0.5)
+            v -= 50
+
+        resp = get_adc(target)
+        print("- ADC value:", resp)
+        return True
+
+    raise Exception()
