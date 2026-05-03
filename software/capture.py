@@ -54,6 +54,9 @@ print("Sampling rate:", hw.scope.clock.adc_rate)
 
 sharpwhisperer.init_target(hw)
 #sharpwhisperer.program_target(PLATFORM, FIRMWARE, hw)
+sharpwhisperer.set_dac(hw.target, 0)
+#sharpwhisperer.set_gate(hw.target, True)
+sharpwhisperer.init_sharppeak(hw.target)
 
 
 #
@@ -86,7 +89,6 @@ def capture_fun(cap_handle):
         while True:
             if CAPTURE_SOURCE == "gnuradio":
                 cap_handle.record_start(tracefile)
-            # TODO: with the additional time needed for dac_trigger, this runs into some hardcoded timeout, need to rework some of this to become usable again
             ret = hw.capture(text, key)
             if CAPTURE_SOURCE == "gnuradio":
                 time.sleep(0.02)
@@ -111,18 +113,18 @@ def capture_fun(cap_handle):
         
         key, text = ktp.next() 
 
-if CAPTURE_SOURCE == "CW":
-    capture_fun(None)
-elif CAPTURE_SOURCE == "gnuradio":
-    with Recorder() as r:
-        print(f"samprate={r.get_samprate()}")
-        capture_fun(r)
-
-#
-# DISCONNECT
-#
-
-hw.disconnect()
+try:
+    if CAPTURE_SOURCE == "CW":
+        capture_fun(None)
+    elif CAPTURE_SOURCE == "gnuradio":
+        with Recorder() as r:
+            print(f"samprate={r.get_samprate()}")
+            capture_fun(r)
+finally:
+    sharpwhisperer.set_dac(hw.target, 0)
+    sharpwhisperer.set_gate(hw.target, False)
+    # DISCONNECT
+    hw.disconnect()
 
 if CAPTURE_SOURCE == "CW":
     np.save("data/traces.npy", traces)
