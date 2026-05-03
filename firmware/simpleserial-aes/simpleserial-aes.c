@@ -145,15 +145,15 @@ uint8_t simpserial_do_random_stuff(uint8_t* d, uint8_t len)
             }
             break;
         case 1:
-            delay_cycles(1000000);
+            delay_cycles(50000); // ~50ms delay
             break;
         case 2:
             dac_trigger();
             break;
         case 3:
-            dac_trigger();
-            delay_cycles(1000);
-            dac_trigger();
+            dac_trigger(); // 10ms +dv 10ms -dv 10ms 0dv 10ms
+            delay_cycles(50000); // ~50ms delay
+            dac_trigger(); // 10ms +dv 10ms -dv 10ms 0dv 10ms
             break;
         default:
             flag = 0;

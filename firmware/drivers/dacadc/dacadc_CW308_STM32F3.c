@@ -33,13 +33,17 @@ void dac_set(uint16_t value){
         DAC->DHR12R1 = (value & (1024-1)); // 0,75V safety
 }
 
-#define DAC_TRIGGER_OFFSET 50
+#define DAC_TRIGGER_OFFSET 70
 #define DAC_TRIGGER_DELAYCOUNT 10000
 void dac_trigger() {
     volatile uint32_t count;
     uint16_t dac_value = (DAC->DHR12R1 & (1024-1));
     if (dac_value < DAC_TRIGGER_OFFSET) {
         while(1);
+    }
+    count = DAC_TRIGGER_DELAYCOUNT;
+    while(count--) {
+        __asm__("nop");
     }
 
     dac_set(dac_value+DAC_TRIGGER_OFFSET);
@@ -55,6 +59,10 @@ void dac_trigger() {
     }
 
     dac_set(dac_value);
+    count = DAC_TRIGGER_DELAYCOUNT;
+    while(count--) {
+        __asm__("nop");
+    }
 }
 
 //#define operating_voltage (3300)
