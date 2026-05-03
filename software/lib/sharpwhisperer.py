@@ -68,8 +68,11 @@ def init_target(hw):
 
 def program_target(PLATFORM, FIRMWARE, hw, compile=True):
     fw_path = get_firmware(PLATFORM, FIRMWARE)
-    #if compile:
-    # TODO: run compilation
+    if compile:
+        # run compilation
+        res = os.system(f"{REPOPATH}/firmware/compile.sh")
+        print(f"compilation result: {res}")
+        assert res == 0
     reset_target(hw.scope)
     print("- progromming hex to target chip")
     print(f"- firmware: {fw_path}")
