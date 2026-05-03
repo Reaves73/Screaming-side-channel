@@ -42,6 +42,7 @@ uint8_t get_pt(uint8_t* pt, uint8_t len)
 {
     aes_indep_enc_pretrigger(pt);
 
+    dac_trigger();
 	trigger_high();
 
   #ifdef ADD_JITTER
@@ -70,6 +71,7 @@ uint8_t enc_multi_getpt(uint8_t* pt, uint8_t len)
     aes_indep_enc_pretrigger(pt);
 
     for(unsigned int i = 0; i < num_encryption_rounds; i++){
+        dac_trigger();
         trigger_high();
         aes_indep_enc(pt);
         trigger_low();
@@ -100,7 +102,7 @@ void gate_set(uint8_t on) {
 // set gate (and led)
 uint8_t simpserial_set_gate(uint8_t* u, uint8_t len)
 {
-    gate_set((uint8_t)(u[0]));
+    gate_set(u[0]);
     uint8_t flag = 1;
     simpleserial_put('g', 1, &flag);
     return 0x00;
@@ -131,13 +133,33 @@ uint8_t simpserial_get_adc(uint8_t* d, uint8_t len)
 #include <stdio.h>
 uint8_t simpserial_do_random_stuff(uint8_t* d, uint8_t len)
 {
+    uint8_t stuff_id = d[0];
+    uint8_t flag = 1;
+
     char buffer[500];
     uint32_t* stp = (uint32_t*)(((uint32_t)buffer) & (~0x255));
-    for (int i = 0; i < 10000; i++) {
-        sprintf(buffer, "hello random text %lu with %lu values %lu from memory", (uint32_t)(*(stp+0)), (uint32_t)(*(stp+10)), (uint32_t)(*(stp+30)));
+    switch (stuff_id) {
+        case 0:
+            for (int i = 0; i < 10000; i++) {
+                sprintf(buffer, "hello random text %lu with %lu values %lu from memory", (uint32_t)(*(stp+0)), (uint32_t)(*(stp+10)), (uint32_t)(*(stp+30)));
+            }
+            break;
+        case 1:
+            delay_cycles(1000000);
+            break;
+        case 2:
+            dac_trigger();
+            break;
+        case 3:
+            dac_trigger();
+            delay_cycles(1000);
+            dac_trigger();
+            break;
+        default:
+            flag = 0;
+            break;
     }
-    
-    uint8_t flag = 1;
+
     simpleserial_put('g', 1, &flag);
     return 0x00;
 };
@@ -232,7 +254,7 @@ int main(void)
     simpleserial_addcmd('u', 1, simpserial_set_gate);
     simpleserial_addcmd('d', 2, simpserial_set_dac);
     simpleserial_addcmd('e', 0, simpserial_get_adc);
-    simpleserial_addcmd('r', 0, simpserial_do_random_stuff);
+    simpleserial_addcmd('r', 1, simpserial_do_random_stuff);
     #endif
     while(1)
         simpleserial_get();

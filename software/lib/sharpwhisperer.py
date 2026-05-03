@@ -36,12 +36,13 @@ def get_adc(target):
     
     return int.from_bytes(resp, byteorder='big')
 
-def do_random_stuff(target):
-    payload = bytearray([])
+def do_random_stuff(target, stuff_id):
+    payload = bytearray([stuff_id & 0xFF])
     target.simpleserial_write('r', payload)
-    print(f"doing random stuff requested.")
+    print(f"doing random stuff {stuff_id} requested.")
     resp = target.simpleserial_read('g', 1, timeout=10000) # timeout is in ms
-    assert resp[0] == 1
+    if resp[0] != 1:
+        print("random stuff failed")
 
 # ---------------------------
 

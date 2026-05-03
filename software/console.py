@@ -94,8 +94,9 @@ def main():
             continue
 
         if cmd == "r":
-            print("- doing random stuff")
-            sharpwhisperer.do_random_stuff(hw.target)
+            stuff_id = int(input("which random stuff? ").strip())
+            print(f"- doing random stuff {stuff_id}")
+            sharpwhisperer.do_random_stuff(hw.target, stuff_id)
             continue
 
         if cmd == "p":
