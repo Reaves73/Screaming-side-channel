@@ -88,11 +88,11 @@ def program_target(PLATFORM, FIRMWARE, hw, compile=True):
 def init_sharppeak(target, i = 0):
     if i == 0:
         set_dac(target, 0)
-        time.sleep(2)
+        time.sleep(0.1)
         v = 700
         while v >= 350:
             set_dac(target, v)
-            time.sleep(0.5)
+            time.sleep(0.1)
             v -= 50
 
         resp = get_adc(target)
