@@ -31,6 +31,8 @@ def stream_downsample_average(filepath: str, fs: float, duration_s: float, facto
         while samples_done < samples_to_read:
             need = min(factor, samples_to_read - samples_done)
             chunk = np.fromfile(f, dtype=np.float32, count=need)
+            # TODO: no idea why the first 100 samples of gnuradio are so weird, clipping is a quickfix
+            chunk = np.clip(chunk, -4, 4)
 
             if len(chunk) == 0:
                 break
