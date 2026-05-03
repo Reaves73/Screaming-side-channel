@@ -102,7 +102,7 @@ class recorder_server(gr.top_block, Qt.QWidget):
         self._tx_gain_range = qtgui.Range(0, 40, 1, 10, 200)
         self._tx_gain_win = qtgui.RangeWidget(self._tx_gain_range, self.set_tx_gain, "TX Gain", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._tx_gain_win)
-        self.epy_block_0 = epy_block_0.PythonExportBlock(exportmodulename="recorder_server_export")
+        self.epy_block_0 = epy_block_0.PythonExportBlock(exportmodulename="recorder_server_export", samp_rate=samp_rate)
         self.analog_quadrature_demod_cf_0 = analog.quadrature_demod_cf(1)
 
 

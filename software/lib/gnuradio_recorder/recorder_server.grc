@@ -285,13 +285,14 @@ blocks:
       \ sys\nsys.path.append(os.getcwd())\nimport importlib\n\nnon_exportdata_printed=False\n\
       def non_exportdata(data):\n    global non_exportdata_printed\n    if not non_exportdata_printed:\n\
       \        print(f\"NO EXPORT MODULE SELECTED\")\n        non_exportdata_printed=True\n\
-      \nclass PythonExportBlock(gr.sync_block):\n    def __init__(self, exportmodulename=None):\n\
-      \        gr.sync_block.__init__(\n            self,\n            name=\"PythonExportBlock\"\
-      ,\n            in_sig=[np.float32],\n            out_sig=None\n        )\n \
-      \       #self.exportmodulename = exportmodulename\n        if (exportmodulename\
-      \ is None):\n            self.exportmodule = None\n            self.processdata_func\
-      \ = non_exportdata\n        else:\n            self.exportmodule = importlib.import_module(exportmodulename)\n\
-      \            (getattr(self.exportmodule, \"init\"))()\n            self.processdata_func\
+      \nclass PythonExportBlock(gr.sync_block):\n    def __init__(self, exportmodulename=None,\
+      \ samp_rate=-1):\n        gr.sync_block.__init__(\n            self,\n     \
+      \       name=\"PythonExportBlock\",\n            in_sig=[np.float32],\n    \
+      \        out_sig=None\n        )\n        #self.exportmodulename = exportmodulename\n\
+      \        if (exportmodulename is None):\n            self.exportmodule = None\n\
+      \            self.processdata_func = non_exportdata\n        else:\n       \
+      \     self.exportmodule = importlib.import_module(exportmodulename)\n      \
+      \      (getattr(self.exportmodule, \"init\"))(samp_rate)\n            self.processdata_func\
       \ = getattr(self.exportmodule, \"exportdata\")\n\n    def work(self, input_items,\
       \ output_items):\n        data = input_items[0]        \n        #print(len(data))\n\
       \        self.processdata_func(data)\n        #print(data[:10])  # do whatever\
@@ -302,9 +303,10 @@ blocks:
     exportmodulename: '"recorder_server_export"'
     maxoutbuf: '0'
     minoutbuf: '0'
+    samp_rate: samp_rate
   states:
-    _io_cache: ('PythonExportBlock', 'PythonExportBlock', [('exportmodulename', 'None')],
-      [('0', 'float', 1)], [], '', [])
+    _io_cache: ('PythonExportBlock', 'PythonExportBlock', [('exportmodulename', 'None'),
+      ('samp_rate', '-1')], [('0', 'float', 1)], [], '', [])
     bus_sink: false
     bus_source: false
     bus_structure: null

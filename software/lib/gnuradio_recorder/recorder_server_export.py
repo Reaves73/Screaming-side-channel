@@ -7,11 +7,14 @@ exportrunning = False
 exportbuffers = [] # TODO: maybe better to send this in a queue?
 exportfishedevent = threading.Event()
 
+samprate = None
+
 CAPTURE_START_CMD_PREFIX="CAP START:"
 CAPTURE_START_CMD_SUFFIX=":"
 CAPTURE_STOP_CMD="CAP STOP"
+SAMPRATE_GET_CMD="SAMPRATE GET"
 def control_server(host="127.0.0.1", port=9999):
-    global exportrunning
+    global exportrunning, samprate
 
     while lastbuffer is None:
         time.sleep(0.1)
@@ -65,7 +68,11 @@ def control_server(host="127.0.0.1", port=9999):
                         conn.sendall(b"OK CAP STOP\n")
                     except:
                         print(f"saving failed: {export_filename}")
-                        conn.sendall(b"FAIL CAP STOP: saving\n")
+                        conn.sendall(b"FAIL CAP STOP:saving\n")
+
+                elif data == SAMPRATE_GET_CMD:
+                    print(f"returning samp_rate")
+                    conn.sendall(f"OK SAMPRATE GET:{samprate}\n".encode())
 
                 else:
                     conn.sendall(b"UNKNOWN CMD\n")
@@ -77,8 +84,10 @@ def control_server(host="127.0.0.1", port=9999):
             conn.close()
             print(f"disconnected: {addr}")
 
-def init():
-    print("initing")
+def init(samp_rate):
+    global samprate
+    samprate = samp_rate
+    print(f"initing, samp_rate={samp_rate}")
     threading.Thread(target=control_server, daemon=True).start()
 
 lastbuffer = None

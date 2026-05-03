@@ -18,8 +18,8 @@ PLATFORM = "CW308_STM32F3"
 FIRMWARE = "simpleserial-aes"
 fw_path = sharpwhisperer.get_firmware(PLATFORM, FIRMWARE)
 
-CAPTURE_SOURCE = "CW"
-#CAPTURE_SOURCE = "gnuradio"
+#CAPTURE_SOURCE = "CW"
+CAPTURE_SOURCE = "gnuradio"
 
 #yuqi_try
 n_samples = 12000
@@ -115,6 +115,7 @@ if CAPTURE_SOURCE == "CW":
     capture_fun(None)
 elif CAPTURE_SOURCE == "gnuradio":
     with Recorder() as r:
+        print(f"samprate={r.get_samprate()}")
         capture_fun(r)
 
 #

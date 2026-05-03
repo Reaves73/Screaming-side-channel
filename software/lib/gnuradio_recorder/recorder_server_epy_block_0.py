@@ -14,7 +14,7 @@ def non_exportdata(data):
         non_exportdata_printed=True
 
 class PythonExportBlock(gr.sync_block):
-    def __init__(self, exportmodulename=None):
+    def __init__(self, exportmodulename=None, samp_rate=-1):
         gr.sync_block.__init__(
             self,
             name="PythonExportBlock",
@@ -27,7 +27,7 @@ class PythonExportBlock(gr.sync_block):
             self.processdata_func = non_exportdata
         else:
             self.exportmodule = importlib.import_module(exportmodulename)
-            (getattr(self.exportmodule, "init"))()
+            (getattr(self.exportmodule, "init"))(samp_rate)
             self.processdata_func = getattr(self.exportmodule, "exportdata")
 
     def work(self, input_items, output_items):

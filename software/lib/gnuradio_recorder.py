@@ -32,6 +32,7 @@ def stop_recorder_server(p):
 CAPTURE_START_CMD_PREFIX="CAP START:"
 CAPTURE_START_CMD_SUFFIX=":"
 CAPTURE_STOP_CMD="CAP STOP"
+SAMPRATE_GET_CMD="SAMPRATE GET"
 class Recorder:
     def __init__(self, server=None):
         if server is None:
@@ -60,8 +61,11 @@ class Recorder:
         self._s.sendall(cmd.encode())
         res = self._s.recv(1024).decode().strip()
         #print(res)
-        if res.split(":")[0] == "OK " + cmd.split(":")[0]:
-            return res
+        ress = res.split(":")
+        if ress[0] == "OK " + cmd.split(":")[0]:
+            if len(ress) < 2:
+                return None
+            return ress[1]
         raise Exception(res)
 
     def record_start(self, filename):
@@ -69,6 +73,9 @@ class Recorder:
 
     def record_stop(self):
         self._send_cmd(CAPTURE_STOP_CMD)
+    
+    def get_samprate(self):
+        return float(self._send_cmd(SAMPRATE_GET_CMD))
 
 
 if __name__ == '__main__':
