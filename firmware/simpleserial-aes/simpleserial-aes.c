@@ -89,12 +89,18 @@ uint8_t enc_multi_setnum(uint8_t* t, uint8_t len)
     return 0;
 }
 
-//buffer and len were given.
-// set relay info and set.
-uint8_t simpserial_set_relay(uint8_t* u, uint8_t len)
+void gate_set(uint8_t on) {
+    //set led state
+    miscgpio_led_set(on);
+    // set dac gate state
+    dac_set_gate(on);
+}
+
+
+// set gate (and led)
+uint8_t simpserial_set_gate(uint8_t* u, uint8_t len)
 {
-    //set relay state
-    miscgpio_led_set((uint8_t)(u[0]));
+    gate_set((uint8_t)(u[0]));
     uint8_t flag = 1;
     simpleserial_put('g', 1, &flag);
     return 0x00;
@@ -193,11 +199,12 @@ int main(void)
     
     // init miscgpio
     miscgpio_init();
-    miscgpio_led_set(0); // set relay off by default
 
     // init dac and adc
     dacadc_init();
     dac_set(0);// set dac to 0 by default
+
+    gate_set(0); // set gate off by default
 
     //while (1);
 	aes_indep_init();
@@ -222,7 +229,7 @@ int main(void)
     simpleserial_addcmd_flags('m', 18, get_mask, CMD_FLAG_LEN);
     simpleserial_addcmd('s', 2, enc_multi_setnum);
     simpleserial_addcmd('f', 16, enc_multi_getpt);
-    simpleserial_addcmd('u', 1, simpserial_set_relay);
+    simpleserial_addcmd('u', 1, simpserial_set_gate);
     simpleserial_addcmd('d', 2, simpserial_set_dac);
     simpleserial_addcmd('e', 0, simpserial_get_adc);
     simpleserial_addcmd('r', 0, simpserial_do_random_stuff);

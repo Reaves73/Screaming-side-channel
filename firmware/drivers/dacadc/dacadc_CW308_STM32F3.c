@@ -8,13 +8,22 @@
 #include "stm32f3xx_hal_uart.h"
 #include "stm32f3xx_hal_flash.h"
 
+
+void dac_set_gate(uint8_t on) {
+    if (on) {
+        DAC->CR |= DAC_CR_EN1;
+    } else {
+        DAC->CR &= ~DAC_CR_EN1;
+    }
+} 
+
 void dac_init()
 {
     // 3) Enable DAC clock
     RCC->APB1ENR |= RCC_APB1ENR_DAC1EN;
 	DAC->DHR12R1 = 0;
     // 4) Enable DAC channel 1
-    DAC->CR |= DAC_CR_EN1;
+    dac_set_gate(0);
     // 5) Set mid-scale output
 }
 

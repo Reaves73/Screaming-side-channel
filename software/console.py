@@ -32,7 +32,7 @@ def main():
     def print_usage():
         print(
         """
-    u      - set relay
+    u      - set gate
     d      - set dac
     e      - get adc
     init   - run sharppeak init sequence
@@ -63,11 +63,11 @@ def main():
         if cmd == "u":
             value = input("0 or 1? ").strip()
             if value not in {"0", "1"}:
-                print("- Relay value must be 0 or 1.")
+                print("- gate value must be 0 or 1.")
                 continue
 
-            resp = sharpwhisperer.set_relay(hw.target, value == "1")#give true or false to set_relay
-            #print("Relay reply:", )
+            resp = sharpwhisperer.set_gate(hw.target, value == "1")
+            #print("gate reply:", )
             continue
 
         if cmd == "d":
@@ -107,6 +107,7 @@ def main():
 
     finally:
       sharpwhisperer.set_dac(hw.target, 0)
+      sharpwhisperer.set_gate(hw.target, False)
       hw.disconnect()
 
 

@@ -4,6 +4,7 @@
 #include "stdint.h"
 
 void dacadc_init();
+void dac_set_gate(uint8_t on);
 void dac_set_mv(uint16_t value);
 uint16_t adc_get_mv();
 

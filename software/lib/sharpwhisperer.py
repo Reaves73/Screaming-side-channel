@@ -5,14 +5,15 @@ import time
 
 # ---------------------------
 
-# 1 - relay on, sharppeak connected;  0 - relay off, sharppeak diconnected
-def set_relay(target, enabled):
+# enabled or disables DAC output
+def set_gate(target, enabled):
     if enabled:
         target.simpleserial_write('u', bytearray([1]))
-        #print(f"Relay set to 1.")
+        #print(f"gate set to 1.")
     else:
         target.simpleserial_write('u', bytearray([0]))
-        #print(f"Relay set to 0.")
+        #print(f"gate set to 0.")
+    print(f"Gate set to {'ENABLED' if enabled else 'DISABLED'}.")
     resp = target.simpleserial_read('g', 1)
     assert resp[0] == 1
     #return resp
