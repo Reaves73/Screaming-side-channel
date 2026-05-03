@@ -69,7 +69,7 @@ class recorder_server(gr.top_block, Qt.QWidget):
         self.tx_gain = tx_gain = 10
         self.samp_rate = samp_rate = 5e6
         self.rf_gain = rf_gain = 10
-        self.lsb_freq = lsb_freq = 434e6
+        self.lsb_freq = lsb_freq = 430.4e6
         self.freq_shift = freq_shift = 12.5e6
 
         ##################################################
@@ -79,7 +79,7 @@ class recorder_server(gr.top_block, Qt.QWidget):
         self._rf_gain_range = qtgui.Range(0, 40, 1, 10, 200)
         self._rf_gain_win = qtgui.RangeWidget(self._rf_gain_range, self.set_rf_gain, "RX Gain", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._rf_gain_win)
-        self._lsb_freq_range = qtgui.Range(425e6, 445e6, 1e6, 434e6, 200)
+        self._lsb_freq_range = qtgui.Range(425e6, 445e6, 1e6, 430.4e6, 200)
         self._lsb_freq_win = qtgui.RangeWidget(self._lsb_freq_range, self.set_lsb_freq, "LSB Freq", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._lsb_freq_win)
         self._volume_range = qtgui.Range(0, 100, 0.100, 0.500, 200)
