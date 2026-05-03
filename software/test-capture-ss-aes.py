@@ -1,17 +1,21 @@
-import chipwhisperer as cw
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/lib")
+
 import cwhardware
+import sharpwhisperer
+
+import chipwhisperer as cw
 import time
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import numpy as np
 
+#PLATFORM = "CW308_STM32F0"
+PLATFORM = "CW308_STM32F3"
+FIRMWARE = "simpleserial-aes"
+fw_path = sharpwhisperer.get_firmware(PLATFORM, FIRMWARE)
 
-PLATFORM = "CW308_STM32F0"
-#origin
-fw_path = 'simpleserial-base-CW308_STM32F0.hex'
-
-#yuqi_try
-#fw_path = 'simpleserial-aes-CW308_STM32F0.hex'
 
 n_samples = 24000
 

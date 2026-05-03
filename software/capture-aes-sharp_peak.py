@@ -1,33 +1,23 @@
-import chipwhisperer as cw
-import cwhardware
 import sys
+import os
+sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/lib")
+
+import cwhardware
+import sharpwhisperer
+from gnuradio_recorder import Recorder
+
+import chipwhisperer as cw
 import time
-import signal
-import socket
-import threading
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import numpy as np
+import tempfile
 
+#PLATFORM = "CW308_STM32F0"
+PLATFORM = "CW308_STM32F3"
+FIRMWARE = "simpleserial-aes"
+fw_path = sharpwhisperer.get_firmware(PLATFORM, FIRMWARE)
 
-PLATFORM = "CW308_STM32F0"
-#origin
-#fw_path = 'simpleserial-base-CW308_STM32F0.hex'
-
-#yuqi_try
-#fw_path = 'simpleserial-aes-CW308_STM32F0_dac2.hex'
-#fw_path = 'simpleserial-aes-CW308_STM32F0_sharppeak.hex'   #0.3 dac output
-#fw_path = 'simpleserial-aes-CW308_STM32F0_sharppeak_0.4.hex' #0.4  dac output
-fw_path = '/home/parallels/Desktop/chipwhisperer/firmware/mcu/simpleserial-aes/simpleserial-aes-CW308_STM32F0.hex'
-
-#fw_path = 'simpleserial-aes-CW308_STM32F0.hex'
-
-def send_trigger(cmd):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(("127.0.0.1", 9999))
-    s.sendall(cmd.encode())
-    s.close()
-    return
 
 #yuqi_try
 n_samples = 12000
@@ -76,34 +66,36 @@ key, text = ktp.next()
 
 #target.set_key(key)
 
-print("Capturing traces...")
+with Recorder() as r:
+    print("Capturing traces...")
 
+    tempdir = tempfile.gettempdir()
+    for i in tqdm(range(n_traces)):
+        tracefile = f"{tempdir}/traces_{i}.npy"
+        while True:
+            r.record_start(tracefile)
+            ret = hw.capture(text, key)
+            time.sleep(0.02)
+            r.record_stop()
 
-for i in tqdm(range(n_traces)):
-    while True:
-        send_trigger("1")
-        ret = hw.capture(text, key)
-        time.sleep(0.02)
-        send_trigger("0")
+            if ret is not None:
+                break
+        k = np.array(list(ret.key), dtype=np.uint8)
+        c = np.array(list(ret.textout), dtype=np.uint8)
+        p = np.array(list(ret.textin), dtype=np.uint8)
+        #t = np.array(list(ret.wave), dtype=np.float32)
 
-        if ret is not None:
-            break
-    k = np.array(list(ret.key), dtype=np.uint8)
-    c = np.array(list(ret.textout), dtype=np.uint8)
-    p = np.array(list(ret.textin), dtype=np.uint8)
-    #t = np.array(list(ret.wave), dtype=np.float32)
+        #t = np.array(ret.wave, dtype=np.float32)
+        #tc = hw.scope.adc.trig_count
+        #seg = t[int(tc/4): int(tc/4) + post_len]
 
-    #t = np.array(ret.wave, dtype=np.float32)
-    #tc = hw.scope.adc.trig_count
-    #seg = t[int(tc/4): int(tc/4) + post_len]
-
-    #traces[i] = t
-    #traces[i, :len(seg)] = seg
-    plaintexts[i] = p
-    ciphertexts[i] = c
-    keys[i] = k
-    
-    key, text = ktp.next() 
+        #traces[i] = t
+        #traces[i, :len(seg)] = seg
+        plaintexts[i] = p
+        ciphertexts[i] = c
+        keys[i] = k
+        
+        key, text = ktp.next() 
 
 
 #

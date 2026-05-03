@@ -282,8 +282,7 @@ blocks:
   id: epy_block
   parameters:
     _source_code: "from gnuradio import gr\nimport numpy as np\n\nimport os\nimport\
-      \ sys\n#print(f\"cwd: {os.getcwd()}\")\n#sys.path.append(\"/home/lindnera/data/SharpWhisperer/software/collect_sharppeak/recorder\"\
-      )\nsys.path.append(os.getcwd())\nimport importlib\n#import mygoodcode\n\nnon_exportdata_printed=False\n\
+      \ sys\nsys.path.append(os.getcwd())\nimport importlib\n\nnon_exportdata_printed=False\n\
       def non_exportdata(data):\n    global non_exportdata_printed\n    if not non_exportdata_printed:\n\
       \        print(f\"NO EXPORT MODULE SELECTED\")\n        non_exportdata_printed=True\n\
       \nclass PythonExportBlock(gr.sync_block):\n    def __init__(self, exportmodulename=None):\n\
@@ -295,9 +294,8 @@ blocks:
       \            (getattr(self.exportmodule, \"init\"))()\n            self.processdata_func\
       \ = getattr(self.exportmodule, \"exportdata\")\n\n    def work(self, input_items,\
       \ output_items):\n        data = input_items[0]        \n        #print(len(data))\n\
-      \        #mygoodcode.processdata(data)\n        self.processdata_func(data)\n\
-      \        #print(data[:10])  # do whatever you want\n        return len(data)\n\
-      \n"
+      \        self.processdata_func(data)\n        #print(data[:10])  # do whatever\
+      \ you want\n        return len(data)\n\n"
     affinity: ''
     alias: ''
     comment: ''

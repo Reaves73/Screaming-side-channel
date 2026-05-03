@@ -3,11 +3,8 @@ import numpy as np
 
 import os
 import sys
-#print(f"cwd: {os.getcwd()}")
-#sys.path.append("/home/lindnera/data/SharpWhisperer/software/collect_sharppeak/recorder")
 sys.path.append(os.getcwd())
 import importlib
-#import mygoodcode
 
 non_exportdata_printed=False
 def non_exportdata(data):
@@ -36,7 +33,6 @@ class PythonExportBlock(gr.sync_block):
     def work(self, input_items, output_items):
         data = input_items[0]        
         #print(len(data))
-        #mygoodcode.processdata(data)
         self.processdata_func(data)
         #print(data[:10])  # do whatever you want
         return len(data)

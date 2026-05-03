@@ -87,7 +87,7 @@ if __name__ == '__main__':
         for i in range(n_traces):
             print("Trace", i)
             
-            res = r.record_start(f"{traces_fname_prefix}{i}.bin")
+            r.record_start(f"{traces_fname_prefix}{i}.bin")
             time.sleep(0.5)
-            res = r.record_stop()
+            r.record_stop()
             #shutil.copy(sharppeak_trace_fname, trace_fname)

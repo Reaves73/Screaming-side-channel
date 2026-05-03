@@ -1,57 +1,24 @@
-import chipwhisperer as cw
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/lib")
+
 import cwhardware
+import sharpwhisperer
+
+import chipwhisperer as cw
 import time
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import numpy as np
 
-import os
-REPOPATH = os.path.realpath(os.path.dirname(os.path.realpath(__file__)) + "/../..")
 
-# 1 - relay on, sharppeak connected;  0 - relay off, sharppeak diconnected
-def set_relay(target, enabled):
-    if enabled:
-        target.simpleserial_write('u', bytearray([1]))
-        #print(f"Relay set to 1.")
-    else:
-        target.simpleserial_write('u', bytearray([0]))
-        #print(f"Relay set to 0.")
-    resp = target.simpleserial_read('g', 1)
-    assert resp[0] == 1
-    #return resp
 
-def set_dac(target, value):
-    assert 0 <= value <= 700
-    payload = bytearray([(value >> 8) & 0xFF, value & 0xFF])
-    target.simpleserial_write('d', payload)
-    print(f"DAC set to {value}.")
-    resp = target.simpleserial_read('g', 1)
-    assert resp[0] == 1
-    #return resp
-
-def get_adc(target):
-    payload = bytearray([])
-    target.simpleserial_write('e', payload)
-    print(f"ADC value requested.")
-    resp = target.simpleserial_read('g', 2)
-    #print(resp)
-    
-    return int.from_bytes(resp, byteorder='big')
-
-def do_random_stuff(target):
-    payload = bytearray([])
-    target.simpleserial_write('r', payload)
-    print(f"doing random stuff requested.")
-    resp = target.simpleserial_read('g', 1, timeout=10000) # timeout is in ms
-    assert resp[0] == 1
-
-def set_target_power(scope, on):
-    scope.io.target_pwr = on
 
 def main():
     hw = cwhardware.CWHardware()
     PLATFORM = "CW308_STM32F3"
-    fw_path = f'{REPOPATH}/firmware/simpleserial-aes/simpleserial-aes-{PLATFORM}.hex'
+    FIRMWARE = "simpleserial-aes"
+    fw_path = sharpwhisperer.get_firmware(PLATFORM, FIRMWARE)
 
     print("PLATFORM: ", PLATFORM)
     hw.connect(PLATFORM)
@@ -73,26 +40,33 @@ def main():
     print("Target clock freq:", hw.scope.clock.clkgen_freq)
     print("Sampling rate:", hw.scope.clock.adc_rate)
 
-    try:
-        print("\nintial relay state: off, dac value: 0\n")
-        set_relay(hw.target, False)
-        print("relay intialized!!!\n")
-        set_dac(hw.target, 0)
-        print("dac intialized!!!\n")
-    except:
-        print("could not initialize board")
-        value = input("try programming it?").strip()
-        if (value == "yes"):
-            set_target_power(hw.scope, False)
-            time.sleep(0.5)
-            set_target_power(hw.scope, True)
-            time.sleep(0.5)
-            print("- progromming hex to target chip")
-            print(f"- firmware: {fw_path}")
-            hw.program_target(fw_path)
-        else:
-            print("quitting")
-            return
+    init_trial = 0
+    while True:
+        try:
+            print("\nintial relay state: off, dac value: 0")
+            sharpwhisperer.set_relay(hw.target, False)
+            print("relay intialized!!!")
+            sharpwhisperer.set_dac(hw.target, 0)
+            print("dac intialized!!!")
+            break
+        except:
+            print("\ncould not initialize board")
+            init_trial += 1
+            if init_trial == 1:
+                print("trying to reset board")
+                sharpwhisperer.reset_target(hw.scope)
+            elif init_trial == 2:
+                value = input("try programming it?").strip()
+                if (value != "yes"):
+                    print("quitting.")
+                    return
+                sharpwhisperer.reset_target(hw.scope)
+                print("- progromming hex to target chip")
+                print(f"- firmware: {fw_path}")
+                hw.program_target(fw_path)
+            else:
+                print("nothing more to try, quitting.")
+                return
 
     def print_usage():
         print(
@@ -119,9 +93,9 @@ def main():
         if cmd == "power":
             value = input("turn on or off?").strip()
             if (value == "on"):
-              set_target_power(hw.scope, True)
+              sharpwhisperer.set_target_power(hw.scope, True)
             elif (value == "off"):
-              set_target_power(hw.scope, False)
+              sharpwhisperer.set_target_power(hw.scope, False)
             else:
               print("- you must write on or off")
             continue
@@ -132,7 +106,7 @@ def main():
                 print("- Relay value must be 0 or 1.")
                 continue
 
-            resp = set_relay(hw.target, value == "1")#give true or false to set_relay
+            resp = sharpwhisperer.set_relay(hw.target, value == "1")#give true or false to set_relay
             #print("Relay reply:", )
             continue
 
@@ -142,44 +116,44 @@ def main():
                 print("- bad value")
                 continue
 
-            resp = set_dac(hw.target, int(value))
+            resp = sharpwhisperer.set_dac(hw.target, int(value))
             #print("DAC reply:", resp[0])
             continue
 
         if cmd == "init1":
-            set_dac(hw.target, 0)
+            sharpwhisperer.set_dac(hw.target, 0)
             time.sleep(2)
             v = 700
             while v >= 400:
-                set_dac(hw.target, v)
+                sharpwhisperer.set_dac(hw.target, v)
                 time.sleep(0.5)
                 v -= 50
 
-            resp = get_adc(hw.target)
+            resp = sharpwhisperer.get_adc(hw.target)
             print("- ADC value:", resp)
             continue
 
         if cmd == "init2":
-            set_dac(hw.target, 0)
+            sharpwhisperer.set_dac(hw.target, 0)
             time.sleep(2)
             v = 700
             while v >= 350:
-                set_dac(hw.target, v)
+                sharpwhisperer.set_dac(hw.target, v)
                 time.sleep(0.5)
                 v -= 50
 
-            resp = get_adc(hw.target)
+            resp = sharpwhisperer.get_adc(hw.target)
             print("- ADC value:", resp)
             continue
 
         if cmd == "e":
-            resp = get_adc(hw.target)
+            resp = sharpwhisperer.get_adc(hw.target)
             print("- ADC reply:", resp)
             continue
 
         if cmd == "r":
             print("- doing random stuff")
-            do_random_stuff(hw.target)
+            sharpwhisperer.do_random_stuff(hw.target)
             continue
 
         if cmd == "p":
@@ -198,7 +172,7 @@ def main():
         print_usage()
 
     finally:
-      set_dac(hw.target, 0)
+      sharpwhisperer.set_dac(hw.target, 0)
       hw.disconnect()
 
 
