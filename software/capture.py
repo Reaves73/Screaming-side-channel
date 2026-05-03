@@ -16,7 +16,6 @@ import tempfile
 #PLATFORM = "CW308_STM32F0"
 PLATFORM = "CW308_STM32F3"
 FIRMWARE = "simpleserial-aes"
-fw_path = sharpwhisperer.get_firmware(PLATFORM, FIRMWARE)
 
 #CAPTURE_SOURCE = "CW"
 CAPTURE_SOURCE = "gnuradio"
@@ -30,7 +29,7 @@ n_traces = 5
 #n_traces = 5000
 
 print("PLATFORM: ", PLATFORM)
-print("fw_path: ", fw_path)
+print("FIRMWARE: ", FIRMWARE)
 
 #
 # SETUP
@@ -87,6 +86,7 @@ def capture_fun(cap_handle):
         while True:
             if CAPTURE_SOURCE == "gnuradio":
                 cap_handle.record_start(tracefile)
+            # TODO: with the additional time needed for dac_trigger, this runs into some hardcoded timeout, need to rework some of this to become usable again
             ret = hw.capture(text, key)
             if CAPTURE_SOURCE == "gnuradio":
                 time.sleep(0.02)
