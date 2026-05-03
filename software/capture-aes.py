@@ -53,8 +53,8 @@ time.sleep(0.1)
 print("Target clock freq:", hw.scope.clock.clkgen_freq)
 print("Sampling rate:", hw.scope.clock.adc_rate)
 
-#sharpwhisperer.init_target(hw)
-sharpwhisperer.program_target(PLATFORM, FIRMWARE, hw)
+sharpwhisperer.init_target(hw)
+#sharpwhisperer.program_target(PLATFORM, FIRMWARE, hw)
 
 
 #
@@ -76,6 +76,7 @@ key, text = ktp.next()
 #target.set_key(key)
 
 def capture_fun(cap_handle):
+    global key, text
     print("Capturing traces...")
 
     if CAPTURE_SOURCE == "gnuradio":
