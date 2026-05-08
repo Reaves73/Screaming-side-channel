@@ -2,6 +2,25 @@ import os
 REPOPATH = os.path.realpath(os.path.dirname(os.path.realpath(__file__)) + "/../..")
 
 import time
+import datetime
+
+# ---------------------------
+
+def get_experiments_dir():
+    experiments_dir_var = "SHARPWHISPERER_EXPERIMENTS"
+    if experiments_dir_var not in os.environ:
+        raise Exception(f"environment variable '{experiments_dir_var}' not defined")
+    v = os.environ[experiments_dir_var]
+    if not os.path.isdir(v):
+        raise Exception(f"environment variable '{experiments_dir_var}' does not refer to existing directory '{v}'")
+    return v
+
+def get_new_experiment_dir(experiment_name):
+    experiments_dir = get_experiments_dir()
+    dstr = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    path = f"{experiments_dir}/{dstr}_{experiment_name}"
+    os.mkdir(path)
+    return path
 
 # ---------------------------
 
