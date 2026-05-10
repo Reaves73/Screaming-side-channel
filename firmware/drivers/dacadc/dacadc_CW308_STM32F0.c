@@ -8,6 +8,14 @@
 #include "stm32f0xx_hal_uart.h"
 #include "stm32f0xx_hal_flash.h"
 
+void dac_set_gate(uint8_t on) {
+    if (on) {
+        DAC->CR |= DAC_CR_EN1;
+    } else {
+        DAC->CR &= ~DAC_CR_EN1;
+    }
+}
+
 void dac_gpio_init_first(void){
 	GPIO_InitTypeDef gpio;
     gpio.Pin  = GPIO_PIN_4;
@@ -34,7 +42,7 @@ void dac_init()
     RCC->APB1ENR |= RCC_APB1ENR_DACEN;
 	DAC->DHR12R1 = 0;
     // 4) Enable DAC channel 1
-    DAC->CR |= DAC_CR_EN1;
+    dac_set_gate(0);
     // 5) Set mid-scale output
 }
 
@@ -42,6 +50,40 @@ void dac_set(uint16_t value){
 	if (value > 956) // 0.7V safety
 	      value = 956;
         DAC->DHR12R1 = (value & (1024-1)); // 0,75V safety
+}
+
+#define DAC_TRIGGER_OFFSET 40
+#define DAC_TRIGGER_DELAYCOUNT 5000
+void dac_trigger() {
+/*
+    volatile uint32_t count;
+    uint16_t dac_value = (DAC->DHR12R1 & (1024-1));
+    if (dac_value < DAC_TRIGGER_OFFSET) {
+        while(1);
+    }
+    count = DAC_TRIGGER_DELAYCOUNT;
+    while(count--) {
+        __asm__("nop");
+    }
+
+    dac_set(dac_value+DAC_TRIGGER_OFFSET);
+    count = DAC_TRIGGER_DELAYCOUNT;
+    while(count--) {
+        __asm__("nop");
+    }
+
+    dac_set(dac_value-DAC_TRIGGER_OFFSET);
+    count = DAC_TRIGGER_DELAYCOUNT;
+    while(count--) {
+        __asm__("nop");
+    }
+
+    dac_set(dac_value);
+    count = DAC_TRIGGER_DELAYCOUNT;
+    while(count--) {
+        __asm__("nop");
+    }
+*/
 }
 
 //#define operating_voltage (3300)

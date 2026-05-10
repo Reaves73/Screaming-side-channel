@@ -9,7 +9,9 @@ import time
 
 def main():
     hw = cwhardware.CWHardware()
-    PLATFORM = "CW308_STM32F3"
+    PLATFORM = "CW308_STM32F0"
+    #PLATFORM = "CW308_STM32F3"
+    #PLATFORM = "CW308_STM32L4"
     FIRMWARE = "simpleserial-aes"
 
     print("PLATFORM: ", PLATFORM)
