@@ -13,6 +13,7 @@ mkdir -p ${ENV_DIR}
 git clone https://github.com/newaetech/chipwhisperer ${ENV_DIR}/chipwhisperer
 cd ${ENV_DIR}/chipwhisperer
 git checkout v6.0.0b
+git submodule update --init --recursive
 
 python3 -m venv ${ENV_DIR}/.cwvenv
 source ${ENV_DIR}/.cwvenv/bin/activate
