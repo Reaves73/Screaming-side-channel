@@ -93,7 +93,7 @@ uint8_t enc_multi_setnum(uint8_t* t, uint8_t len)
 
 void gate_set(uint8_t on) {
     //set led state
-    miscgpio_led_set(on);
+    miscgpio_led_set(0, on);
     // set dac gate state
     dac_set_gate(on);
 }
@@ -221,6 +221,9 @@ int main(void)
     
     // init miscgpio
     miscgpio_init();
+
+    // NOTE: uncomment and run this for testing that the DAC pins are well connected and also have no shorts to VDD or GND or similar
+    dac_soldertest(delay_cycles, miscgpio_led_set);
 
     // init dac and adc
     dacadc_init();
