@@ -39,7 +39,8 @@ def main():
     e      - get adc
     init   - run sharppeak init sequence
     r      - do some random stuff
-    p      - program hex
+    c      - compile
+    p      - compile and program
     power  - control target power
     q      - quit
         """)
@@ -99,6 +100,10 @@ def main():
             stuff_id = int(input("which random stuff? ").strip())
             print(f"- doing random stuff {stuff_id}")
             sharpwhisperer.do_random_stuff(hw.target, stuff_id)
+            continue
+
+        if cmd == "c":
+            sharpwhisperer.compile_firmware(PLATFORM, FIRMWARE)
             continue
 
         if cmd == "p":

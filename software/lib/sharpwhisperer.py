@@ -87,12 +87,16 @@ def init_target(hw):
     resp = get_adc(hw.target)
     print("- ADC reply:", resp)
 
+def compile_firmware(PLATFORM, FIRMWARE):
+    # run compilation
+    res = os.system(f"{REPOPATH}/firmware/compile.sh {PLATFORM}")
+    print(f"compilation result: {res}")
+    return res
+
 def program_target(PLATFORM, FIRMWARE, hw, compile=True):
     fw_path = get_firmware(PLATFORM, FIRMWARE)
     if compile:
-        # run compilation
-        res = os.system(f"{REPOPATH}/firmware/compile.sh")
-        print(f"compilation result: {res}")
+        res = compile_firmware(PLATFORM, FIRMWARE)
         assert res == 0
     reset_target(hw.scope)
     print("- progromming hex to target chip")

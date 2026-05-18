@@ -8,8 +8,12 @@ cd ${FIRMWARE_DIR}
 export MCUDIR=$(readlink -f "${FIRMWARE_DIR}/../env/chipwhisperer/firmware/mcu")
 export DRIVERSDIR=$(readlink -f "${FIRMWARE_DIR}/drivers")
 
+export PLATFORM=$1
+
 cd simpleserial-aes
-make PLATFORM=CW308_STM32F0 CRYPTO_TARGET=TINYAES128C clean all
+#make PLATFORM=CW308_STM32F0 CRYPTO_TARGET=TINYAES128C clean all
 #make PLATFORM=CW308_STM32F3 CRYPTO_TARGET=TINYAES128C clean all
 #make PLATFORM=CW308_STM32L4 CRYPTO_TARGET=TINYAES128C CC=${FIRMWARE_DIR}/../env/gcc13/arm-gnu-toolchain-13.3.rel1-x86_64-arm-none-eabi/bin/arm-none-eabi-gcc clean all
 #make PLATFORM=CW308_STM32L4 CRYPTO_TARGET=TINYAES128C clean all
+
+make CRYPTO_TARGET=TINYAES128C clean all
