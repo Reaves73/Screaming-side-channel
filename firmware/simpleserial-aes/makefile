@@ -50,7 +50,7 @@ endif
 
 ${info Building for platform ${PLATFORM} with CRYPTO_TARGET=$(CRYPTO_TARGET)}
 
-#Add simpleserial project to build
+# Add simpleserial project to build
 include $(MCUDIR)/simpleserial/Makefile.simpleserial
 
 include $(DRIVERSDIR)/dacadc/Makefile.dacadc

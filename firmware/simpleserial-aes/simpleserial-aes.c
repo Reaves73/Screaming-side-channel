@@ -130,7 +130,7 @@ uint8_t simpserial_get_adc(uint8_t* d, uint8_t len)
 };
 
 //some computation
-#include <stdio.h>
+//#include <stdio.h>
 uint8_t simpserial_do_random_stuff(uint8_t* d, uint8_t len)
 {
     uint8_t stuff_id = d[0];
@@ -141,7 +141,7 @@ uint8_t simpserial_do_random_stuff(uint8_t* d, uint8_t len)
     switch (stuff_id) {
         case 0:
             for (int i = 0; i < 10000; i++) {
-                sprintf(buffer, "hello random text %lu with %lu values %lu from memory", (uint32_t)(*(stp+0)), (uint32_t)(*(stp+10)), (uint32_t)(*(stp+30)));
+                //sprintf(buffer, "hello random text %lu with %lu values %lu from memory", (uint32_t)(*(stp+0)), (uint32_t)(*(stp+10)), (uint32_t)(*(stp+30)));
             }
             break;
         case 1:
