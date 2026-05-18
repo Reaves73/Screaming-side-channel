@@ -130,7 +130,9 @@ uint8_t simpserial_get_adc(uint8_t* d, uint8_t len)
 };
 
 //some computation
-//#include <stdio.h>
+#ifndef STM32L4
+#include <stdio.h>
+#endif
 uint8_t simpserial_do_random_stuff(uint8_t* d, uint8_t len)
 {
     uint8_t stuff_id = d[0];
@@ -141,7 +143,9 @@ uint8_t simpserial_do_random_stuff(uint8_t* d, uint8_t len)
     switch (stuff_id) {
         case 0:
             for (int i = 0; i < 10000; i++) {
-                //sprintf(buffer, "hello random text %lu with %lu values %lu from memory", (uint32_t)(*(stp+0)), (uint32_t)(*(stp+10)), (uint32_t)(*(stp+30)));
+#ifndef STM32L4
+                sprintf(buffer, "hello random text %lu with %lu values %lu from memory", (uint32_t)(*(stp+0)), (uint32_t)(*(stp+10)), (uint32_t)(*(stp+30)));
+#endif
             }
             break;
         case 1:
@@ -223,7 +227,7 @@ int main(void)
     miscgpio_init();
 
     // NOTE: uncomment and run this for testing that the DAC pins are well connected and also have no shorts to VDD or GND or similar
-    dac_soldertest(delay_cycles, miscgpio_led_set);
+    //dac_soldertest(delay_cycles, miscgpio_led_set);
 
     // init dac and adc
     dacadc_init();
