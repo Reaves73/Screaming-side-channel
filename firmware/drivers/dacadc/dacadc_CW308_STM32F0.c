@@ -1,12 +1,8 @@
 #include "stdint.h"
 #include "dacadc.h"
 
-/*#include "stm32f0_hal_lowlevel.h"*/
 #include "stm32f0xx_hal_rcc.h"
 #include "stm32f0xx_hal_gpio.h"
-/*#include "stm32f0xx_hal_dma.h"
-#include "stm32f0xx_hal_uart.h"
-#include "stm32f0xx_hal_flash.h"*/
 
 void dac_set_gate(uint8_t on) {
     if (on) {
@@ -16,28 +12,8 @@ void dac_set_gate(uint8_t on) {
     }
 }
 
-void dac_gpio_init_first(void){
-	GPIO_InitTypeDef gpio;
-    gpio.Pin  = GPIO_PIN_4;
-    gpio.Mode = GPIO_MODE_INPUT;
-    gpio.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOA, &gpio);
-}
-
-void dac_gpio_init(void){
-	GPIO_InitTypeDef gpio;
-    gpio.Pin  = GPIO_PIN_4;
-    gpio.Mode = GPIO_MODE_ANALOG;
-    gpio.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOA, &gpio);
-}
-
 void dac_init()
 {
-    // 1) Enable GPIOA clock
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    // 2) PA4 analog mode
-    dac_gpio_init();
     // 3) Enable DAC clock
     RCC->APB1ENR |= RCC_APB1ENR_DACEN;
 	DAC->DHR12R1 = 0;
@@ -53,9 +29,8 @@ void dac_set(uint16_t value){
 }
 
 #define DAC_TRIGGER_OFFSET 40
-#define DAC_TRIGGER_DELAYCOUNT 5000
+#define DAC_TRIGGER_DELAYCOUNT 6500
 void dac_trigger() {
-/*
     volatile uint32_t count;
     uint16_t dac_value = (DAC->DHR12R1 & (1024-1));
     if (dac_value < DAC_TRIGGER_OFFSET) {
@@ -83,12 +58,11 @@ void dac_trigger() {
     while(count--) {
         __asm__("nop");
     }
-*/
 }
 
 //#define operating_voltage (3300)
 #define operating_voltage (2960)
-#define operating_voltage_dac (operating_voltage-50)
+#define operating_voltage_dac operating_voltage
 void dac_set_mv(uint16_t value)
 {
     //dac_set(1383); // 1.0V (@VDD 2.96V)
@@ -180,6 +154,16 @@ uint16_t adc_get_mv()
 }
 
 void dacadc_init() {
+    // Enable GPIOA clock
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+
+    // PA4 analog mode
+	GPIO_InitTypeDef gpio;
+    gpio.Pin  = GPIO_PIN_4;
+    gpio.Mode = GPIO_MODE_ANALOG;
+    gpio.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOA, &gpio);
+
     dac_init();
     adc_init();
 }
