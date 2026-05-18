@@ -89,7 +89,7 @@ def main():
             continue
 
         if cmd == "init":
-            sharpwhisperer.init_sharppeak(hw.target)
+            sharpwhisperer.init_sharppeak(hw.target, PLATFORM)
             continue
 
         if cmd == "init1":

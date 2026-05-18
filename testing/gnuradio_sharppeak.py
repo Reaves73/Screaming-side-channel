@@ -11,7 +11,8 @@ import tempfile
 import numpy as np
 import matplotlib.pyplot as plt
 
-PLATFORM = "CW308_STM32F3"
+PLATFORM = "CW308_STM32F0"
+#PLATFORM = "CW308_STM32F3"
 FIRMWARE = "simpleserial-aes"
 
 if True:
@@ -29,7 +30,7 @@ if True:
     try:
         sharpwhisperer.set_dac(hw.target, 0)
         sharpwhisperer.set_gate(hw.target, True)
-        sharpwhisperer.init_sharppeak(hw.target)
+        sharpwhisperer.init_sharppeak(hw.target, PLATFORM)
         with Recorder() as r:
             print(f"samprate={r.get_samprate()}")
             r.record_start(tracefile)
