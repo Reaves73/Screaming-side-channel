@@ -11,8 +11,9 @@ import tempfile
 import numpy as np
 import matplotlib.pyplot as plt
 
-PLATFORM = "CW308_STM32F0"
+#PLATFORM = "CW308_STM32F0"
 #PLATFORM = "CW308_STM32F3"
+PLATFORM = "CW308_STM32L4"
 FIRMWARE = "simpleserial-aes"
 
 if True:
