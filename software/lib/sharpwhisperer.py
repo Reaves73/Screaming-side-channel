@@ -136,8 +136,10 @@ def init_sharppeak(target, PLATFORM, i = 0):
             set_dac(target, v)
             time.sleep(0.1)
             v -= 50
-        if PLATFORM == "CW308_STM32F0": # this works with VDDA before shunt resistor
-            set_dac(target, 305)
+        if PLATFORM == "CW308_STM32F0":
+            # 305 works with VDDA before shunt resistor
+            # 324 works with VDDA and VDDA behind shunt resistor
+            set_dac(target, 324)
         resp = get_adc(target)
         print("- ADC value:", resp)
         return True
