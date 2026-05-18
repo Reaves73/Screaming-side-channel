@@ -15,12 +15,11 @@ void dac_set_gate(uint8_t on) {
 
 void dac_init()
 {
-    // 3) Enable DAC clock
+    // Enable DAC clock
     RCC->APB1ENR |= RCC_APB1ENR_DAC1EN;
+
 	DAC->DHR12R1 = 0;
-    // 4) Enable DAC channel 1
     dac_set_gate(0);
-    // 5) Set mid-scale output
 }
 
 void dac_set(uint16_t value){
@@ -91,18 +90,15 @@ void adc_init()
 {
     // measure ouput voltage with ADC2_IN1 (also on PA4)
 
-    //RCC->CFGR2 |= (0b10000 << RCC_CFGR2_ADCPRE12_Pos); // Prescaler
-
     // Enable ADC clock
     __HAL_RCC_ADC12_CLK_ENABLE();
 
     ADC12_COMMON->CCR |= (0b01 << ADC12_CCR_CKMODE_Pos); // 0b01
 
     // Disable ADC if enabled
-    if (ADC2->CR & ADC_CR_ADEN) // BIT0
+    if (ADC2->CR & ADC_CR_ADEN)
     {
-        //printf("ADC turning off %x\n", rd32(ADC_CR));
-        ADC2->CR |= ADC_CR_ADDIS; // BIT1
+        ADC2->CR |= ADC_CR_ADDIS;
         while (ADC2->CR & ADC_CR_ADDIS);
     }
     //printf("ADC turned off\n");
@@ -136,10 +132,10 @@ void adc_init()
 uint16_t adc_get()
 {
     // Start conversion
-    ADC2->CR |= ADC_CR_ADSTART; // BIT2
+    ADC2->CR |= ADC_CR_ADSTART;
 
     // Wait for end of conversion
-    while (!(ADC2->ISR & ADC_ISR_EOC)); // BIT2
+    while (!(ADC2->ISR & ADC_ISR_EOC));
 
     // Read result
     return (uint16_t)(ADC2->DR);
