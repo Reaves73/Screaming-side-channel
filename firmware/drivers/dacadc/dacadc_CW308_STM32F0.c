@@ -227,6 +227,7 @@ void soldering_pintest_trial(uint8_t v) {
 	}
 	HAL_GPIO_Init(GPIOA, &gpio);
 }
+
 uint8_t soldering_pintest_read() {
     uint8_t v = 0;
     v |= ((HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_4) == GPIO_PIN_SET) & 0x1) << 0;

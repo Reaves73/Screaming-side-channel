@@ -171,3 +171,97 @@ void dacadc_init() {
     adc_init();
 }
 
+// -----------------------------------
+
+void soldering_pintest_init() {
+	GPIO_InitTypeDef gpio;
+
+	// DAC
+	__HAL_RCC_GPIOA_CLK_ENABLE();
+	// DAC channel 1
+	gpio.Pin  = GPIO_PIN_4;
+ 	gpio.Mode = GPIO_MODE_INPUT;
+	gpio.Pull = GPIO_PULLDOWN; //GPIO_NOPULL, GPIO_PULLUP, GPIO_PULLDOWN
+	HAL_GPIO_Init(GPIOA, &gpio);
+
+	// DAC channel 2
+	gpio.Pin  = GPIO_PIN_5;
+ 	gpio.Mode = GPIO_MODE_INPUT;
+	gpio.Pull = GPIO_PULLDOWN; //GPIO_NOPULL, GPIO_PULLUP, GPIO_PULLDOWN
+	HAL_GPIO_Init(GPIOA, &gpio);
+}
+
+uint8_t soldering_pintest_read() {
+    uint8_t v = 0;
+    v |= ((HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_4) == GPIO_PIN_SET) & 0x1) << 0;
+    v |= ((HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_5) == GPIO_PIN_SET) & 0x1) << 1;
+    return v;
+}
+
+void soldering_pintest_led_set(void (*_miscgpio_led_set)(uint8_t,uint8_t), uint8_t v) {
+    miscgpio_led_set(1, v & 0x1);
+    miscgpio_led_set(2, v & 0x2);
+}
+
+
+void soldering_pintest_trial(uint8_t v) {
+	GPIO_InitTypeDef gpio;
+	
+	// DAC channel 1
+	gpio.Pin  = GPIO_PIN_4;
+ 	gpio.Mode = GPIO_MODE_INPUT;
+	if (v) {
+		gpio.Pull = GPIO_PULLUP;
+	} else {
+		gpio.Pull = GPIO_PULLDOWN;
+	}
+	HAL_GPIO_Init(GPIOA, &gpio);
+	
+	// DAC channel 2
+	gpio.Pin  = GPIO_PIN_5;
+ 	gpio.Mode = GPIO_MODE_INPUT;
+	if (v) {
+		gpio.Pull = GPIO_PULLDOWN;
+	} else {
+		gpio.Pull = GPIO_PULLUP;
+	}
+	HAL_GPIO_Init(GPIOA, &gpio);
+}
+
+// this function is not defined in the chipwhisperer supplied stm32f0 hal
+// - took it from https://github.com/majbthrd/stm32ecm/blob/master/stm32f0xx_hal_gpio.c
+#define assert_param(expr) ((void)0U)
+GPIO_PinState HAL_GPIO_ReadPin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
+{
+  GPIO_PinState bitstatus;
+
+  /* Check the parameters */
+  assert_param(IS_GPIO_PIN(GPIO_Pin));
+
+  if ((GPIOx->IDR & GPIO_Pin) != (uint32_t)GPIO_PIN_RESET)
+  {
+    bitstatus = GPIO_PIN_SET;
+  }
+  else
+  {
+    bitstatus = GPIO_PIN_RESET;
+  }
+  return bitstatus;
+}
+
+void dac_soldertest(void (*_delay_cycles)(volatile uint32_t), void (*_miscgpio_led_set)(uint8_t,uint8_t)) {
+    soldering_pintest_init();
+	while(1) {
+		_miscgpio_led_set(0, 0);
+		soldering_pintest_trial(0);
+		_delay_cycles(1000000/2);
+        soldering_pintest_led_set(_miscgpio_led_set, soldering_pintest_read());
+		_delay_cycles(1000000/2);
+
+		_miscgpio_led_set(0, 1);
+		soldering_pintest_trial(1);
+		_delay_cycles(1000000/2);
+        soldering_pintest_led_set(_miscgpio_led_set, soldering_pintest_read());
+		_delay_cycles(1000000/2);
+	}
+}
