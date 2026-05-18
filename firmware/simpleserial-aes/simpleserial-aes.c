@@ -98,46 +98,12 @@ void gate_set(uint8_t on) {
     dac_set_gate(on);
 }
 
-
-// set gate (and led)
-uint8_t simpserial_set_gate(uint8_t* u, uint8_t len)
-{
-    gate_set(u[0]);
-    uint8_t flag = 1;
-    simpleserial_put('g', 1, &flag);
-    return 0x00;
-}
-
-//set dac value and set.
-uint8_t simpserial_set_dac(uint8_t* d, uint8_t len)
-{
-    //set dac value
-    dac_set_mv((uint16_t)(d[0] << 8 | d[1]));
-    uint8_t flag = 1;
-    simpleserial_put('g', 1, &flag);
-    return 0x00;
-};
-
-//get adc value.
-uint8_t simpserial_get_adc(uint8_t* d, uint8_t len)
-{
-    uint16_t v = adc_get_mv();
-    uint8_t data[2];
-    data[0] = (uint8_t)((v >> 8) & 0xff);
-    data[1] = (uint8_t)((v >> 0) & 0xff);
-    simpleserial_put('g', 2, data);
-    return 0x00;
-};
-
-//some computation
+// do some computation
 #ifndef STM32L4
 #include <stdio.h>
 #endif
-uint8_t simpserial_do_random_stuff(uint8_t* d, uint8_t len)
+uint8_t do_random_stuff(uint8_t stuff_id)
 {
-    uint8_t stuff_id = d[0];
-    uint8_t flag = 1;
-
     char buffer[500];
     uint32_t* stp = (uint32_t*)(((uint32_t)buffer) & (~0x255));
     switch (stuff_id) {
@@ -145,6 +111,8 @@ uint8_t simpserial_do_random_stuff(uint8_t* d, uint8_t len)
             for (int i = 0; i < 10000; i++) {
 #ifndef STM32L4
                 sprintf(buffer, "hello random text %lu with %lu values %lu from memory", (uint32_t)(*(stp+0)), (uint32_t)(*(stp+10)), (uint32_t)(*(stp+30)));
+#else
+                return 0;
 #endif
             }
             break;
@@ -160,14 +128,48 @@ uint8_t simpserial_do_random_stuff(uint8_t* d, uint8_t len)
             dac_trigger(); // 10ms +dv 10ms -dv 10ms 0dv 10ms
             break;
         default:
-            flag = 0;
-            break;
+            return 0;
     }
-
-    simpleserial_put('g', 1, &flag);
-    return 0x00;
+    return 1;
 };
 
+uint8_t simpserial_sharpwhisperer(uint8_t* d, uint8_t len)
+{
+    uint8_t result_flag = 1;
+    switch (d[0]) {
+        case 0:
+            gate_set(d[1]);
+            break;
+        case 1:
+            dac_set_mv((uint16_t)(d[1] << 8 | d[2]));
+            break;
+        case 2:
+            uint16_t v = adc_get_mv();
+            uint8_t data[2];
+            data[0] = (uint8_t)((v >> 8) & 0xff);
+            data[1] = (uint8_t)((v >> 0) & 0xff);
+            simpleserial_put('g', 2, data);
+            return 0x00;
+        case 3:
+            result_flag = do_random_stuff(d[1]);
+            break;
+        case 4:
+            result_flag = 0;
+#if   defined(STM32F0)
+            result_flag = 1;
+#elif defined(STM32F3)
+            result_flag = 2;
+#elif defined(STM32L4)
+            result_flag = 3;
+#endif
+            break;
+        default:
+            result_flag = 0;
+            break;
+    }
+    simpleserial_put('g', 1, &result_flag);
+    return 0x00;
+}
 
 #if SS_VER == SS_VER_2_1
 uint8_t aes(uint8_t cmd, uint8_t scmd, uint8_t len, uint8_t *buf)
@@ -258,10 +260,8 @@ int main(void)
     simpleserial_addcmd_flags('m', 18, get_mask, CMD_FLAG_LEN);
     simpleserial_addcmd('s', 2, enc_multi_setnum);
     simpleserial_addcmd('f', 16, enc_multi_getpt);
-    simpleserial_addcmd('u', 1, simpserial_set_gate);
-    simpleserial_addcmd('d', 2, simpserial_set_dac);
-    simpleserial_addcmd('e', 0, simpserial_get_adc);
-    simpleserial_addcmd('r', 1, simpserial_do_random_stuff);
+
+    simpleserial_addcmd('u', 3, simpserial_sharpwhisperer);
     #endif
     while(1)
         simpleserial_get();

@@ -22,7 +22,7 @@ def main():
     time.sleep(0.1)
 
     try:
-        sharpwhisperer.init_target(hw)
+        target_platform = sharpwhisperer.init_target(hw)
     except:
         print("\ncould not initialize target")
         value = input("try programming it?").strip()
@@ -30,6 +30,11 @@ def main():
             print("quitting.")
             return
         sharpwhisperer.program_target(PLATFORM, FIRMWARE, hw)
+        target_platform = PLATFORM
+    if target_platform != PLATFORM:
+        print(f"wrong target board connected: {target_platform}")
+        sys.exit(-1)
+    
 
     def print_usage():
         print(
