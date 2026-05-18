@@ -14,14 +14,11 @@ void dac_set_gate(uint8_t on) {
 
 void dac_init()
 {
-    // DAC1_OUT1 on PA4
-
-    // 3) Enable DAC clock
+    // Enable DAC clock
     __HAL_RCC_DAC1_CLK_ENABLE();
+
 	DAC->DHR12R1 = 0;
-    // 4) Enable DAC channel 1
     dac_set_gate(0);
-    // 5) Set mid-scale output
 }
 
 void dac_set(uint16_t value){
@@ -33,11 +30,38 @@ void dac_set(uint16_t value){
 #define DAC_TRIGGER_OFFSET 40
 #define DAC_TRIGGER_DELAYCOUNT 5000
 void dac_trigger() {
+    volatile uint32_t count;
+    uint16_t dac_value = (DAC->DHR12R1 & (1024-1));
+    if (dac_value < DAC_TRIGGER_OFFSET) {
+        while(1);
+    }
+    count = DAC_TRIGGER_DELAYCOUNT;
+    while(count--) {
+        __asm__("nop");
+    }
+
+    dac_set(dac_value+DAC_TRIGGER_OFFSET);
+    count = DAC_TRIGGER_DELAYCOUNT;
+    while(count--) {
+        __asm__("nop");
+    }
+
+    dac_set(dac_value-DAC_TRIGGER_OFFSET);
+    count = DAC_TRIGGER_DELAYCOUNT;
+    while(count--) {
+        __asm__("nop");
+    }
+
+    dac_set(dac_value);
+    count = DAC_TRIGGER_DELAYCOUNT;
+    while(count--) {
+        __asm__("nop");
+    }
 }
 
 //#define operating_voltage (3300)
 #define operating_voltage (2960)
-#define operating_voltage_dac (operating_voltage-50)
+#define operating_voltage_dac operating_voltage
 void dac_set_mv(uint16_t value)
 {
     //dac_set(1383); // 1.0V (@VDD 2.96V)
@@ -63,8 +87,6 @@ void adc_init()
 {
     // measure ouput voltage with ADC1_IN9 (also on PA4)
 
-    //RCC->CFGR2 |= (0b10000 << RCC_CFGR2_ADCPRE12_Pos); // Prescaler
-
     // Enable ADC clock
     __HAL_RCC_ADC_CLK_ENABLE();
     //RCC->CCIPR |= RCC_CCIPR_ADCSEL;
@@ -73,10 +95,9 @@ void adc_init()
     //ADC1_COMMON->CCR |= ADC_CCR_TSEN; // enable temperature sensor
 
     // Disable ADC if enabled
-    if (ADC1->CR & ADC_CR_ADEN) // BIT0
+    if (ADC1->CR & ADC_CR_ADEN)
     {
-        //printf("ADC turning off %x\n", rd32(ADC_CR));
-        ADC1->CR |= ADC_CR_ADDIS; // BIT1
+        ADC1->CR |= ADC_CR_ADDIS;
         while (ADC1->CR & ADC_CR_ADDIS);
     }
     //printf("ADC turned off\n");
@@ -117,10 +138,10 @@ void adc_init()
 uint16_t adc_get()
 {
     // Start conversion
-    ADC1->CR |= ADC_CR_ADSTART; // BIT2
+    ADC1->CR |= ADC_CR_ADSTART;
 
     // Wait for end of conversion
-    while (!(ADC1->ISR & ADC_ISR_EOC)); // BIT2
+    while (!(ADC1->ISR & ADC_ISR_EOC));
 
     // Read result
     return (uint16_t)(ADC1->DR);
