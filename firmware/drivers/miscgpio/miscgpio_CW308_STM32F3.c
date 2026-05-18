@@ -1,12 +1,8 @@
 #include "stdint.h"
 #include "miscgpio.h"
 
-/*#include "stm32f3_hal_lowlevel.h"*/
 #include "stm32f3xx_hal_rcc.h"
 #include "stm32f3xx_hal_gpio.h"
-/*#include "stm32f3xx_hal_dma.h"
-#include "stm32f3xx_hal_uart.h"
-#include "stm32f3xx_hal_flash.h"*/
 
 void miscgpio_init() {
 	GPIO_InitTypeDef gpio;

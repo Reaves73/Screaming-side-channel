@@ -22,6 +22,7 @@ void miscgpio_init() {
 	miscgpio_led_set(1, 0);
 	miscgpio_led_set(2, 0);
 }
+
 void miscgpio_led_set(uint8_t id, uint8_t on) {
 	GPIO_PinState ps;
 	if (on) {
