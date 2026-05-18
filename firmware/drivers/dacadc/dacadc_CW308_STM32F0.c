@@ -14,12 +14,11 @@ void dac_set_gate(uint8_t on) {
 
 void dac_init()
 {
-    // 3) Enable DAC clock
+    // Enable DAC clock
     RCC->APB1ENR |= RCC_APB1ENR_DACEN;
+
 	DAC->DHR12R1 = 0;
-    // 4) Enable DAC channel 1
     dac_set_gate(0);
-    // 5) Set mid-scale output
 }
 
 void dac_set(uint16_t value){
@@ -88,59 +87,46 @@ void adc_init()
 {
     // measure ouput voltage with ADC_IN4 (also on PA4)
 
-    // Enable GPIOA clock
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-
-    // PA4 analog mode
-    GPIO_InitTypeDef gpio;
-    gpio.Pin  = GPIO_PIN_4;
-    gpio.Mode = GPIO_MODE_ANALOG;
-    gpio.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOA, &gpio);
-
     // Enable ADC clock
-    RCC->APB2ENR |= RCC_APB2ENR_ADCEN; //BIT9
-    //or32(RCC_CR2, BIT0); // HSI14ON
-    //while ((rd32(RCC_CR2) & BIT1) == 0); // HSI14RDY
+    RCC->APB2ENR |= RCC_APB2ENR_ADCEN;
 
     // Disable ADC if enabled
-    if (ADC1->CR & ADC_CR_ADEN) // BIT0
+    if (ADC1->CR & ADC_CR_ADEN)
     {
-        //printf("ADC turning off %x\n", rd32(ADC_CR));
-        ADC1->CR |= ADC_CR_ADDIS; // BIT1
+        ADC1->CR |= ADC_CR_ADDIS;
         while (ADC1->CR & ADC_CR_ADDIS);
     }
     //printf("ADC turned off\n");
 
     // ADC clock = ADCCLK
-    ADC1->CFGR2 &= ~ADC_CFGR2_CKMODE; // (BIT31 | BIT30)
+    ADC1->CFGR2 &= ~ADC_CFGR2_CKMODE;
 
     // Select channel 4 (PA4)
-    ADC1->CHSELR = ADC_CHSELR_CHSEL4; // BIT4
+    ADC1->CHSELR = ADC_CHSELR_CHSEL4;
 
     // Long sampling time (239.5 cycles)
     ADC1->SMPR = (ADC_SMPR_SMP_0 | ADC_SMPR_SMP_1 | ADC_SMPR_SMP_2); // 0x7
 
     // Calibrate ADC (recommended)
-    ADC1->CR |= ADC_CR_ADCAL; // BIT31
+    ADC1->CR |= ADC_CR_ADCAL;
     
-    while (ADC1->CR & ADC_CR_ADCAL); // BIT31
+    while (ADC1->CR & ADC_CR_ADCAL);
     //printf("ADC calibrated\n");
 
     // Enable ADC
-    ADC1->CR |= ADC_CR_ADEN; // BIT0
+    ADC1->CR |= ADC_CR_ADEN;
 
-    while (!(ADC1->ISR & ADC_ISR_ADRDY)); // BIT0
+    while (!(ADC1->ISR & ADC_ISR_ADRDY));
     //printf("ADC enabled\n");
 }
 
 uint16_t adc_get()
 {
     // Start conversion
-    ADC1->CR |= ADC_CR_ADSTART; // BIT2
+    ADC1->CR |= ADC_CR_ADSTART;
 
     // Wait for end of conversion
-    while (!(ADC1->ISR & ADC_ISR_EOC)); // BIT2
+    while (!(ADC1->ISR & ADC_ISR_EOC));
 
     // Read result
     return (uint16_t)(ADC1->DR);
