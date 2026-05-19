@@ -11,9 +11,9 @@ import tempfile
 import numpy as np
 import matplotlib.pyplot as plt
 
-#PLATFORM = "CW308_STM32F0"
-#PLATFORM = "CW308_STM32F3"
-PLATFORM = "CW308_STM32L4"
+cfg = sharpwhisperer.get_experiment_setup_config()
+PLATFORM = sharpwhisperer.get_experiment_setup_config_PLATFORM(cfg)
+
 FIRMWARE = "simpleserial-aes"
 
 if True:

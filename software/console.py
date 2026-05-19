@@ -8,11 +8,11 @@ import sharpwhisperer
 import time
 
 def main():
-    hw = cwhardware.CWHardware()
-    #PLATFORM = "CW308_STM32F0"
-    #PLATFORM = "CW308_STM32F3"
-    PLATFORM = "CW308_STM32L4"
+    cfg = sharpwhisperer.get_experiment_setup_config()
+    PLATFORM = sharpwhisperer.get_experiment_setup_config_PLATFORM(cfg)
     FIRMWARE = "simpleserial-aes"
+
+    hw = cwhardware.CWHardware()
 
     print("PLATFORM: ", PLATFORM)
     hw.connect(PLATFORM)

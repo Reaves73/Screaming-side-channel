@@ -3,6 +3,8 @@ REPOPATH = os.path.realpath(os.path.dirname(os.path.realpath(__file__)) + "/../.
 
 import time
 import datetime
+import shutil
+import json
 
 # ---------------------------
 
@@ -15,11 +17,44 @@ def get_experiments_dir():
         raise Exception(f"environment variable '{experiments_dir_var}' does not refer to existing directory '{v}'")
     return v
 
+def get_experiment_setup_config_path():
+    return f"{get_experiments_dir()}/setup_config.json"
+
+def check_experiment_setup_config(cfg):
+    platforms = cfg["PLATFORMS"]
+    assert all(map(lambda p: "ID" in p, platforms))
+    assert all(map(lambda p: type(p["selected"]) == bool, platforms))
+    assert len(list(filter(lambda p: p["selected"] == True, platforms))) == 1
+
+    assert type(cfg["vdda_via_shunt"]) == bool
+    assert type(cfg["shunt_shorted"]) == bool
+
+    assert type(cfg["chipwhisperer_adc_to_target_power"]) == bool
+    assert type(cfg["chipwhisperer_adc_to_dac"]) == bool
+    assert type(cfg["sharppeak_on_dac_directly"]) == bool
+
+    assert cfg["chipwhisperer_adc_to_target_power"] ^ cfg["chipwhisperer_adc_to_dac"]
+    assert cfg["chipwhisperer_adc_to_dac"] ^ cfg["sharppeak_on_dac_directly"]
+
+    assert type(cfg["notes"]) == str
+
+def get_experiment_setup_config_PLATFORM(cfg):
+    platforms = cfg["PLATFORMS"]
+    return ((list(filter(lambda p: p["selected"] == True, platforms)))[0])["ID"]
+
+def get_experiment_setup_config():
+    configpath = get_experiment_setup_config_path()
+    with open(configpath, 'r') as f:
+        cfg = json.load(f)
+    check_experiment_setup_config(cfg)
+    return cfg
+
 def get_new_experiment_dir(experiment_name):
     experiments_dir = get_experiments_dir()
     dstr = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     path = f"{experiments_dir}/{dstr}_{experiment_name}"
     os.mkdir(path)
+    shutil.copyfile(get_experiment_setup_config_path(), "setup_config.json")
     return path
 
 # ---------------------------
