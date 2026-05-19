@@ -5,6 +5,7 @@ import time
 import datetime
 import shutil
 import json
+import subprocess
 
 # ---------------------------
 
@@ -17,10 +18,12 @@ def get_experiments_dir():
         raise Exception(f"environment variable '{experiments_dir_var}' does not refer to existing directory '{v}'")
     return v
 
-def get_experiment_setup_config_path():
-    return f"{get_experiments_dir()}/setup_config.json"
+def get_experiment_setup_config_path(config_dir=None):
+    if config_dir is None:
+        config_dir = get_experiments_dir()
+    return f"{config_dir}/setup_config.json"
 
-def check_experiment_setup_config(cfg):
+def validate_experiment_setup_config(cfg):
     platforms = cfg["PLATFORMS"]
     assert all(map(lambda p: "ID" in p, platforms))
     assert all(map(lambda p: type(p["selected"]) == bool, platforms))
@@ -42,20 +45,46 @@ def get_experiment_setup_config_PLATFORM(cfg):
     platforms = cfg["PLATFORMS"]
     return ((list(filter(lambda p: p["selected"] == True, platforms)))[0])["ID"]
 
-def get_experiment_setup_config():
-    configpath = get_experiment_setup_config_path()
+def get_experiment_setup_config(experiment_dir=None):
+    configpath = get_experiment_setup_config_path(experiment_dir)
     with open(configpath, 'r') as f:
         cfg = json.load(f)
-    check_experiment_setup_config(cfg)
+    validate_experiment_setup_config(cfg)
     return cfg
 
 def get_new_experiment_dir(experiment_name):
     experiments_dir = get_experiments_dir()
     dstr = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     path = f"{experiments_dir}/{dstr}_{experiment_name}"
+    get_experiment_setup_config() # to validate the setup config
     os.mkdir(path)
-    shutil.copyfile(get_experiment_setup_config_path(), "setup_config.json")
+    os.mkdir(f"{path}/meta")
+    shutil.copyfile(get_experiment_setup_config_path(), get_experiment_setup_config_path(f"{path}/meta"))
     return path
+
+# ---------------------------
+
+def write_file(filename, d, binary=False):
+    import os
+    if os.path.exists(filename):
+        raise Exception(f"file already exists: {filename}")
+    with open(filename, "wb" if binary else "w", encoding=None if binary else "utf-8") as file:
+        file.write(d)
+
+def write_git_diff_files(dirpath):
+    prev_cwd = os.getcwd()
+    os.chdir(REPOPATH)
+    #print(os.getcwd())
+    hash = subprocess.check_output(["git", "rev-parse", "HEAD"])
+    commit = subprocess.check_output(["git", "log", "-1"])
+    diff = subprocess.check_output(["git", "diff"])
+    diff_staged = subprocess.check_output(["git", "diff", "--staged"])
+    os.chdir(prev_cwd)
+    #print(os.getcwd())
+    write_file(f"{dirpath}/githash.txt", hash, binary=True)
+    write_file(f"{dirpath}/gitcommit.txt", commit, binary=True)
+    write_file(f"{dirpath}/gitdiff.txt", diff, binary=True)
+    write_file(f"{dirpath}/gitdiff_staged.txt", diff_staged, binary=True)
 
 # ---------------------------
 

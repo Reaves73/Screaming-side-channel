@@ -8,6 +8,11 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import numpy as np
 import tempfile
+import json
+
+def save_capture_config(config_dict, path):
+    with open(path, 'w') as config_file:
+        json.dump(config_dict, config_file, indent=2)
 
 def capture(config_dict):
     experiment_name = config_dict["experiment_name"]
@@ -15,7 +20,12 @@ def capture(config_dict):
     print(f"CAPTURING: experiment '{experiment_name}' in '{experiment_dir}'")
     #raise Exception()
 
-    PLATFORM = config_dict["PLATFORM"]
+    save_capture_config(config_dict, f"{experiment_dir}/meta/capture_config.json")
+    # save repository commit and diff
+    sharpwhisperer.write_git_diff_files(f"{experiment_dir}/meta")
+
+    cfg = sharpwhisperer.get_experiment_setup_config(f"{experiment_dir}/meta")
+    PLATFORM = sharpwhisperer.get_experiment_setup_config_PLATFORM(cfg)
     # firmware is fixed right now in this function
     FIRMWARE = "simpleserial-aes" #config_dict["FIRMWARE"]
     print("PLATFORM: ", PLATFORM)
@@ -57,7 +67,7 @@ def capture(config_dict):
     #sharpwhisperer.program_target(PLATFORM, FIRMWARE, hw)
     sharpwhisperer.set_dac(hw.target, 0)
     #sharpwhisperer.set_gate(hw.target, True)
-    sharpwhisperer.init_sharppeak(hw.target)
+    sharpwhisperer.init_sharppeak(hw.target, PLATFORM)
 
 
     #

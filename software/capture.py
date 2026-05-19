@@ -7,11 +7,8 @@ import sharpcapturer
 import matplotlib.pyplot as plt
 import numpy as np
 
-config_dict = {} 
+config_dict = {}
 config_dict["experiment_name"] = "testexp"
-
-#config_dict["PLATFORM"] = "CW308_STM32F0"
-config_dict["PLATFORM"] = "CW308_STM32F3"
 
 config_dict["n_traces"] = 5
 #config_dict["n_traces"] = 50
