@@ -14,6 +14,13 @@ def save_capture_config(config_dict, path):
     with open(path, 'w') as config_file:
         json.dump(config_dict, config_file, indent=2)
 
+def tracelist_to_nparray(traces_l):
+    #print(trace_l[0].size)
+    #print(trace_l[1].size)
+    min_len = min(len(t) for t in traces_l)
+    traces_l_trimmed = [t[:min_len] for t in traces_l]
+    return np.stack(traces_l_trimmed)
+
 def capture(config_dict):
     experiment_name = config_dict["experiment_name"]
     experiment_dir = sharpwhisperer.get_new_experiment_dir(experiment_name)
@@ -66,7 +73,7 @@ def capture(config_dict):
     sharpwhisperer.init_target(hw)
     #sharpwhisperer.program_target(PLATFORM, FIRMWARE, hw)
     sharpwhisperer.set_dac(hw.target, 0)
-    #sharpwhisperer.set_gate(hw.target, True)
+    sharpwhisperer.set_gate(hw.target, True)
     sharpwhisperer.init_sharppeak(hw.target, PLATFORM)
 
 
@@ -79,6 +86,7 @@ def capture(config_dict):
     traces = None
     if include_trace_chipwhisperer:
         traces_chipwhisperer = np.zeros([n_traces, chipwhisperer_n_samples], dtype=np.float32)
+    traces_gnuradio_l = []
 
     plaintexts = np.zeros([n_traces, 16], dtype=np.uint8)
     ciphertexts = np.zeros([n_traces, 16], dtype=np.uint8)
@@ -97,6 +105,7 @@ def capture(config_dict):
                 if cap_handle is not None:
                     tracefile = f"{tempfile.gettempdir()}/traces_gnuradio.npy"
                     cap_handle.record_start(tracefile)
+                    traces_gnuradio_l.append(np.load(tracefile))
                 ret = hw.capture(text, key)
                 if cap_handle is not None:
                     time.sleep(0.02)
@@ -139,8 +148,7 @@ def capture(config_dict):
     if include_trace_chipwhisperer:
         np.save(f"{experiment_dir}/traces_chipwhisperer.npy", traces)
     if include_trace_gnuradio:
-        #TODO
-        pass
+        np.save(f"{experiment_dir}/traces_gnuradio.npy", tracelist_to_nparray(traces_gnuradio_l))
     np.save(f"{experiment_dir}/keys.npy", keys)
     np.save(f"{experiment_dir}/plaintexts.npy", plaintexts)
     np.save(f"{experiment_dir}/ciphertexts.npy", ciphertexts)
