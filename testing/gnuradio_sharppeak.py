@@ -39,7 +39,11 @@ if True:
             r.record_start(tracefile)
             time.sleep(0.01)
             sharpwhisperer.do_random_stuff(hw.target, 3)
-            r.record_stop()
+            try:
+                r.record_stop()
+            finally:
+                if os.path.exists(tracefile):
+                    os.remove(tracefile)
     finally:
         sharpwhisperer.set_dac(hw.target, 0)
         sharpwhisperer.set_gate(hw.target, False)
