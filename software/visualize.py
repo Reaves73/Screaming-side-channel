@@ -1,8 +1,10 @@
+#!/usr/bin/env python3
+
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
 from pathlib import Path
-
+import argparse
 
 def stream_downsample_average(filepath: str, fs: float, duration_s: float, factor: int):
     path = Path(filepath)
@@ -45,7 +47,6 @@ def stream_downsample_average(filepath: str, fs: float, duration_s: float, facto
 
     return y, fs_down
 
-
 def plot_time(samples, fs, title="Time Domain"):
     t = np.arange(len(samples)) / fs
     plt.figure(figsize=(10, 4))
@@ -56,7 +57,6 @@ def plot_time(samples, fs, title="Time Domain"):
     plt.grid(True)
     plt.tight_layout()
     plt.show()
-
 
 def plot_spectrum(samples, fs, title="Spectrum"):
     n = min(len(samples), 65536)
@@ -79,24 +79,30 @@ def plot_spectrum(samples, fs, title="Spectrum"):
     plt.tight_layout()
     plt.show()
 
-
 def main():
-    if len(sys.argv) < 5:
-        print("invaild parameter")
-        sys.exit(1)
+    # parse arguments
+    # ---------------------------
+    parser = argparse.ArgumentParser()
+    parser.add_argument("filepath")
 
-    filepath = sys.argv[1]
-    fs = float(sys.argv[2])
-    duration_s = float(sys.argv[3])
-    factor = int(sys.argv[4])
+    parser.add_argument("fs", help="", type=float)
+    parser.add_argument("duration", help="duration in seconds", type=float)
+    parser.add_argument("factor", help="", type=int)
 
-    y, fs_down = stream_downsample_average(filepath, fs, duration_s, factor)
+    args = parser.parse_args()
+
+    # process
+    # ---------------------------
+    y, fs_down = stream_downsample_average(args.filepath, args.fs, args.duration, args.factor)
 
     # 去直流
     y = y - np.mean(y)
 
-    plot_time(y, fs_down, title=f"Downsampled Time Domain (factor={factor})")
-    plot_spectrum(y, fs_down, title=f"Downsampled Spectrum (factor={factor})")
+
+    # plot
+    # ---------------------------
+    plot_time(y, fs_down, title=f"Downsampled Time Domain (factor={args.factor})")
+    plot_spectrum(y, fs_down, title=f"Downsampled Spectrum (factor={args.factor})")
 
 
 if __name__ == "__main__":
