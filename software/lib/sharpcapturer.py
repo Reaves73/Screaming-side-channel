@@ -105,11 +105,11 @@ def capture(config_dict):
                 if cap_handle is not None:
                     tracefile = f"{tempfile.gettempdir()}/traces_gnuradio.npy"
                     cap_handle.record_start(tracefile)
-                    traces_gnuradio_l.append(np.load(tracefile))
                 ret = hw.capture(text, key)
                 if cap_handle is not None:
                     time.sleep(0.02)
                     cap_handle.record_stop()
+                    traces_gnuradio_l.append(np.load(tracefile))
 
                 if ret is not None:
                     break

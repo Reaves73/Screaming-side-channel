@@ -15,10 +15,10 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("experiment_name", help="short, concise name for the given experiment (will be part of experiment directory name)")
 
-parser.add_argument("-n", "--n_traces", help="number of traces", type=int, default=1000)
+parser.add_argument("-n", "--n_traces", help="number of traces (default: 1000)", type=int, default=1000)
 
-parser.add_argument("--cw_n_samples", help="chipwhisperer samples", type=int, default=12000)
-parser.add_argument("--cw_n_decimate", help="chipwhisperer decimate", type=int, default=1)
+parser.add_argument("--cw_n_samples", help="chipwhisperer samples (default: 12000)", type=int, default=12000)
+parser.add_argument("--cw_n_decimate", help="chipwhisperer decimate (default: 1)", type=int, default=1)
 
 args = parser.parse_args()
 
