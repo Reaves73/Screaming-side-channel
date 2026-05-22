@@ -9,6 +9,7 @@ import sharpwhisperer
 from gnuradio_recorder import Recorder
 
 import time
+import datetime
 import tempfile
 import numpy as np
 import matplotlib.pyplot as plt
@@ -18,40 +19,37 @@ PLATFORM = sharpwhisperer.get_experiment_setup_config_PLATFORM(cfg)
 
 FIRMWARE = "simpleserial-aes"
 
-if True:
-    hw = cwhardware.CWHardware()
-    hw.connect(PLATFORM)
+hw = cwhardware.CWHardware()
+hw.connect(PLATFORM)
 
-    # Confiture scope
-    hw.scope.default_setup();
-    time.sleep(0.1)
+# Confiture scope
+hw.scope.default_setup();
+time.sleep(0.1)
 
-    tempdir = tempfile.gettempdir()
-    tracefile = f"{tempdir}/traces_testing.npy"
+dstr = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+tracefile = f"{tempfile.gettempdir()}/traces_testing_{dstr}.npy"
 
-    sharpwhisperer.init_target(hw)
-    try:
-        sharpwhisperer.set_dac(hw.target, 0)
-        sharpwhisperer.set_gate(hw.target, True)
-        sharpwhisperer.init_sharppeak(hw.target, PLATFORM)
-        with Recorder() as r:
-            print(f"samprate={r.get_samprate()}")
-            r.record_start(tracefile)
-            time.sleep(0.01)
-            sharpwhisperer.do_random_stuff(hw.target, 3)
-            try:
-                r.record_stop()
-            finally:
-                if os.path.exists(tracefile):
-                    os.remove(tracefile)
-    finally:
-        sharpwhisperer.set_dac(hw.target, 0)
-        sharpwhisperer.set_gate(hw.target, False)
-        hw.disconnect()
-else:
-    tracefile = "/tmp/traces_testing.npy"
+sharpwhisperer.init_target(hw)
+trace = None
+try:
+    sharpwhisperer.set_dac(hw.target, 0)
+    sharpwhisperer.set_gate(hw.target, True)
+    sharpwhisperer.init_sharppeak(hw.target, PLATFORM)
+    with Recorder() as r:
+        print(f"samprate={r.get_samprate()}")
+        r.record_start(tracefile)
+        time.sleep(0.01)
+        sharpwhisperer.do_random_stuff(hw.target, 3)
+        r.record_stop()
+        trace = np.load(tracefile)
+finally:
+    sharpwhisperer.set_dac(hw.target, 0)
+    sharpwhisperer.set_gate(hw.target, False)
+    hw.disconnect()
+    if os.path.exists(tracefile):
+        os.remove(tracefile)
 
-# now open tracefile and visualize
+# now visualize the trace
 if False:
     samples = np.fromfile(tracefile, dtype=np.float32)
     #print(samples[:30])
@@ -72,4 +70,10 @@ if False:
     plt.tight_layout()
     plt.show()
 else:
-    os.system(" ".join(["python3", os.path.dirname(os.path.realpath(__file__)) + "/../software/visualize.py", tracefile, "20"]))
+    try:
+        print(trace.shape)
+        np.save(tracefile, np.stack([trace]))
+        os.system(" ".join(["python3", os.path.dirname(os.path.realpath(__file__)) + "/../software/visualize.py", tracefile, "20"]))
+    finally:
+        if os.path.exists(tracefile):
+            os.remove(tracefile)
