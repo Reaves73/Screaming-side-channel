@@ -68,4 +68,4 @@ if False:
     plt.tight_layout()
     plt.show()
 else:
-    os.system(" ".join(["python3", os.path.dirname(os.path.realpath(__file__)) + "/../software/visualize.py", tracefile, "5000000", "0.2", "20"]))
+    os.system(" ".join(["python3", os.path.dirname(os.path.realpath(__file__)) + "/../software/visualize.py", tracefile, "20"]))
