@@ -101,12 +101,12 @@ def capture(config_dict):
     #target.set_key(key)
 
     def capture_fun(state, cap_handle=None):
-        key, text = state
         print("Capturing traces...")
 
         dstr = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         tracefile = f"{tempfile.gettempdir()}/traces_gnuradio_{dstr}.npy"
         for i in tqdm(range(n_traces)):
+            key, text = state
             while True:
                 if cap_handle is not None:
                     cap_handle.record_start(tracefile)
