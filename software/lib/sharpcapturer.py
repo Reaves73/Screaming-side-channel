@@ -4,11 +4,13 @@ from gnuradio_recorder import Recorder
 
 import chipwhisperer as cw
 import time
+import datetime
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import numpy as np
 import tempfile
 import json
+import os
 
 def save_capture_config(config_dict, path):
     with open(path, 'w') as config_file:
@@ -104,16 +106,21 @@ def capture(config_dict):
         key, text = state
         print("Capturing traces...")
 
+        dstr = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        tracefile = f"{tempfile.gettempdir()}/traces_gnuradio_{dstr}.npy"
         for i in tqdm(range(n_traces)):
             while True:
                 if cap_handle is not None:
-                    tracefile = f"{tempfile.gettempdir()}/traces_gnuradio.npy"
                     cap_handle.record_start(tracefile)
                 ret = hw.capture(text, key)
                 if cap_handle is not None:
                     time.sleep(0.02)
-                    cap_handle.record_stop()
-                    traces_gnuradio_l.append(np.load(tracefile))
+                    try:
+                        cap_handle.record_stop()
+                        traces_gnuradio_l.append(np.load(tracefile))
+                    finally:
+                        if os.path.exists(tracefile):
+                            os.remove(tracefile)
 
                 if ret is not None:
                     break
