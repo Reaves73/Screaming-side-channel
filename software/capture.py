@@ -20,6 +20,8 @@ parser.add_argument("-n", "--n_traces", help="number of traces (default: 1000)",
 parser.add_argument("--cw_n_samples", help="chipwhisperer samples (default: 12000)", type=int, default=12000)
 parser.add_argument("--cw_n_decimate", help="chipwhisperer decimate (default: 1)", type=int, default=1)
 
+parser.add_argument("--exclude_gnuradio", help="disable gnuradio trace collection", action="store_true", default=False)
+
 args = parser.parse_args()
 
 
@@ -34,7 +36,7 @@ config_dict["n_traces"] = args.n_traces
 #config_dict["n_traces"] = 5000
 
 config_dict["include_trace_chipwhisperer"] = True
-config_dict["include_trace_gnuradio"] = True
+config_dict["include_trace_gnuradio"] = not args.exclude_gnuradio
 
 config_dict["chipwhisperer_n_samples"] = args.cw_n_samples
 #config_dict["chipwhisperer_n_samples"] = 12000
