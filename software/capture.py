@@ -46,6 +46,8 @@ config_dict["chipwhisperer_n_decimate"] = args.cw_n_decimate
 #config_dict["chipwhisperer_n_decimate"] = 1
 #config_dict["chipwhisperer_n_decimate"] = 4
 
+config_dict["gnuradio_samplerate"] = 5e6 # cannot be changed currently
+
 
 # run the capturing function
 # ---------------------------

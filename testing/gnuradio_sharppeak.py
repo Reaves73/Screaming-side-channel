@@ -71,7 +71,6 @@ if False:
     plt.show()
 else:
     try:
-        print(trace.shape)
         np.save(tracefile, np.stack([trace]))
         os.system(" ".join(["python3", os.path.dirname(os.path.realpath(__file__)) + "/../software/visualize.py", tracefile, "20"]))
     finally:

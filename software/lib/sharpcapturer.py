@@ -47,7 +47,6 @@ def capture(config_dict):
     
     if include_trace_chipwhisperer:
         chipwhisperer_n_samples = config_dict["chipwhisperer_n_samples"]
-        chipwhisperer_n_decimate = config_dict["chipwhisperer_n_decimate"]
 
     #
     # SETUP
@@ -60,7 +59,7 @@ def capture(config_dict):
     hw.scope.default_setup();
     if include_trace_chipwhisperer:
         hw.scope.adc.samples = chipwhisperer_n_samples
-        hw.scope.adc.decimate = chipwhisperer_n_decimate
+        hw.scope.adc.decimate = config_dict["chipwhisperer_n_decimate"]
         hw.scope.clock.adc_src = "clkgen_x1"
     time.sleep(0.1)
 
@@ -148,7 +147,9 @@ def capture(config_dict):
             capture_fun(state)
         else:
             with Recorder() as r:
-                print(f"samprate={r.get_samprate()}")
+                samplerate = r.get_samprate()
+                print(f"gnuradio_samplerate={samplerate}")
+                assert config_dict["gnuradio_samplerate"] == samplerate
                 capture_fun(state, r)
     finally:
         sharpwhisperer.set_dac(hw.target, 0)
