@@ -84,9 +84,12 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("filepath")
 
+    parser.add_argument("factor", help="decimation factor", type=int)
+    
     parser.add_argument("--fs", help="sampling frequency", type=float, default=None)
     parser.add_argument("--duration", help="duration in seconds", type=float, default=None)
-    parser.add_argument("factor", help="decimation factor", type=int)
+
+    parser.add_argument("--averaged_traces", help="how many traces to take and average", type=int)
 
     args = parser.parse_args()
 
@@ -100,12 +103,17 @@ def main():
     if file_size == 0:
         raise ValueError("empty file")
 
-    trace = np.load(args.filepath) # might be many traces actually
+    traces = np.load(args.filepath) # might be many traces actually
     #print(trace.shape)
-    if len(trace.shape) > 1:
-        trace = trace[0,:]
-    assert len(trace.shape) == 1
+    # TODO: fix the case that our file only contains one trace
+    #if len(trace.shape) > 1:
+    #    trace = trace[0,:]
+    #assert len(trace.shape) == 1
     #print(trace.shape)
+
+    # TODO: fix the case that we have not as many traces as we want to average
+    traces = traces[:args.averaged_traces,:]
+    trace = traces.mean(axis=0)
 
     # currently can't take fs and duration
     assert args.fs is None and args.duration is None
