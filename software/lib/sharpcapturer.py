@@ -88,7 +88,6 @@ def capture(config_dict):
 
     ktp = cw.ktp.Basic()
 
-    traces = None
     if include_trace_chipwhisperer:
         traces_chipwhisperer = np.zeros([n_traces, chipwhisperer_n_samples], dtype=np.float32)
     traces_gnuradio_l = []
@@ -158,7 +157,7 @@ def capture(config_dict):
         hw.disconnect()
 
     if include_trace_chipwhisperer:
-        np.save(f"{experiment_dir}/traces_chipwhisperer.npy", traces)
+        np.save(f"{experiment_dir}/traces_chipwhisperer.npy", traces_chipwhisperer)
     if include_trace_gnuradio:
         np.save(f"{experiment_dir}/traces_gnuradio.npy", tracelist_to_nparray(traces_gnuradio_l))
     np.save(f"{experiment_dir}/keys.npy", keys)
