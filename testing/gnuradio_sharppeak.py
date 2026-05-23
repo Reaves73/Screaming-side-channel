@@ -72,7 +72,7 @@ if False:
 else:
     try:
         np.save(tracefile, np.stack([trace]))
-        os.system(" ".join(["python3", os.path.dirname(os.path.realpath(__file__)) + "/../software/visualize.py", tracefile, "20"]))
+        os.system(" ".join(["python3", os.path.dirname(os.path.realpath(__file__)) + "/../software/visualize.py", tracefile, "--factor", "20"]))
     finally:
         if os.path.exists(tracefile):
             os.remove(tracefile)

@@ -16,7 +16,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("filepath")
 
-    parser.add_argument("factor", help="decimation factor", type=int)
+    parser.add_argument("--factor", help="decimation factor", type=int, default=1)
     
     parser.add_argument("--fs", help="sampling frequency", type=float, default=None)
     parser.add_argument("--duration", help="duration in seconds", type=float, default=None)
@@ -51,8 +51,11 @@ def main():
     assert args.fs is None and args.duration is None
     fs = 500000
 
-    y, fs_down = sharpvisualizer.stream_downsample_average(trace, args.fs, args.duration, args.factor)
-    fs_down = fs/args.factor
+    if args.factor != 1:
+        y, fs_down = sharpvisualizer.stream_downsample_average(trace, args.fs, args.duration, args.factor)
+        fs_down = fs/args.factor
+    else:
+        y, fs_down = trace, args.fs
 
     # 去直流
     #y = y - np.mean(y)
