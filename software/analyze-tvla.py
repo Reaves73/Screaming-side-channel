@@ -4,12 +4,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from numpy.matlib import repmat
 import sys
+import os
 import scipy.stats as st
-import aes
+from pathlib import Path
+import argparse
 
-plaintexts_fname = "data/plaintexts.npy"
-keys_fname = "data/keys.npy"
-traces_fname = "data/traces.npy"
+sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/lib")
+import aes
 
 
 def hamming_weight(n):
@@ -74,6 +75,27 @@ def tvla(values, traces, f, pred_1, pred_2):
 #
 # READ INPUTS
 #
+
+parser = argparse.ArgumentParser()
+parser.add_argument("filepath")
+
+args = parser.parse_args()
+
+path = Path(args.filepath)
+if not path.exists():
+    raise FileNotFoundError(f"path not exist: {args.filepath}")
+if not path.is_dir():
+    raise NotADirectoryError(f"path is not a directory: {args.filepath}")
+
+traces_fname = path / "traces_chipwhisperer.npy"
+plaintexts_fname = path / "plaintexts.npy"
+keys_fname = path / "keys.npy"
+
+for f in [traces_fname, plaintexts_fname, keys_fname]:
+    if not f.exists():
+        raise FileNotFoundError(f"file not exist: {f}")
+    if f.stat().st_size == 0:
+        raise ValueError(f"empty file: {f}")
 
 print("Reading inputs...")
 plaintexts = np.load(plaintexts_fname)

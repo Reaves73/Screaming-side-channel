@@ -2,11 +2,8 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-
-# path
-TRACES_F = "data/traces.npy"
-PTS_F    = "data/plaintexts.npy"
-KEYS_F   = "data/keys.npy"  
+from pathlib import Path
+import argparse
 
 # ====== AES SBOX ======
 SBOX = np.array([
@@ -52,9 +49,34 @@ def cpa_byte(traces_z, pt_byte):
     return int(g_best), float(abs_corr[g_best, s_best]), int(s_best), corr[g_best]
 
 def main():
+    # parse arguments
+    # ---------------------------
+    parser = argparse.ArgumentParser()
+    parser.add_argument("filepath")
+
+    args = parser.parse_args()
+
+    # process path
+    # ---------------------------
+    path = Path(args.filepath)
+    if not path.exists():
+        raise FileNotFoundError(f"path not exist: {args.filepath}")
+    if not path.is_dir():
+        raise NotADirectoryError(f"path is not a directory: {args.filepath}")
+
+    traces_f = path / "traces_chipwhisperer.npy"
+    pts_f = path / "plaintexts.npy"
+    keys_f = path / "keys.npy"
+
+    for f in [traces_f, pts_f, keys_f]:
+        if not f.exists():
+            raise FileNotFoundError(f"file not exist: {f}")
+        if f.stat().st_size == 0:
+            raise ValueError(f"empty file: {f}")
+
     print("Loading data...")
-    traces = np.load(TRACES_F).astype(np.float32)
-    pts = np.load(PTS_F).astype(np.uint8)
+    traces = np.load(traces_f).astype(np.float32)
+    pts = np.load(pts_f).astype(np.uint8)
 
     N, S = traces.shape
     print(f"N traces: {N}, S samples: {S}")
@@ -66,7 +88,7 @@ def main():
 
     true_key = None
     try:
-        keys = np.load(KEYS_F).astype(np.uint8)
+        keys = np.load(keys_f).astype(np.uint8)
         if keys.ndim == 2 and keys.shape[1] == 16:
             true_key = keys[0].copy()
             
