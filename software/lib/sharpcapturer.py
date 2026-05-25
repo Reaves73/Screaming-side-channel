@@ -158,18 +158,28 @@ def capture(config_dict):
                         response = sharptriggerer.match_filter_convolution(t_gnuradio, gr_trig_n_width)
                         detected_trigger = sharptriggerer.match_filter_find_trigger(response)
                         if detected_trigger is None:
-                            raise Exception("trigger not found")
+                            print("gnuradio trace: trigger not found")
+                            continue
                         idx_left_cutoff = sharptriggerer.get_trigger_end(detected_trigger, gr_trig_n_permit_range, gr_trig_n_permit_diff)
                         if idx_left_cutoff is None:
-                            raise Exception("trigger signal not valid")
-                        t_gnuradio_cut = t_gnuradio[idx_left_cutoff:idx_left_cutoff + round(duration_s*gr_fs)]
+                            print("gnuradio trace: trigger signal not valid")
+                            continue
+                        idx_right_cutoff = idx_left_cutoff + round(duration_s*gr_fs)
+                        print(t_gnuradio.size)
+                        if t_gnuradio.size <= idx_right_cutoff:
+                            print("gnuradio trace: trace not completely captured")
+                            continue
+                        t_gnuradio_cut = t_gnuradio[idx_left_cutoff:idx_right_cutoff]
                         traces_gnuradio_l.append(t_gnuradio_cut)
                     finally:
                         if os.path.exists(tracefile):
                             os.remove(tracefile)
 
-                if ret is not None:
-                    break
+                if ret is None:
+                    print("chipwhisperer: trace not captured")
+                    continue
+
+                break
             k = np.array(list(ret.key), dtype=np.uint8)
             c = np.array(list(ret.textout), dtype=np.uint8)
             p = np.array(list(ret.textin), dtype=np.uint8)
