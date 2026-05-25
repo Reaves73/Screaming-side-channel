@@ -77,17 +77,18 @@ def tvla(values, traces, f, pred_1, pred_2):
 #
 
 parser = argparse.ArgumentParser()
-parser.add_argument("filepath")
+parser.add_argument("filepath", help="path to traces file in experiment directory with plaintexts and keys")
 
 args = parser.parse_args()
 
-path = Path(args.filepath)
-if not path.exists():
+fpath = Path(args.filepath)
+if not fpath.exists():
     raise FileNotFoundError(f"path not exist: {args.filepath}")
-if not path.is_dir():
-    raise NotADirectoryError(f"path is not a directory: {args.filepath}")
+if not fpath.is_file():
+    raise NotADirectoryError(f"path is not a file: {args.filepath}")
 
-traces_fname = path / "traces_chipwhisperer.npy"
+traces_fname = fpath
+path = fpath.parent
 plaintexts_fname = path / "plaintexts.npy"
 keys_fname = path / "keys.npy"
 

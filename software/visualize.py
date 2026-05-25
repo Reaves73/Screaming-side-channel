@@ -14,7 +14,7 @@ def main():
     # parse arguments
     # ---------------------------
     parser = argparse.ArgumentParser()
-    parser.add_argument("filepath")
+    parser.add_argument("filepath", help="path to traces file (or single trace)")
 
     parser.add_argument("--factor", help="decimation factor", type=int, default=1)
     

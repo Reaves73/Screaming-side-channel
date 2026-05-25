@@ -52,19 +52,20 @@ def main():
     # parse arguments
     # ---------------------------
     parser = argparse.ArgumentParser()
-    parser.add_argument("filepath")
+    parser.add_argument("filepath", help="path to traces file in experiment directory with plaintexts and keys")
 
     args = parser.parse_args()
 
     # process path
     # ---------------------------
-    path = Path(args.filepath)
-    if not path.exists():
+    fpath = Path(args.filepath)
+    if not fpath.exists():
         raise FileNotFoundError(f"path not exist: {args.filepath}")
-    if not path.is_dir():
-        raise NotADirectoryError(f"path is not a directory: {args.filepath}")
+    if not fpath.is_file():
+        raise NotADirectoryError(f"path is not a file: {args.filepath}")
 
-    traces_f = path / "traces_chipwhisperer.npy"
+    traces_f = fpath
+    path = fpath.parent
     pts_f = path / "plaintexts.npy"
     keys_f = path / "keys.npy"
 
