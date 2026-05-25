@@ -201,7 +201,8 @@ def capture_core(config_dict):
             with Recorder() as r:
                 gr_fs = r.get_samprate()
                 print(f"gnuradio_samplerate={gr_fs}")
-                assert config_dict["gnuradio_samplerate"] == gr_fs #maybe this is not true later because not arbitrary values are settable and it is up to some signal synthesis like with CW?
+                #NOTE: maybe this is not true later because not arbitrary values are settable and it is up to some signal synthesis like with CW?
+                assert config_dict["gnuradio_samplerate"] == gr_fs
                 experiment_descr["gr_samplerate"] = gr_fs
                 capture_fun(state, cap_handle=r, gr_fs=gr_fs)
     except KeyboardInterrupt:
@@ -213,6 +214,7 @@ def capture_core(config_dict):
         experiment_descr["capture_abort_reason"] = "Exception"
         # reset CW target because the exception might have disturbed simpleserial
         sharpwhisperer.init_target(hw)
+        raise
     finally:
         try:
             sharpwhisperer.set_dac(hw.target, 0)
