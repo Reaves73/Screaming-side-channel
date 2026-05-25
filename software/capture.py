@@ -65,9 +65,10 @@ if cap_res is None:
 
 experiment_dir, experiment_descr = cap_res
 if args.visualize_trace_cw:
-    sharpvisualizer.plot_time(np.load(f"{experiment_dir}/traces_chipwhisperer.npy")[0,:], experiment_descr["cw_adc_rate_measured"], title="first trace chipwhisperer")
+    sharpvisualizer.plot_time(np.load(f"{experiment_dir}/traces_chipwhisperer.npy")[0,:], experiment_descr["cw_adc_rate_measured"], title="first trace chipwhisperer", pltmode=None)
 if config_dict["include_trace_gnuradio"] and args.visualize_trace_gr:
-    sharpvisualizer.plot_time(np.load(f"{experiment_dir}/traces_gnuradio.npy")[0,:], experiment_descr["gr_samplerate"], title="first trace gnuradio")
+    sharpvisualizer.plot_time(np.load(f"{experiment_dir}/traces_gnuradio.npy")[0,:], experiment_descr["gr_samplerate"], title="first trace gnuradio", pltmode=None)
+sharpvisualizer.plot_fun()
 
 
 #plt.plot(np.average(traces, axis=0))
