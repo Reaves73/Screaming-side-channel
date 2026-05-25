@@ -1,0 +1,80 @@
+import numpy as np
+from scipy.signal import find_peaks
+
+def match_filter_convolution(trace, n_width):
+    kernel = np.r_[-np.ones(n_width), np.ones(n_width)]
+
+    # apply padding to avoid edge artifacts in response
+    tracepad = np.pad(trace, n_width, mode='edge')
+    response = np.convolve(tracepad, kernel, mode='same')
+
+    return response[n_width:-n_width]
+
+def match_filter_find_trigger(response, debug=False):
+    # find trigger middle (negative response)
+    edge_idx = np.argmin(response)
+    edge_val = response[edge_idx]
+    if not(edge_val < 0):
+        return None
+    edge_val = abs(edge_val)
+    if debug:
+        print("(edge_idx, edge_val) =", (edge_idx, edge_val))
+
+    # find highest response (one of other two edges in trigger, positive response)
+    edge_pos_idx = np.argmax(response)
+    edge_pos_val = response[edge_pos_idx]
+    if not(edge_pos_val >= 0 and edge_pos_val > edge_val / 3):
+        return None
+    if debug:
+        print("(edge_pos_idx, edge_pos_val) =", (edge_pos_idx, edge_pos_val))
+
+    positive_threshold = edge_pos_val / 3
+    negative_threshold = -edge_val / 3
+
+    # Find positive peaks
+    pos_peaks, pos_props = find_peaks(
+        response,
+        height=positive_threshold
+    )
+
+    # Find negative peaks
+    # invert signal so valleys become peaks
+    neg_peaks, neg_props = find_peaks(
+        -response,
+        height=-negative_threshold
+    )
+    if debug:
+        print("Positive peaks:", pos_peaks)
+        print("Negative peaks:", neg_peaks)
+
+    if not (len(pos_peaks) == 2 and len(neg_peaks) == 1):
+        return None
+
+    idx_trig_mid = neg_peaks[0]
+    idx_trig_left = pos_peaks[0]
+    idx_trig_right = pos_peaks[1]
+    if not(idx_trig_left < idx_trig_mid < idx_trig_right):
+        return None
+
+    return (idx_trig_mid, (idx_trig_left, idx_trig_right))
+
+def get_trigger_end(detected_trigger, n_permit_range, n_permit_diff, fs=None, debug=False):
+    (idx_trig_mid, (idx_trig_left, idx_trig_right)) = detected_trigger
+
+    samples_left  = (idx_trig_mid - idx_trig_left)
+    samples_right = (idx_trig_right - idx_trig_mid)
+    if debug and fs is not None:
+        print("time_left:", samples_left / fs)
+        print("time_right:", samples_right / fs)
+        print("time_permit_range:", list(map(lambda x: x / fs, n_permit_range)))
+        print("time_permit_diff:", n_permit_diff / fs)
+
+    n_min, n_max = n_permit_range
+    if not(all(map(lambda x: n_min <= x <= n_max, [samples_left, samples_right]))):
+        return None
+
+    if not(abs(samples_left - samples_right) < n_permit_diff):
+        return None
+        
+
+    return idx_trig_right + samples_right

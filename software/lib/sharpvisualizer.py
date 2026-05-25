@@ -41,7 +41,8 @@ def stream_downsample_average(trace, fs: float, duration_s: float, factor: int):
 
     return trace_ds, fs_ds
 
-def plot_time(samples, fs, title="Time Domain"):
+def plot_time(samples, fs, title="Time Domain", vlines=None):
+    #fig, ax = plt.subplots()
     t = np.arange(len(samples)) / fs
     plt.figure(figsize=(10, 4))
     plt.plot(t, samples)
@@ -50,6 +51,9 @@ def plot_time(samples, fs, title="Time Domain"):
     plt.ylabel("Amplitude")
     plt.grid(True)
     plt.tight_layout()
+    if vlines is not None:
+        for vline in vlines:
+            plt.axvline(x=vline / fs, color='red', linestyle='--', linewidth=2)
     plt.show()
 
 def plot_spectrum(samples, fs, title="Spectrum"):
