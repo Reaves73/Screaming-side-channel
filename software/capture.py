@@ -58,8 +58,12 @@ config_dict["gnuradio_samplerate"] = 5e6 # cannot be changed currently
 
 # run the capturing function
 # ---------------------------
-experiment_dir, experiment_descr = sharpcapturer.capture(config_dict)
+cap_res = sharpcapturer.sync_capture(config_dict)
+if cap_res is None:
+    print("capturing failed")
+    sys.exit(-1)
 
+experiment_dir, experiment_descr = cap_res
 if args.visualize_trace_cw:
     sharpvisualizer.plot_time(np.load(f"{experiment_dir}/traces_chipwhisperer.npy")[0,:], experiment_descr["cw_adc_rate_measured"], title="first trace chipwhisperer")
 if config_dict["include_trace_gnuradio"] and args.visualize_trace_gr:

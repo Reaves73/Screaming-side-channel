@@ -12,6 +12,7 @@ import numpy as np
 import tempfile
 import json
 import os
+from pwd import getpwuid
 
 def save_capture_config(config_dict, path):
     with open(path, 'w') as config_file:
@@ -249,3 +250,34 @@ def capture(config_dict):
         save_capture_config(experiment_descr, f"{experiment_dir}/meta/experiment_descr.json")
 
     return experiment_dir, experiment_descr
+
+# wrapper for capture function that synchronizes the users
+import fcntl
+def sync_capture(config_dict):
+    LOCKFILE = f"{sharpwhisperer.get_experiments_dir()}/SHARPPEAK_LOCK"
+    lock_fd = os.open(LOCKFILE, os.O_RDWR | os.O_CREAT | os.O_TRUNC)
+    locked = False
+    try:
+        fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        locked = True
+        # here we have the actual call to capture
+        return capture(config_dict)
+    except BlockingIOError:
+        print("Another process is already capturing")
+        
+        # show owner of LOCKFILE
+        print("LOCKFILE OWNER:", getpwuid(os.stat(LOCKFILE).st_uid).pw_name)
+        #for (root, dirs, file) in os.walk(os.path.basename(LOCKFILE)):
+        #    for f in file:
+        #        if f.startswith(LOCKFILE):
+        #            print(f)
+        
+        return None
+    finally:
+        if locked:
+            try:
+                fcntl.flock(lock_fd, fcntl.LOCK_UN)
+                os.close(lock_fd)
+            finally:
+                if os.path.exists(LOCKFILE):
+                    os.remove(LOCKFILE)
