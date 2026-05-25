@@ -66,8 +66,9 @@ def main():
 
     # plot
     # ---------------------------
-    sharpvisualizer.plot_time(y, fs, title=f"Downsampled Time Domain (factor={args.factor})")
-    sharpvisualizer.plot_spectrum(y, fs, title=f"Downsampled Spectrum (factor={args.factor})")
+    sharpvisualizer.plot_time(y, fs, title=f"Downsampled Time Domain (factor={args.factor})", pltmode=None)
+    sharpvisualizer.plot_spectrum(y, fs, title=f"Downsampled Spectrum (factor={args.factor})", pltmode=None)
+    sharpvisualizer.plot_fun()
 
 
 if __name__ == "__main__":
