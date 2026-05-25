@@ -109,7 +109,7 @@ def init(samp_rate):
 
 lastbuffer = None
 exportrunning_onemore = False
-def exportdata(d):
+def export_data(d):
     global lastbuffer, exportrunning_onemore
 
     if not exportrunning:
@@ -130,3 +130,11 @@ def exportdata(d):
         lastbuffer = None
         exportrunning_onemore = True
     exportbuffers.append(d.copy())
+
+def handle_async_msg(msg):
+    return None
+
+send_async_msg_fn = None
+def send_async_msg(msg):
+    assert send_async_msg_fn is not None
+    send_async_msg_fn(msg)

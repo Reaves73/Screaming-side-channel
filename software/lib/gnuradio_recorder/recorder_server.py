@@ -109,6 +109,8 @@ class recorder_server(gr.top_block, Qt.QWidget):
         ##################################################
         # Connections
         ##################################################
+        self.msg_connect((self.epy_block_0, 'cmd_out'), (self.uhd_usrp_source_0, 'command'))
+        self.msg_connect((self.uhd_usrp_source_0, 'async_msgs'), (self.epy_block_0, 'msg_in'))
         self.connect((self.analog_quadrature_demod_cf_0, 0), (self.epy_block_0, 0))
         self.connect((self.uhd_usrp_source_0, 0), (self.analog_quadrature_demod_cf_0, 0))
 

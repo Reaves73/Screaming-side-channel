@@ -282,21 +282,30 @@ blocks:
   id: epy_block
   parameters:
     _source_code: "from gnuradio import gr\nimport numpy as np\n\nimport os\nimport\
-      \ sys\nsys.path.append(os.getcwd())\nimport importlib\n\nnon_exportdata_printed=False\n\
-      def non_exportdata(data):\n    global non_exportdata_printed\n    if not non_exportdata_printed:\n\
-      \        print(f\"NO EXPORT MODULE SELECTED\")\n        non_exportdata_printed=True\n\
-      \nclass PythonExportBlock(gr.sync_block):\n    def __init__(self, exportmodulename=None,\
-      \ samp_rate=-1):\n        gr.sync_block.__init__(\n            self,\n     \
-      \       name=\"PythonExportBlock\",\n            in_sig=[np.float32],\n    \
-      \        out_sig=None\n        )\n        #self.exportmodulename = exportmodulename\n\
-      \        if (exportmodulename is None):\n            self.exportmodule = None\n\
-      \            self.processdata_func = non_exportdata\n        else:\n       \
-      \     self.exportmodule = importlib.import_module(exportmodulename)\n      \
-      \      (getattr(self.exportmodule, \"init\"))(samp_rate)\n            self.processdata_func\
-      \ = getattr(self.exportmodule, \"exportdata\")\n\n    def work(self, input_items,\
-      \ output_items):\n        data = input_items[0]        \n        #print(len(data))\n\
-      \        self.processdata_func(data)\n        #print(data[:10])  # do whatever\
-      \ you want\n        return len(data)\n\n"
+      \ sys\nsys.path.append(os.getcwd())\nimport importlib\n\nimport pmt\n\nnon_module_func_printed=False\n\
+      def non_module_func_body():\n    global non_module_func_printed\n    if not\
+      \ non_module_func_printed:\n        print(f\"NO EXPORT MODULE SELECTED\")\n\
+      \        non_module_func_printed=True\n\ndef non_export_data(data):\n    non_module_func_body()\n\
+      \ndef non_handle_async_msg(msg):\n    non_module_func_body()\n\nclass PythonExportBlock(gr.sync_block):\n\
+      \    def __init__(self, exportmodulename=None, samp_rate=-1):\n        gr.sync_block.__init__(\n\
+      \            self,\n            name=\"PythonExportBlock\",\n            in_sig=[np.float32],\n\
+      \            out_sig=None\n        )\n        self.message_port_register_in(pmt.intern('msg_in'))\n\
+      \        self.message_port_register_out(pmt.intern(\"cmd_out\"))\n\n       \
+      \ #self.exportmodulename = exportmodulename\n        if (exportmodulename is\
+      \ None):\n            self.exportmodule = None\n            self.process_data_func\
+      \ = non_export_data\n            self.handle_async_msg_func = non_handle_async_msg\n\
+      \        else:\n            self.exportmodule = importlib.import_module(exportmodulename)\n\
+      \            (getattr(self.exportmodule, \"init\"))(samp_rate)\n           \
+      \ self.process_data_func = getattr(self.exportmodule, \"export_data\")\n   \
+      \         self.handle_async_msg_func = getattr(self.exportmodule, \"handle_async_msg\"\
+      )\n            setattr(self.exportmodule, \"send_async_msg_fn\", self.send_cmd)\n\
+      \n        self.set_msg_handler(pmt.intern('msg_in'), self.handle_msg)\n\n  \
+      \  def handle_msg(self, msg):\n        return self.handle_async_msg_func(msg)\n\
+      \n    def send_cmd(self, msg):\n        return message_port_pub(pmt.intern(\"\
+      cmd_out\"), msg)\n\n    def work(self, input_items, output_items):\n       \
+      \ data = input_items[0]        \n        #print(len(data))\n        self.process_data_func(data)\n\
+      \        #print(data[:10])  # do whatever you want\n        return len(data)\n\
+      \n"
     affinity: ''
     alias: ''
     comment: ''
@@ -306,11 +315,12 @@ blocks:
     samp_rate: samp_rate
   states:
     _io_cache: ('PythonExportBlock', 'PythonExportBlock', [('exportmodulename', 'None'),
-      ('samp_rate', '-1')], [('0', 'float', 1)], [], '', [])
+      ('samp_rate', '-1')], [('0', 'float', 1), ('msg_in', 'message', 1)], [('cmd_out',
+      'message', 1)], '', [])
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [792, 456.0]
+    coordinate: [888, 504.0]
     rotation: 0
     state: enabled
 - name: note_0
@@ -1077,8 +1087,10 @@ connections:
 - [blocks_selector_0, '0', blocks_null_sink_0, '0']
 - [blocks_selector_0, '1', blocks_file_sink_1, '0']
 - [blocks_throttle2_0, '0', analog_quadrature_demod_cf_0, '0']
+- [epy_block_0, cmd_out, uhd_usrp_source_0, command]
 - [uhd_usrp_source_0, '0', analog_quadrature_demod_cf_0, '0']
 - [uhd_usrp_source_0, '0', qtgui_sink_x_0, '0']
+- [uhd_usrp_source_0, async_msgs, epy_block_0, msg_in]
 
 metadata:
   file_format: 1
