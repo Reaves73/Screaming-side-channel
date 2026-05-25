@@ -97,8 +97,8 @@ class Recorder:
             return ress[1]
         raise Exception(res)
 
-    def record_start(self, filename):
-        self._send_cmd(CAPTURE_START_CMD_PREFIX + filename + CAPTURE_START_CMD_SUFFIX)
+    def record_start(self):
+        self._send_cmd(CAPTURE_START_CMD_PREFIX + "" + CAPTURE_START_CMD_SUFFIX)
 
     def record_stop(self):
         return self._send_cmd(CAPTURE_STOP_CMD)

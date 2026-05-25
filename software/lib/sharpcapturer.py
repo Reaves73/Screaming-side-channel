@@ -142,39 +142,32 @@ def capture_core(config_dict):
             gr_trig_n_permit_range = (4e-3 * gr_fs, 15e-3 * gr_fs)
             gr_trig_n_permit_diff = 4e-7 * gr_fs
 
-        dstr = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        tracefile = f"{tempfile.gettempdir()}/traces_gnuradio_{dstr}.npy"
         for i in tqdm(range(n_traces)): # NOTE: it is important for last_complete_trace_idx that this index i is starting from 0 and incrementing
             key, text = state
             while True:
                 if cap_handle is not None:
-                    cap_handle.record_start(tracefile)
+                    cap_handle.record_start()
                 ret = hw.capture(text, key)
                 if cap_handle is not None:
                     time.sleep(0.02)
-                    try:
-                        t_gnuradio = cap_handle.record_stop()
-                        #t_gnuradio = np.load(tracefile)
+                    t_gnuradio = cap_handle.record_stop()
 
-                        response = sharptriggerer.match_filter_convolution(t_gnuradio, gr_trig_n_width)
-                        detected_trigger = sharptriggerer.match_filter_find_trigger(response, gr_trig_n_width)
-                        if detected_trigger is None:
-                            print("gnuradio trace: trigger not found")
-                            continue
-                        idx_left_cutoff = sharptriggerer.get_trigger_end(detected_trigger, gr_trig_n_permit_range, gr_trig_n_permit_diff)
-                        if idx_left_cutoff is None:
-                            print("gnuradio trace: trigger signal not valid")
-                            continue
-                        idx_right_cutoff = idx_left_cutoff + round(duration_s*gr_fs)
-                        #print(t_gnuradio.size)
-                        if t_gnuradio.size <= idx_right_cutoff:
-                            print("gnuradio trace: trace not completely captured")
-                            continue
-                        t_gnuradio_cut = t_gnuradio[idx_left_cutoff:idx_right_cutoff]
-                        traces_gnuradio_l.append(t_gnuradio_cut)
-                    finally:
-                        if os.path.exists(tracefile):
-                            os.remove(tracefile)
+                    response = sharptriggerer.match_filter_convolution(t_gnuradio, gr_trig_n_width)
+                    detected_trigger = sharptriggerer.match_filter_find_trigger(response, gr_trig_n_width)
+                    if detected_trigger is None:
+                        print("gnuradio trace: trigger not found")
+                        continue
+                    idx_left_cutoff = sharptriggerer.get_trigger_end(detected_trigger, gr_trig_n_permit_range, gr_trig_n_permit_diff)
+                    if idx_left_cutoff is None:
+                        print("gnuradio trace: trigger signal not valid")
+                        continue
+                    idx_right_cutoff = idx_left_cutoff + round(duration_s*gr_fs)
+                    #print(t_gnuradio.size)
+                    if t_gnuradio.size <= idx_right_cutoff:
+                        print("gnuradio trace: trace not completely captured")
+                        continue
+                    t_gnuradio_cut = t_gnuradio[idx_left_cutoff:idx_right_cutoff]
+                    traces_gnuradio_l.append(t_gnuradio_cut)
 
                 if ret is None:
                     print("chipwhisperer: trace not captured")
@@ -263,9 +256,6 @@ def capture_random_stuff_core(stuff_id, numtraces=None):
     hw.scope.default_setup();
     time.sleep(0.1)
 
-    dstr = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    tracefile = f"{tempfile.gettempdir()}/traces_testing_{dstr}.npy"
-
     sharpwhisperer.init_target(hw)
     traces_l = []
     try:
@@ -275,18 +265,15 @@ def capture_random_stuff_core(stuff_id, numtraces=None):
         with Recorder() as r:
             print(f"samprate={r.get_samprate()}")
             for _ in range(1 if numtraces is None else numtraces):
-                r.record_start(tracefile)
+                r.record_start()
                 time.sleep(0.01)
                 sharpwhisperer.do_random_stuff(hw.target, stuff_id)
-                time.sleep(0.001)
+                time.sleep(0.02)
                 traces_l.append(r.record_stop())
-                #traces_l.append(np.load(tracefile))
     finally:
         sharpwhisperer.set_dac(hw.target, 0)
         sharpwhisperer.set_gate(hw.target, False)
         hw.disconnect()
-        if os.path.exists(tracefile):
-            os.remove(tracefile)
     if numtraces is None:
         assert len(traces_l) == 1
         return traces_l[0]
