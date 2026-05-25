@@ -43,7 +43,10 @@ def main():
     #assert len(trace.shape) == 1
     #print(trace.shape)
 
-    # TODO: fix the case that we have not as many traces as we want to average
+    # don't have as many traces as we want to average (the subscription wouldn't break but nice to output for debugging and clarity)
+    if traces.shape[0] < args.averaged_traces:
+        print(traces.shape)
+        raise Exception("not enough traces to average")
     traces = traces[:args.averaged_traces,:]
     trace = traces.mean(axis=0)
 

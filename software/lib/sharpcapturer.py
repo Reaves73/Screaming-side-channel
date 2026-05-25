@@ -130,6 +130,7 @@ def capture(config_dict):
 
     #target.set_key(key)
 
+    last_complete_trace_idx = [None]
     def capture_fun(state, cap_handle=None, gr_fs=None):
         print("Capturing traces...")
 
@@ -143,7 +144,7 @@ def capture(config_dict):
 
         dstr = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         tracefile = f"{tempfile.gettempdir()}/traces_gnuradio_{dstr}.npy"
-        for i in tqdm(range(n_traces)):
+        for i in tqdm(range(n_traces)): # NOTE: it is important for last_complete_trace_idx that this index i is starting from 0 and incrementing
             key, text = state
             while True:
                 if cap_handle is not None:
@@ -196,7 +197,8 @@ def capture(config_dict):
             ciphertexts[i] = c
             keys[i] = k
             
-            state = ktp.next() 
+            state = ktp.next()
+            last_complete_trace_idx[0] = i
         return state
 
     try:
@@ -209,20 +211,41 @@ def capture(config_dict):
                 assert config_dict["gnuradio_samplerate"] == gr_fs #maybe this is not true later because not arbitrary values are settable and it is up to some signal synthesis like with CW?
                 experiment_descr["gr_samplerate"] = gr_fs
                 capture_fun(state, cap_handle=r, gr_fs=gr_fs)
+    except KeyboardInterrupt:
+        experiment_descr["capture_abort_reason"] = "KeyboardInterrupt"
+        print("Aborting capture.")
+        # reset CW target because we might have disturbed simpleserial
+        sharpwhisperer.init_target(hw)
+    except:
+        experiment_descr["capture_abort_reason"] = "Exception"
+        # reset CW target because the exception might have disturbed simpleserial
+        sharpwhisperer.init_target(hw)
     finally:
-        sharpwhisperer.set_dac(hw.target, 0)
-        sharpwhisperer.set_gate(hw.target, False)
-        # DISCONNECT
-        hw.disconnect()
+        try:
+            sharpwhisperer.set_dac(hw.target, 0)
+            sharpwhisperer.set_gate(hw.target, False)
+            # DISCONNECT
+            hw.disconnect()
+        except:
+            print("ERROR: failed to set DAC, gate and disconnect from target")
 
-    if include_trace_chipwhisperer:
-        np.save(f"{experiment_dir}/traces_chipwhisperer.npy", traces_chipwhisperer)
-    if include_trace_gnuradio:
-        np.save(f"{experiment_dir}/traces_gnuradio.npy", tracelist_to_nparray(traces_gnuradio_l))
-    np.save(f"{experiment_dir}/keys.npy", keys)
-    np.save(f"{experiment_dir}/plaintexts.npy", plaintexts)
-    np.save(f"{experiment_dir}/ciphertexts.npy", ciphertexts)
+        if last_complete_trace_idx[0] == n_traces - 1:
+            experiment_descr["capture_complete"] = True
+        else:
+            experiment_descr["capture_complete"] = False
+            print("WARNING: not all traces have been captured")
+            print(f"Complete traces: {last_complete_trace_idx[0]+1 if last_complete_trace_idx[0] is not None else None}")
 
-    save_capture_config(experiment_descr, f"{experiment_dir}/meta/experiment_descr.json")
+        if last_complete_trace_idx[0] is not None:
+            n_tr = last_complete_trace_idx[0]+1
+            if include_trace_chipwhisperer:
+                np.save(f"{experiment_dir}/traces_chipwhisperer.npy", traces_chipwhisperer[:n_tr,:])
+            if include_trace_gnuradio:
+                np.save(f"{experiment_dir}/traces_gnuradio.npy", tracelist_to_nparray(traces_gnuradio_l)[:n_tr,:])
+            np.save(f"{experiment_dir}/keys.npy", keys[:n_tr,:])
+            np.save(f"{experiment_dir}/plaintexts.npy", plaintexts[:n_tr,:])
+            np.save(f"{experiment_dir}/ciphertexts.npy", ciphertexts[:n_tr,:])
+
+        save_capture_config(experiment_descr, f"{experiment_dir}/meta/experiment_descr.json")
 
     return experiment_dir, experiment_descr
