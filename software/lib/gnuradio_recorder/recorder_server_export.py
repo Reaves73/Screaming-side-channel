@@ -9,6 +9,8 @@ exportfishedevent = threading.Event()
 
 samprate = None
 
+debug = False
+
 CAPTURE_START_CMD_PREFIX="CAP START:"
 CAPTURE_START_CMD_SUFFIX=":"
 CAPTURE_STOP_CMD="CAP STOP"
@@ -43,20 +45,24 @@ def control_server(host="127.0.0.1", port=9999):
                 if data.startswith(CAPTURE_START_CMD_PREFIX) and data.endswith(CAPTURE_START_CMD_SUFFIX):
                     exportbuffers.clear()
                     exportrunning = True
-                    print(f"start capturing")
+                    if debug:
+                        print(f"start capturing")
                     export_filename = data[len(CAPTURE_START_CMD_PREFIX):-len(CAPTURE_START_CMD_SUFFIX)]
-                    print(f"registered filename: {export_filename}")
+                    if debug:
+                        print(f"registered filename: {export_filename}")
                     conn.sendall(b"OK CAP START\n")
 
                 elif data == CAPTURE_STOP_CMD:
-                    print(f"stop capturing")
+                    if debug:
+                        print(f"stop capturing")
                     # signal stopping
                     exportrunning = False
                     # wait for ack, then clear it for next capture
                     exportfishedevent.wait()
                     exportfishedevent.clear()
                     # process buffers
-                    print(f"collected {len(exportbuffers)} buffers")
+                    if debug:
+                        print(f"collected {len(exportbuffers)} buffers")
                     #print(type(exportbuffers[0]))
                     #print(exportbuffers[0].shape)
                     trace = np.concatenate(exportbuffers).astype(np.float32)
@@ -64,14 +70,16 @@ def control_server(host="127.0.0.1", port=9999):
                     # save to file
                     try:
                         np.save(export_filename, trace)
-                        print(f"saved to: {export_filename}")
+                        if debug:
+                            print(f"saved to: {export_filename}")
                         conn.sendall(b"OK CAP STOP\n")
                     except:
                         print(f"saving failed: {export_filename}")
                         conn.sendall(b"FAIL CAP STOP:saving\n")
 
                 elif data == SAMPRATE_GET_CMD:
-                    print(f"returning samp_rate")
+                    if debug:
+                        print(f"returning samp_rate")
                     conn.sendall(f"OK SAMPRATE GET:{samprate}\n".encode())
 
                 else:

@@ -165,7 +165,7 @@ def capture(config_dict):
                             print("gnuradio trace: trigger signal not valid")
                             continue
                         idx_right_cutoff = idx_left_cutoff + round(duration_s*gr_fs)
-                        print(t_gnuradio.size)
+                        #print(t_gnuradio.size)
                         if t_gnuradio.size <= idx_right_cutoff:
                             print("gnuradio trace: trace not completely captured")
                             continue
