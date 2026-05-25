@@ -17,7 +17,8 @@ parser.add_argument("-n", "--n_traces", help="number of traces (default: 1)", ty
 
 args = parser.parse_args()
 
-traces = sharpcapturer.sync_capture_random_stuff(2, numtraces=args.n_traces)
+traces = sharpcapturer.capture_random_stuff(2, numtraces=args.n_traces)
+assert traces is not None
 
 for trace_idx in range(traces.shape[0]):
     print(f"Trace {trace_idx}")

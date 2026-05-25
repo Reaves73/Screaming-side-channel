@@ -58,7 +58,7 @@ config_dict["gnuradio_samplerate"] = 5e6 # cannot be changed currently
 
 # run the capturing function
 # ---------------------------
-cap_res = sharpcapturer.sync_capture(config_dict)
+cap_res = sharpcapturer.capture(config_dict)
 if cap_res is None:
     print("capturing failed")
     sys.exit(-1)

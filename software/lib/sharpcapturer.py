@@ -12,7 +12,6 @@ import numpy as np
 import tempfile
 import json
 import os
-from pwd import getpwuid
 
 def save_capture_config(config_dict, path):
     with open(path, 'w') as config_file:
@@ -25,7 +24,7 @@ def tracelist_to_nparray(traces_l):
     traces_l_trimmed = [t[:min_len] for t in traces_l]
     return np.stack(traces_l_trimmed)
 
-def capture(config_dict):
+def capture_core(config_dict):
     experiment_descr = {}
     experiment_name = config_dict["experiment_name"]
     experiment_dir = sharpwhisperer.get_new_experiment_dir(experiment_name)
@@ -251,7 +250,7 @@ def capture(config_dict):
 
     return experiment_dir, experiment_descr
 
-def capture_random_stuff(stuff_id, numtraces=None):
+def capture_random_stuff_core(stuff_id, numtraces=None):
     cfg = sharpwhisperer.get_experiment_setup_config()
     PLATFORM = sharpwhisperer.get_experiment_setup_config_PLATFORM(cfg)
 
@@ -293,35 +292,5 @@ def capture_random_stuff(stuff_id, numtraces=None):
         return traces_l[0]
     return tracelist_to_nparray(traces_l)
 
-# wrapper for capture functions that synchronizes the users
-import fcntl
-def sync_usage_wrapper(fn):
-    def wrapped(*args, **kwargs):
-        LOCKFILE = f"{sharpwhisperer.get_experiments_dir()}/SHARPPEAK_LOCK"
-        lock_fd = os.open(LOCKFILE, os.O_RDWR | os.O_CREAT | os.O_TRUNC)
-        locked = False
-        try:
-            fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            locked = True
-            # here we have the actual call to capture
-            return fn(*args, **kwargs)
-        except BlockingIOError:
-            print("Another process is already capturing")
-            
-            # show owner of LOCKFILE
-            print("LOCKFILE OWNER:", getpwuid(os.stat(LOCKFILE).st_uid).pw_name)
-            
-            return None
-        finally:
-            if locked:
-                try:
-                    fcntl.flock(lock_fd, fcntl.LOCK_UN)
-                    os.close(lock_fd)
-                finally:
-                    if os.path.exists(LOCKFILE):
-                        os.remove(LOCKFILE)
-        
-    return wrapped
-
-sync_capture = sync_usage_wrapper(capture)
-sync_capture_random_stuff = sync_usage_wrapper(capture_random_stuff)
+capture = sharpwhisperer.sync_usage_wrapper(capture_core)
+capture_random_stuff = sharpwhisperer.sync_usage_wrapper(capture_random_stuff_core)

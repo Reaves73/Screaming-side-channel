@@ -11,7 +11,8 @@ import tempfile
 import numpy as np
 import matplotlib.pyplot as plt
 
-trace = sharpcapturer.sync_capture_random_stuff(3)
+trace = sharpcapturer.capture_random_stuff(3)
+assert trace is not None
 
 # now visualize the trace
 if False:

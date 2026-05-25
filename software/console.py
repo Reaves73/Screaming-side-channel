@@ -127,4 +127,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    sharpwhisperer.sync_usage_wrapper(main)()

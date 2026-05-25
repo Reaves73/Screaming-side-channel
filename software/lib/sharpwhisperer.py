@@ -88,6 +88,38 @@ def write_git_diff_files(dirpath):
 
 # ---------------------------
 
+# wrapper for procedures that use chipwhisperer HW, or other shared resources; this is to synchronize the users
+import fcntl
+from pwd import getpwuid
+def sync_usage_wrapper(fn):
+    def wrapped(*args, **kwargs):
+        LOCKFILE = f"{get_experiments_dir()}/SHARPPEAK_LOCK"
+        lock_fd = os.open(LOCKFILE, os.O_RDWR | os.O_CREAT | os.O_TRUNC)
+        locked = False
+        try:
+            fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            locked = True
+            # here we have the actual call to capture
+            return fn(*args, **kwargs)
+        except BlockingIOError:
+            print("Another process is already occupying the shared sharpwhisperer resource.")
+            
+            # show owner of LOCKFILE
+            print("LOCKFILE OWNER:", getpwuid(os.stat(LOCKFILE).st_uid).pw_name)
+            
+            return None
+        finally:
+            if locked:
+                try:
+                    fcntl.flock(lock_fd, fcntl.LOCK_UN)
+                    os.close(lock_fd)
+                finally:
+                    if os.path.exists(LOCKFILE):
+                        os.remove(LOCKFILE)
+    return wrapped
+
+# ---------------------------
+
 # enabled or disables DAC output
 def set_gate(target, enabled):
     if enabled:
