@@ -251,33 +251,72 @@ def capture(config_dict):
 
     return experiment_dir, experiment_descr
 
-# wrapper for capture function that synchronizes the users
-import fcntl
-def sync_capture(config_dict):
-    LOCKFILE = f"{sharpwhisperer.get_experiments_dir()}/SHARPPEAK_LOCK"
-    lock_fd = os.open(LOCKFILE, os.O_RDWR | os.O_CREAT | os.O_TRUNC)
-    locked = False
+def capture_random_stuff(stuff_id):
+    cfg = sharpwhisperer.get_experiment_setup_config()
+    PLATFORM = sharpwhisperer.get_experiment_setup_config_PLATFORM(cfg)
+
+    FIRMWARE = "simpleserial-aes"
+
+    hw = cwhardware.CWHardware()
+    hw.connect(PLATFORM)
+
+    # Confiture scope
+    hw.scope.default_setup();
+    time.sleep(0.1)
+
+    dstr = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    tracefile = f"{tempfile.gettempdir()}/traces_testing_{dstr}.npy"
+
+    sharpwhisperer.init_target(hw)
+    trace = None
     try:
-        fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        locked = True
-        # here we have the actual call to capture
-        return capture(config_dict)
-    except BlockingIOError:
-        print("Another process is already capturing")
-        
-        # show owner of LOCKFILE
-        print("LOCKFILE OWNER:", getpwuid(os.stat(LOCKFILE).st_uid).pw_name)
-        #for (root, dirs, file) in os.walk(os.path.basename(LOCKFILE)):
-        #    for f in file:
-        #        if f.startswith(LOCKFILE):
-        #            print(f)
-        
-        return None
+        sharpwhisperer.set_dac(hw.target, 0)
+        sharpwhisperer.set_gate(hw.target, True)
+        sharpwhisperer.init_sharppeak(hw.target, PLATFORM)
+        with Recorder() as r:
+            print(f"samprate={r.get_samprate()}")
+            r.record_start(tracefile)
+            time.sleep(0.01)
+            sharpwhisperer.do_random_stuff(hw.target, stuff_id)
+            r.record_stop()
+            trace = np.load(tracefile)
     finally:
-        if locked:
-            try:
-                fcntl.flock(lock_fd, fcntl.LOCK_UN)
-                os.close(lock_fd)
-            finally:
-                if os.path.exists(LOCKFILE):
-                    os.remove(LOCKFILE)
+        sharpwhisperer.set_dac(hw.target, 0)
+        sharpwhisperer.set_gate(hw.target, False)
+        hw.disconnect()
+        if os.path.exists(tracefile):
+            os.remove(tracefile)
+    return trace
+
+# wrapper for capture functions that synchronizes the users
+import fcntl
+def sync_usage_wrapper(fn):
+    def wrapped(*args, **kwargs):
+        LOCKFILE = f"{sharpwhisperer.get_experiments_dir()}/SHARPPEAK_LOCK"
+        lock_fd = os.open(LOCKFILE, os.O_RDWR | os.O_CREAT | os.O_TRUNC)
+        locked = False
+        try:
+            fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            locked = True
+            # here we have the actual call to capture
+            return fn(*args, **kwargs)
+        except BlockingIOError:
+            print("Another process is already capturing")
+            
+            # show owner of LOCKFILE
+            print("LOCKFILE OWNER:", getpwuid(os.stat(LOCKFILE).st_uid).pw_name)
+            
+            return None
+        finally:
+            if locked:
+                try:
+                    fcntl.flock(lock_fd, fcntl.LOCK_UN)
+                    os.close(lock_fd)
+                finally:
+                    if os.path.exists(LOCKFILE):
+                        os.remove(LOCKFILE)
+        
+    return wrapped
+
+sync_capture = sync_usage_wrapper(capture)
+sync_capture_random_stuff = sync_usage_wrapper(capture_random_stuff)

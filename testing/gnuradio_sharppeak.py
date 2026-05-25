@@ -4,50 +4,14 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/../software/lib")
 
-import cwhardware
-import sharpwhisperer
-from gnuradio_recorder import Recorder
+import sharpcapturer
 
-import time
 import datetime
 import tempfile
 import numpy as np
 import matplotlib.pyplot as plt
 
-cfg = sharpwhisperer.get_experiment_setup_config()
-PLATFORM = sharpwhisperer.get_experiment_setup_config_PLATFORM(cfg)
-
-FIRMWARE = "simpleserial-aes"
-
-hw = cwhardware.CWHardware()
-hw.connect(PLATFORM)
-
-# Confiture scope
-hw.scope.default_setup();
-time.sleep(0.1)
-
-dstr = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-tracefile = f"{tempfile.gettempdir()}/traces_testing_{dstr}.npy"
-
-sharpwhisperer.init_target(hw)
-trace = None
-try:
-    sharpwhisperer.set_dac(hw.target, 0)
-    sharpwhisperer.set_gate(hw.target, True)
-    sharpwhisperer.init_sharppeak(hw.target, PLATFORM)
-    with Recorder() as r:
-        print(f"samprate={r.get_samprate()}")
-        r.record_start(tracefile)
-        time.sleep(0.01)
-        sharpwhisperer.do_random_stuff(hw.target, 3)
-        r.record_stop()
-        trace = np.load(tracefile)
-finally:
-    sharpwhisperer.set_dac(hw.target, 0)
-    sharpwhisperer.set_gate(hw.target, False)
-    hw.disconnect()
-    if os.path.exists(tracefile):
-        os.remove(tracefile)
+trace = sharpcapturer.sync_capture_random_stuff(3)
 
 # now visualize the trace
 if False:
@@ -70,6 +34,8 @@ if False:
     plt.tight_layout()
     plt.show()
 else:
+    dstr = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    tracefile = f"{tempfile.gettempdir()}/traces_testing_{dstr}.npy"
     try:
         np.save(tracefile, np.stack([trace]))
         os.system(" ".join(["python3", os.path.dirname(os.path.realpath(__file__)) + "/../software/visualize.py", tracefile, "--factor", "20"]))

@@ -4,26 +4,11 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/../software/lib")
 
+import sharpcapturer
 import sharptriggerer
 import sharpvisualizer
 
-import numpy as np
-import argparse
-
-# parse arguments
-# ---------------------------
-parser = argparse.ArgumentParser()
-parser.add_argument("filepath", help="path to traces file (or single trace)")
-
-args = parser.parse_args()
-
-
-traces = np.load(args.filepath) # might be many traces actually
-# only take the first trace if it is many traces
-if len(traces.shape) > 1:
-    trace = traces[0,:]
-else:
-    trace = traces
+trace = sharpcapturer.sync_capture_random_stuff(2)
 
 fs = 5e6
 sharpvisualizer.plot_time(trace, fs, title=f"original trace")
