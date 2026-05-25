@@ -1,5 +1,6 @@
 import cwhardware
 import sharpwhisperer
+import sharptriggerer
 from gnuradio_recorder import Recorder
 
 import chipwhisperer as cw
@@ -24,8 +25,10 @@ def tracelist_to_nparray(traces_l):
     return np.stack(traces_l_trimmed)
 
 def capture(config_dict):
+    experiment_descr = {}
     experiment_name = config_dict["experiment_name"]
     experiment_dir = sharpwhisperer.get_new_experiment_dir(experiment_name)
+    experiment_descr["experiment_dir"] = experiment_dir
     print(f"CAPTURING: experiment '{experiment_name}' in '{experiment_dir}'")
     #raise Exception()
 
@@ -40,13 +43,11 @@ def capture(config_dict):
     print("PLATFORM: ", PLATFORM)
     print("FIRMWARE: ", FIRMWARE)
 
+    duration_s = config_dict["duration_s"]
     n_traces = config_dict["n_traces"]
 
     include_trace_chipwhisperer = config_dict["include_trace_chipwhisperer"]
     include_trace_gnuradio = config_dict["include_trace_gnuradio"]
-    
-    if include_trace_chipwhisperer:
-        chipwhisperer_n_samples = config_dict["chipwhisperer_n_samples"]
 
     #
     # SETUP
@@ -57,15 +58,44 @@ def capture(config_dict):
 
     # Confiture scope
     hw.scope.default_setup();
-    if include_trace_chipwhisperer:
-        hw.scope.adc.samples = chipwhisperer_n_samples
-        hw.scope.adc.decimate = config_dict["chipwhisperer_n_decimate"]
+    hw.scope.adc.decimate = config_dict["chipwhisperer_n_decimate"]
+    print("CW Sys Clock:", hw.scope.clock._hwinfo.sysFrequency())
+    cw_clkgen_freq_set = hw.scope.clock.clkgen_freq
+    print("CW Target clock freq setting:", cw_clkgen_freq_set)
+    # CW clock settings
+    if config_dict["chipwhisperer_adc_clkgen_x4"]:
+        hw.scope.clock.adc_src = "clkgen_x4"
+    else:
         hw.scope.clock.adc_src = "clkgen_x1"
-    time.sleep(0.1)
+    if not hw.scope.try_wait_clkgen_locked(5, 0.05):
+        raise Exception("Could not lock clock for scope. You have to run the script again.")
+    # need a good delay to get a proper adc_rate reading from CW (otherwise it is weirdly and randomly off)
+    time.sleep(0.5)
+
+    # determine CW clocks
+    cw_adc_rate_expected = hw.scope.clock.adc_mul * cw_clkgen_freq_set / hw.scope.adc.decimate
+    cw_adc_rate_measured = hw.scope.clock.adc_rate
+    cw_clkgen_freq_inferred = cw_adc_rate_measured / hw.scope.clock.adc_mul * hw.scope.adc.decimate
+
+    # validate measured with expected, and set with inferred
+    if not(abs(cw_adc_rate_expected-cw_adc_rate_measured) < cw_adc_rate_expected*1e-6 and
+           abs(cw_clkgen_freq_set-cw_clkgen_freq_inferred) < cw_clkgen_freq_set*1e-6):
+        print("cw_adc_rate_expected:   ", cw_adc_rate_expected)
+        print("cw_adc_rate_measured:   ", cw_adc_rate_measured)
+        print("cw_clkgen_freq_set:     ", cw_clkgen_freq_set)
+        print("cw_clkgen_freq_inferred:", cw_clkgen_freq_inferred)
+        raise Exception("measured adc and inferred clkgen frequencies not validated.")
+
+    # NOTE: could reset cached adc_rate value in CW library, measure again and validate, if we would be interested in that
 
     if include_trace_chipwhisperer:
-        print("Target clock freq:", hw.scope.clock.clkgen_freq)
-        print("Sampling rate:", hw.scope.clock.adc_rate)
+        experiment_descr["cw_adc_rate_measured"] = cw_adc_rate_measured
+        print("CW Sampling rate:", cw_adc_rate_measured)
+        chipwhisperer_n_samples = round(duration_s * cw_adc_rate_measured)
+        print("CW samples per trace:", chipwhisperer_n_samples)
+        if chipwhisperer_n_samples > 24000: # it should be something like 24573, but I see errors with varying values, as low as 24431, so this seems safe enough
+            raise Exception("maximum number of samples allowed is 24000")
+        hw.scope.adc.samples = chipwhisperer_n_samples
 
     #
     # INIT
@@ -100,8 +130,16 @@ def capture(config_dict):
 
     #target.set_key(key)
 
-    def capture_fun(state, cap_handle=None):
+    def capture_fun(state, cap_handle=None, gr_fs=None):
         print("Capturing traces...")
+
+        gr_trig_n_width = None
+        if cap_handle is not None:
+            assert gr_fs is not None
+            gr_trig_n_width = round(5e-3 * gr_fs / 100)
+            print("gr_trig_n_width:", gr_trig_n_width)
+            gr_trig_n_permit_range = (4e-3 * gr_fs, 15e-3 * gr_fs)
+            gr_trig_n_permit_diff = 4e-7 * gr_fs
 
         dstr = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         tracefile = f"{tempfile.gettempdir()}/traces_gnuradio_{dstr}.npy"
@@ -115,7 +153,17 @@ def capture(config_dict):
                     time.sleep(0.02)
                     try:
                         cap_handle.record_stop()
-                        traces_gnuradio_l.append(np.load(tracefile))
+                        t_gnuradio = np.load(tracefile)
+
+                        response = sharptriggerer.match_filter_convolution(t_gnuradio, gr_trig_n_width)
+                        detected_trigger = sharptriggerer.match_filter_find_trigger(response)
+                        if detected_trigger is None:
+                            raise Exception("trigger not found")
+                        idx_left_cutoff = sharptriggerer.get_trigger_end(detected_trigger, gr_trig_n_permit_range, gr_trig_n_permit_diff)
+                        if idx_left_cutoff is None:
+                            raise Exception("trigger signal not valid")
+                        t_gnuradio_cut = t_gnuradio[idx_left_cutoff:idx_left_cutoff + round(duration_s*gr_fs)]
+                        traces_gnuradio_l.append(t_gnuradio_cut)
                     finally:
                         if os.path.exists(tracefile):
                             os.remove(tracefile)
@@ -146,10 +194,11 @@ def capture(config_dict):
             capture_fun(state)
         else:
             with Recorder() as r:
-                samplerate = r.get_samprate()
-                print(f"gnuradio_samplerate={samplerate}")
-                assert config_dict["gnuradio_samplerate"] == samplerate
-                capture_fun(state, r)
+                gr_fs = r.get_samprate()
+                print(f"gnuradio_samplerate={gr_fs}")
+                assert config_dict["gnuradio_samplerate"] == gr_fs #maybe this is not true later because not arbitrary values are settable and it is up to some signal synthesis like with CW?
+                experiment_descr["gr_samplerate"] = gr_fs
+                capture_fun(state, cap_handle=r, gr_fs=gr_fs)
     finally:
         sharpwhisperer.set_dac(hw.target, 0)
         sharpwhisperer.set_gate(hw.target, False)
@@ -163,3 +212,7 @@ def capture(config_dict):
     np.save(f"{experiment_dir}/keys.npy", keys)
     np.save(f"{experiment_dir}/plaintexts.npy", plaintexts)
     np.save(f"{experiment_dir}/ciphertexts.npy", ciphertexts)
+
+    save_capture_config(experiment_descr, f"{experiment_dir}/meta/experiment_descr.json")
+
+    return experiment_dir, experiment_descr

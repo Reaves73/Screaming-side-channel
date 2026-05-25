@@ -28,7 +28,7 @@ else:
 fs = 5e6
 sharpvisualizer.plot_time(trace, fs, title=f"original trace")
 
-n_width = int(5e-3 * fs / 100)
+n_width = round(5e-3 * fs / 100)
 print("n_width:", n_width)
 response = sharptriggerer.match_filter_convolution(trace, n_width)
 
