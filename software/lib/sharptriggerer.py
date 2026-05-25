@@ -5,12 +5,12 @@ def match_filter_convolution(trace, n_width):
     kernel = np.r_[-np.ones(n_width), np.ones(n_width)]
 
     # apply padding to avoid edge artifacts in response
-    tracepad = np.pad(trace, n_width, mode='edge')
+    tracepad = np.pad(trace, n_width*2, mode='edge')
     response = np.convolve(tracepad, kernel, mode='same')
 
     return response[n_width:-n_width]
 
-def match_filter_find_trigger(response, debug=False):
+def match_filter_find_trigger(response, n_min_distance, debug=False):
     # find trigger middle (negative response)
     edge_idx = np.argmin(response)
     edge_val = response[edge_idx]
@@ -34,6 +34,7 @@ def match_filter_find_trigger(response, debug=False):
     # Find positive peaks
     pos_peaks, pos_props = find_peaks(
         response,
+        distance=n_min_distance,
         height=positive_threshold
     )
 
@@ -41,6 +42,7 @@ def match_filter_find_trigger(response, debug=False):
     # invert signal so valleys become peaks
     neg_peaks, neg_props = find_peaks(
         -response,
+        distance=n_min_distance,
         height=-negative_threshold
     )
     if debug:

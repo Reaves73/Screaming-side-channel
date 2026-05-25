@@ -19,7 +19,10 @@ response = sharptriggerer.match_filter_convolution(trace, n_width)
 
 sharpvisualizer.plot_time(response, fs, title=f"trigger edge response", pltmode=None)
 
-detected_trigger = sharptriggerer.match_filter_find_trigger(response, debug=True)
+if sharptriggerer.match_filter_find_trigger(response, 1, debug=True) is None:
+  print("trigger distance issue")
+
+detected_trigger = sharptriggerer.match_filter_find_trigger(response, n_width, debug=True)
 if detected_trigger is None:
     sharpvisualizer.plot_fun()
     raise Exception("trigger not found")

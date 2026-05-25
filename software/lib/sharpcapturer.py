@@ -158,7 +158,7 @@ def capture(config_dict):
                         t_gnuradio = np.load(tracefile)
 
                         response = sharptriggerer.match_filter_convolution(t_gnuradio, gr_trig_n_width)
-                        detected_trigger = sharptriggerer.match_filter_find_trigger(response)
+                        detected_trigger = sharptriggerer.match_filter_find_trigger(response, gr_trig_n_width)
                         if detected_trigger is None:
                             print("gnuradio trace: trigger not found")
                             continue
