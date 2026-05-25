@@ -54,8 +54,7 @@ def recv_array(sock):
 
 # -----------------
 
-CAPTURE_START_CMD_PREFIX="CAP START:"
-CAPTURE_START_CMD_SUFFIX=":"
+CAPTURE_START_CMD="CAP START"
 CAPTURE_STOP_CMD="CAP STOP"
 SAMPRATE_GET_CMD="SAMPRATE GET"
 class Recorder:
@@ -93,12 +92,13 @@ class Recorder:
         if ress[0] == "OK " + cmd.split(":")[0]:
             if len(ress) < 2:
                 return result
+            assert len(ress) == 2
             assert result is None
             return ress[1]
         raise Exception(res)
 
     def record_start(self):
-        self._send_cmd(CAPTURE_START_CMD_PREFIX + "" + CAPTURE_START_CMD_SUFFIX)
+        self._send_cmd(CAPTURE_START_CMD)
 
     def record_stop(self):
         return self._send_cmd(CAPTURE_STOP_CMD)

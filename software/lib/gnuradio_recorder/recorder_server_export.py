@@ -23,10 +23,11 @@ def send_array(sock, nparr):
     sock.sendall(struct.pack("!I", len(data)))
     sock.sendall(data)
 
-CAPTURE_START_CMD_PREFIX="CAP START:"
-CAPTURE_START_CMD_SUFFIX=":"
+CAPTURE_START_CMD="CAP START"
 CAPTURE_STOP_CMD="CAP STOP"
 SAMPRATE_GET_CMD="SAMPRATE GET"
+#SAMPRATE_SET_CMD_PREFIX="SAMPRATE SET:"
+#SAMPRATE_SET_CMD_SUFFIX=":"
 def control_server(host="127.0.0.1", port=9999):
     global exportrunning, samprate
 
@@ -47,26 +48,23 @@ def control_server(host="127.0.0.1", port=9999):
         conn, addr = s.accept()
         print(f"connected: {addr}")
         try:
-            export_filename = None
             while True:
                 data = conn.recv(1024).decode().strip()
                 if len(data) == 0:
                     break
                 #print(f"received: {data} from {addr}")
 
-                if data.startswith(CAPTURE_START_CMD_PREFIX) and data.endswith(CAPTURE_START_CMD_SUFFIX):
+                if data == CAPTURE_START_CMD:
                     exportbuffers.clear()
                     exportrunning = True
                     if debug:
                         print(f"start capturing")
-                    export_filename = data[len(CAPTURE_START_CMD_PREFIX):-len(CAPTURE_START_CMD_SUFFIX)]
-                    if debug:
-                        print(f"registered filename: {export_filename}")
                     conn.sendall(b"OK CAP START\n")
 
                 elif data == CAPTURE_STOP_CMD:
                     if debug:
                         print(f"stop capturing")
+                    #TODO: detect if overflow has happened during capture and send an error in this case
                     # signal stopping
                     exportrunning = False
                     # wait for ack, then clear it for next capture
@@ -79,26 +77,19 @@ def control_server(host="127.0.0.1", port=9999):
                     #print(exportbuffers[0].shape)
                     trace = np.concatenate(exportbuffers).astype(np.float32)
                     #print(trace.shape)
-                    # save to file
-                    if False:
-                        try:
-                            np.save(export_filename, trace)
-                            if debug:
-                                print(f"saved to: {export_filename}")
-                            conn.sendall(b"OK CAP STOP\n")
-                        except:
-                            print(f"saving failed: {export_filename}")
-                            conn.sendall(b"FAIL CAP STOP:saving\n")
-                    else:
-                        if debug:
-                            print(f"sending trace")
-                        send_array(conn, trace)
-                        conn.sendall(b"OK CAP STOP\n")
+                    # send serialized through socket
+                    if debug:
+                        print(f"sending trace")
+                    send_array(conn, trace)
+                    conn.sendall(b"OK CAP STOP\n")
 
                 elif data == SAMPRATE_GET_CMD:
                     if debug:
                         print(f"returning samp_rate")
                     conn.sendall(f"OK SAMPRATE GET:{samprate}\n".encode())
+
+                #TODO:
+                #elif data.startswith(SAMPRATE_SET_CMD_PREFIX) and data.endswith(SAMPRATE_SET_CMD_SUFFIX):
 
                 else:
                     conn.sendall(b"UNKNOWN CMD\n")
