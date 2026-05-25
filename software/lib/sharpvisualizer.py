@@ -48,6 +48,9 @@ def plot_fun(pltmode=True):
         if not pltmode:
             plt.show(block=False)
 
+def plot_clear_all():
+    plt.close('all')
+
 def plot_time(samples, fs, title="Time Domain", vlines=None, pltmode=True):
     #fig, ax = plt.subplots()
     t = np.arange(len(samples)) / fs

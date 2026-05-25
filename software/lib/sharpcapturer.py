@@ -251,7 +251,7 @@ def capture(config_dict):
 
     return experiment_dir, experiment_descr
 
-def capture_random_stuff(stuff_id):
+def capture_random_stuff(stuff_id, numtraces=None):
     cfg = sharpwhisperer.get_experiment_setup_config()
     PLATFORM = sharpwhisperer.get_experiment_setup_config_PLATFORM(cfg)
 
@@ -268,25 +268,30 @@ def capture_random_stuff(stuff_id):
     tracefile = f"{tempfile.gettempdir()}/traces_testing_{dstr}.npy"
 
     sharpwhisperer.init_target(hw)
-    trace = None
+    traces_l = []
     try:
         sharpwhisperer.set_dac(hw.target, 0)
         sharpwhisperer.set_gate(hw.target, True)
         sharpwhisperer.init_sharppeak(hw.target, PLATFORM)
         with Recorder() as r:
             print(f"samprate={r.get_samprate()}")
-            r.record_start(tracefile)
-            time.sleep(0.01)
-            sharpwhisperer.do_random_stuff(hw.target, stuff_id)
-            r.record_stop()
-            trace = np.load(tracefile)
+            for _ in range(1 if numtraces is None else numtraces):
+                r.record_start(tracefile)
+                time.sleep(0.01)
+                sharpwhisperer.do_random_stuff(hw.target, stuff_id)
+                time.sleep(0.001)
+                r.record_stop()
+                traces_l.append(np.load(tracefile))
     finally:
         sharpwhisperer.set_dac(hw.target, 0)
         sharpwhisperer.set_gate(hw.target, False)
         hw.disconnect()
         if os.path.exists(tracefile):
             os.remove(tracefile)
-    return trace
+    if numtraces is None:
+        assert len(traces_l) == 1
+        return traces_l[0]
+    return tracelist_to_nparray(traces_l)
 
 # wrapper for capture functions that synchronizes the users
 import fcntl
