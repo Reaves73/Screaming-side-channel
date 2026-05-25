@@ -2,6 +2,9 @@ import socket
 import subprocess
 import threading
 import os
+import struct
+import numpy as np
+from io import BytesIO
 
 def print_recorder_server(p):
     for line in p.stdout:
@@ -28,6 +31,28 @@ def start_recorder_server():
 
 def stop_recorder_server(p):
     p.kill()
+
+# -----------------
+
+def recv_exact(sock, n):
+    data = b""
+    while len(data) < n:
+        packet = sock.recv(n - len(data))
+        if not packet:
+            raise ConnectionError("socket closed")
+        data += packet
+    return data
+
+def recv_array(sock):
+    # read length prefix
+    size = struct.unpack("!I", recv_exact(sock, 4))[0]
+
+    # read payload
+    data = recv_exact(sock, size)
+
+    return np.load(BytesIO(data), allow_pickle=False)
+
+# -----------------
 
 CAPTURE_START_CMD_PREFIX="CAP START:"
 CAPTURE_START_CMD_SUFFIX=":"
@@ -59,12 +84,16 @@ class Recorder:
     def _send_cmd(self, cmd):
         #print(f"- sending '{cmd}'")
         self._s.sendall(cmd.encode())
+        result = None
+        if cmd == CAPTURE_STOP_CMD:
+            result = recv_array(self._s)
         res = self._s.recv(1024).decode().strip()
         #print(res)
         ress = res.split(":")
         if ress[0] == "OK " + cmd.split(":")[0]:
             if len(ress) < 2:
-                return None
+                return result
+            assert result is None
             return ress[1]
         raise Exception(res)
 
@@ -72,7 +101,7 @@ class Recorder:
         self._send_cmd(CAPTURE_START_CMD_PREFIX + filename + CAPTURE_START_CMD_SUFFIX)
 
     def record_stop(self):
-        self._send_cmd(CAPTURE_STOP_CMD)
+        return self._send_cmd(CAPTURE_STOP_CMD)
     
     def get_samprate(self):
         return float(self._send_cmd(SAMPRATE_GET_CMD))

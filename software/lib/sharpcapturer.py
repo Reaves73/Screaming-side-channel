@@ -153,8 +153,8 @@ def capture_core(config_dict):
                 if cap_handle is not None:
                     time.sleep(0.02)
                     try:
-                        cap_handle.record_stop()
-                        t_gnuradio = np.load(tracefile)
+                        t_gnuradio = cap_handle.record_stop()
+                        #t_gnuradio = np.load(tracefile)
 
                         response = sharptriggerer.match_filter_convolution(t_gnuradio, gr_trig_n_width)
                         detected_trigger = sharptriggerer.match_filter_find_trigger(response, gr_trig_n_width)
@@ -279,8 +279,8 @@ def capture_random_stuff_core(stuff_id, numtraces=None):
                 time.sleep(0.01)
                 sharpwhisperer.do_random_stuff(hw.target, stuff_id)
                 time.sleep(0.001)
-                r.record_stop()
-                traces_l.append(np.load(tracefile))
+                traces_l.append(r.record_stop())
+                #traces_l.append(np.load(tracefile))
     finally:
         sharpwhisperer.set_dac(hw.target, 0)
         sharpwhisperer.set_gate(hw.target, False)

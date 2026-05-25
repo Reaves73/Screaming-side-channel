@@ -1,6 +1,8 @@
 import threading
 import socket
 import numpy as np
+import struct
+from io import BytesIO
 import time
 
 exportrunning = False
@@ -10,6 +12,16 @@ exportfishedevent = threading.Event()
 samprate = None
 
 debug = False
+
+def send_array(sock, nparr):
+    buf = BytesIO()
+    np.save(buf, nparr, allow_pickle=False)
+
+    data = buf.getvalue()
+
+    # send length prefix first
+    sock.sendall(struct.pack("!I", len(data)))
+    sock.sendall(data)
 
 CAPTURE_START_CMD_PREFIX="CAP START:"
 CAPTURE_START_CMD_SUFFIX=":"
@@ -68,14 +80,20 @@ def control_server(host="127.0.0.1", port=9999):
                     trace = np.concatenate(exportbuffers).astype(np.float32)
                     #print(trace.shape)
                     # save to file
-                    try:
-                        np.save(export_filename, trace)
+                    if False:
+                        try:
+                            np.save(export_filename, trace)
+                            if debug:
+                                print(f"saved to: {export_filename}")
+                            conn.sendall(b"OK CAP STOP\n")
+                        except:
+                            print(f"saving failed: {export_filename}")
+                            conn.sendall(b"FAIL CAP STOP:saving\n")
+                    else:
                         if debug:
-                            print(f"saved to: {export_filename}")
+                            print(f"sending trace")
+                        send_array(conn, trace)
                         conn.sendall(b"OK CAP STOP\n")
-                    except:
-                        print(f"saving failed: {export_filename}")
-                        conn.sendall(b"FAIL CAP STOP:saving\n")
 
                 elif data == SAMPRATE_GET_CMD:
                     if debug:
