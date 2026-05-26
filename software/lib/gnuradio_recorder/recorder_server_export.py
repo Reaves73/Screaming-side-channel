@@ -20,6 +20,7 @@ def send_async_msg(msg):
     assert send_async_msg_fn is not None
     send_async_msg_fn(msg)
 
+# NOTE: this works because the demodulation block doesn't rely on knowing the sampling rate
 def set_samplingrate(samp_rate):
     global samprate
     if samprate == samp_rate:
@@ -30,7 +31,8 @@ def set_samplingrate(samp_rate):
     send_async_msg(msg)
     samprate = samp_rate
     print(f"USRP: updating, samp_rate={samp_rate}")
-    time.sleep(0.5) # pause to let demodulation catch up to the change (hope this is enough and helps)
+    # TODO: maybe better to synchronize via export_data. there might not data coming until that is done, or at least not after buffers are running empty
+    time.sleep(1.0) # pause to let demodulation catch up to the change (hope this is enough and helps, 0.5 was too short, 0.8 seemed enough)
 
 def send_array(sock, nparr):
     buf = BytesIO()
