@@ -86,7 +86,6 @@ def control_server(host="127.0.0.1", port=9999):
                 elif data == CAPTURE_STOP_CMD:
                     if debug:
                         print(f"stop capturing")
-                    #TODO: detect if overflow has happened during capture and send an error in this case
                     # signal stopping
                     # TODO: don't need this race condition check actually, it is covered by the "while not exportrunning_onemore" in the start procedure
                     if not exportrunning_onemore:
@@ -167,6 +166,9 @@ def export_data(d):
     if debug:
         print(".", end="", flush="True")
 
+# NOTE: cannot detect whether overflow has happened during capture, as these messages are asynchronous and in case of many overflows are
+# NOTE: could only tear down the whole server to radically mark data reliability issue in case of many overflows happening at the same time at some point
+# NOTE: but then, what value would be good to also avoid unnecessary false alarms?
 import pmt
 def handle_async_msg(msg):
     print("!! USRP: ", type(msg), msg)
