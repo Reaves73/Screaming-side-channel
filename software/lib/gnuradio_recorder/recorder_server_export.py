@@ -8,6 +8,7 @@ import sys
 
 exportrunning = False
 exportbuffers = [] # TODO: maybe better to send this in a queue?
+exportrunning_onemore = False
 exportfishedevent = threading.Event()
 
 samprate = None
@@ -47,7 +48,7 @@ SAMPRATE_GET_CMD="SAMPRATE GET"
 SAMPRATE_SET_CMD_PREFIX="SAMPRATE SET:"
 SAMPRATE_SET_CMD_SUFFIX=":"
 def control_server(host="127.0.0.1", port=9999):
-    global exportrunning, samprate
+    global exportrunning, exportrunning_onemore, samprate
 
     while lastbuffer is None:
         time.sleep(0.1)
@@ -75,6 +76,9 @@ def control_server(host="127.0.0.1", port=9999):
                 if data == CAPTURE_START_CMD:
                     exportbuffers.clear()
                     exportrunning = True
+                    # TODO: this while solution is not so great, should have a timeout, but prevents race condition at least
+                    while not exportrunning_onemore:
+                        time.sleep(0.001)
                     if debug:
                         print(f"start capturing")
                     conn.sendall(b"OK CAP START\n")
@@ -84,6 +88,11 @@ def control_server(host="127.0.0.1", port=9999):
                         print(f"stop capturing")
                     #TODO: detect if overflow has happened during capture and send an error in this case
                     # signal stopping
+                    # TODO: don't need this race condition check actually, it is covered by the "while not exportrunning_onemore" in the start procedure
+                    if not exportrunning_onemore:
+                        print(f"race condition averted")
+                        send_array(conn, np.array([]))
+                        conn.sendall(b"FAIL CAP STOP\n")
                     exportrunning = False
                     # wait for ack, then clear it for next capture
                     exportfishedevent.wait()
@@ -134,7 +143,6 @@ def init(samp_rate):
     threading.Thread(target=control_server, daemon=True).start()
 
 lastbuffer = None
-exportrunning_onemore = False
 def export_data(d):
     global lastbuffer, exportrunning_onemore
 
