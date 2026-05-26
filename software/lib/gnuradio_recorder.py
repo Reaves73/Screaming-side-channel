@@ -63,6 +63,9 @@ class Recorder:
             print("running recorder_server in background")
         self._server = server
         self._s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._timeout = 2
+        self._s.settimeout(self._timeout)
+        #print("Recorder socket timeout:", self._s.gettimeout())
         self._p = None
 
     def __enter__(self):
@@ -72,6 +75,7 @@ class Recorder:
             server_address = "127.0.0.1"
             self._p = start_recorder_server()
         self._s.connect((server_address, 9999))
+        assert self._s.gettimeout() == self._timeout
         return self
 
     def __exit__(self, type, value, traceback):

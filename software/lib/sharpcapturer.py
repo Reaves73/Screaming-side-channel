@@ -147,7 +147,10 @@ def capture_core(config_dict):
 
         for i in tqdm(range(n_traces)): # NOTE: it is important for last_complete_trace_idx that this index i is starting from 0 and incrementing
             key, text = state
-            while True:
+
+            capture_ok = False
+            capture_retries_max = 10
+            for _ in range(capture_retries_max):
                 if cap_handle is not None:
                     cap_handle.record_start()
                 ret = hw.capture(text, key)
@@ -176,7 +179,11 @@ def capture_core(config_dict):
                     print("chipwhisperer: trace not captured")
                     continue
 
+                capture_ok = True
                 break
+            if not capture_ok:
+                raise Exception(f"after {capture_retries_max} capturing retries, no success")
+
             k = np.array(list(ret.key), dtype=np.uint8)
             c = np.array(list(ret.textout), dtype=np.uint8)
             p = np.array(list(ret.textin), dtype=np.uint8)
