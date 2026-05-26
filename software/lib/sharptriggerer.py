@@ -5,7 +5,7 @@ def match_filter_convolution(trace, n_width):
     kernel = np.r_[-np.ones(n_width), np.ones(n_width)]
 
     # apply padding to avoid edge artifacts in response
-    tracepad = np.pad(trace, n_width*2, mode='edge')
+    tracepad = np.pad(trace, n_width*2, mode='mean') # TODO: maybe n_width*1 is enough
     response = np.convolve(tracepad, kernel, mode='same')
 
     return response[n_width:-n_width]

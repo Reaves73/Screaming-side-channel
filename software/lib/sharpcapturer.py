@@ -165,7 +165,7 @@ def capture_core(config_dict):
                         continue
                     idx_left_cutoff = sharptriggerer.get_trigger_end(detected_trigger, gr_trig_n_permit_range, gr_trig_n_permit_diff)
                     if idx_left_cutoff is None:
-                        print("gnuradio trace: trigger signal not valid (e.g., not clean enough)")
+                        print("gnuradio trace: trigger signal not valid") # NOTE: e.g., not clean enough, overflow has happened so that at least one plateau is compressed
                         continue
                     idx_right_cutoff = idx_left_cutoff + gnuradio_n_samples#round(duration_s*gr_fs)
                     #print(t_gnuradio.size)
