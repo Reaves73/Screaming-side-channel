@@ -120,7 +120,10 @@ def capture_core(config_dict):
 
     if include_trace_chipwhisperer:
         traces_chipwhisperer = np.zeros([n_traces, chipwhisperer_n_samples], dtype=np.float32)
-    traces_gnuradio_l = []
+    if include_trace_gnuradio:
+        #traces_gnuradio_l = []
+        gnuradio_n_samples = round(duration_s * config_dict["gnuradio_samplerate"])
+        traces_gnuradio = np.zeros([n_traces, gnuradio_n_samples], dtype=np.float32)
 
     plaintexts = np.zeros([n_traces, 16], dtype=np.uint8)
     ciphertexts = np.zeros([n_traces, 16], dtype=np.uint8)
@@ -161,13 +164,13 @@ def capture_core(config_dict):
                     if idx_left_cutoff is None:
                         print("gnuradio trace: trigger signal not valid")
                         continue
-                    idx_right_cutoff = idx_left_cutoff + round(duration_s*gr_fs)
+                    idx_right_cutoff = idx_left_cutoff + gnuradio_n_samples#round(duration_s*gr_fs)
                     #print(t_gnuradio.size)
                     if t_gnuradio.size <= idx_right_cutoff:
                         print("gnuradio trace: trace not completely captured")
                         continue
                     t_gnuradio_cut = t_gnuradio[idx_left_cutoff:idx_right_cutoff]
-                    traces_gnuradio_l.append(t_gnuradio_cut)
+                    #traces_gnuradio_l.append(t_gnuradio_cut)
 
                 if ret is None:
                     print("chipwhisperer: trace not captured")
@@ -185,6 +188,8 @@ def capture_core(config_dict):
 
             if include_trace_chipwhisperer:
                 traces_chipwhisperer[i] = t
+            if include_trace_gnuradio:
+                traces_gnuradio[i] = t_gnuradio_cut
             #traces[i, :len(seg)] = seg
             plaintexts[i] = p
             ciphertexts[i] = c
@@ -236,7 +241,7 @@ def capture_core(config_dict):
             if include_trace_chipwhisperer:
                 np.save(f"{experiment_dir}/traces_chipwhisperer.npy", traces_chipwhisperer[:n_tr,:])
             if include_trace_gnuradio:
-                np.save(f"{experiment_dir}/traces_gnuradio.npy", tracelist_to_nparray(traces_gnuradio_l)[:n_tr,:])
+                np.save(f"{experiment_dir}/traces_gnuradio.npy", traces_gnuradio[:n_tr,:]) #tracelist_to_nparray(traces_gnuradio_l)
             np.save(f"{experiment_dir}/keys.npy", keys[:n_tr,:])
             np.save(f"{experiment_dir}/plaintexts.npy", plaintexts[:n_tr,:])
             np.save(f"{experiment_dir}/ciphertexts.npy", ciphertexts[:n_tr,:])
