@@ -258,7 +258,7 @@ def capture_core(config_dict):
 
     return experiment_dir, experiment_descr
 
-def capture_random_stuff_core(stuff_id, numtraces=None):
+def capture_random_stuff_core(stuff_id, numtraces=None, fs=None):
     cfg = sharpwhisperer.get_experiment_setup_config()
     PLATFORM = sharpwhisperer.get_experiment_setup_config_PLATFORM(cfg)
 
@@ -278,6 +278,7 @@ def capture_random_stuff_core(stuff_id, numtraces=None):
         sharpwhisperer.set_gate(hw.target, True)
         sharpwhisperer.init_sharppeak(hw.target, PLATFORM)
         with Recorder() as r:
+            r.set_samprate(fs)
             print(f"samprate={r.get_samprate()}")
             for _ in range(1 if numtraces is None else numtraces):
                 r.record_start()

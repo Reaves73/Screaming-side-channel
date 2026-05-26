@@ -9,15 +9,23 @@ import sharptriggerer
 import sharpvisualizer
 
 import argparse
+import numpy as np
 
 # parse arguments
 # ---------------------------
 parser = argparse.ArgumentParser()
+parser.add_argument("-f", "--filepath", help="path to traces file (must be uncut traces with trigger!!!)")
 parser.add_argument("-n", "--n_traces", help="number of traces (default: 1)", type=int, default=1)
+parser.add_argument("-fs", "--samprate", help="sampling rate (default: 5e6)", type=float, default=5e6)
 
 args = parser.parse_args()
 
-traces = sharpcapturer.capture_random_stuff(2, numtraces=args.n_traces)
+fs = args.samprate
+if args.filepath is not None:
+    traces = np.load(args.filepath)
+    traces = traces[:args.n_traces,:]
+else:
+    traces = sharpcapturer.capture_random_stuff(2, numtraces=args.n_traces, fs=fs)
 assert traces is not None
 
 for trace_idx in range(traces.shape[0]):
@@ -25,7 +33,6 @@ for trace_idx in range(traces.shape[0]):
     print("="*20)
     trace = traces[trace_idx,:]
 
-    fs = 5e6
     sharpvisualizer.plot_time(trace, fs, title=f"original trace", pltmode=None)
 
     n_width = round(5e-3 * fs / 100)

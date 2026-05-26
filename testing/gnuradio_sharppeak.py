@@ -10,8 +10,16 @@ import datetime
 import tempfile
 import numpy as np
 import matplotlib.pyplot as plt
+import argparse
 
-trace = sharpcapturer.capture_random_stuff(3)
+# parse arguments
+# ---------------------------
+parser = argparse.ArgumentParser()
+parser.add_argument("-fs", "--samprate", help="sampling rate (default: 5e6)", type=float, default=5e6)
+
+args = parser.parse_args()
+
+trace = sharpcapturer.capture_random_stuff(3, fs=args.samprate)
 assert trace is not None
 
 # now visualize the trace
