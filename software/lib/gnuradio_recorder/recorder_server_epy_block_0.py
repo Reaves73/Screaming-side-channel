@@ -50,7 +50,7 @@ class PythonExportBlock(gr.sync_block):
         return self.handle_async_msg_func(msg)
 
     def send_cmd(self, msg):
-        return message_port_pub(pmt.intern("cmd_out"), msg)
+        return self.message_port_pub(pmt.intern("cmd_out"), msg)
 
     def work(self, input_items, output_items):
         data = input_items[0]        

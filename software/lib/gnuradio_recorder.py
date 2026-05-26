@@ -57,6 +57,8 @@ def recv_array(sock):
 CAPTURE_START_CMD="CAP START"
 CAPTURE_STOP_CMD="CAP STOP"
 SAMPRATE_GET_CMD="SAMPRATE GET"
+SAMPRATE_SET_CMD_PREFIX="SAMPRATE SET:"
+SAMPRATE_SET_CMD_SUFFIX=":"
 class Recorder:
     def __init__(self, server=None):
         if server is None:
@@ -109,6 +111,9 @@ class Recorder:
     
     def get_samprate(self):
         return float(self._send_cmd(SAMPRATE_GET_CMD))
+    
+    def set_samprate(self, rate):
+        return self._send_cmd(SAMPRATE_SET_CMD_PREFIX + str(rate) + SAMPRATE_SET_CMD_SUFFIX)
 
 
 if __name__ == '__main__':

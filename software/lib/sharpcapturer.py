@@ -211,6 +211,7 @@ def capture_core(config_dict):
             capture_fun(state)
         else:
             with Recorder() as r:
+                r.set_samprate(config_dict["gnuradio_samplerate"])
                 gr_fs = r.get_samprate()
                 print(f"gnuradio_samplerate={gr_fs}")
                 #NOTE: maybe this is not true later because not arbitrary values are settable and it is up to some signal synthesis like with CW?

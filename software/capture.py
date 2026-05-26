@@ -22,6 +22,8 @@ parser.add_argument("-n", "--n_traces", help="number of traces (default: 1000)",
 parser.add_argument("--cw_adc_clkgen_x4", help="chipwhisperer adc_src set to clkgen_x4 (otherwise clkgen_x1)", action="store_true", default=False)
 parser.add_argument("--cw_n_decimate", help="chipwhisperer decimate (default: 1)", type=int, default=1)
 
+parser.add_argument("--gr_samprate", help="gnuradio sample rate (default: 5e6)", type=float, default=5e6)
+
 parser.add_argument("--exclude_gnuradio", help="disable gnuradio trace collection", action="store_true", default=False)
 
 parser.add_argument("--visualize_trace_cw", help="for debugging. after capturing, visualize the first chipwhisperer trace", action="store_true", default=False)
@@ -53,7 +55,7 @@ config_dict["chipwhisperer_n_decimate"] = args.cw_n_decimate
 #config_dict["chipwhisperer_n_decimate"] = 1
 #config_dict["chipwhisperer_n_decimate"] = 4
 
-config_dict["gnuradio_samplerate"] = 5e6 # cannot be changed currently
+config_dict["gnuradio_samplerate"] = args.gr_samprate
 
 
 # run the capturing function

@@ -301,7 +301,7 @@ blocks:
       )\n            setattr(self.exportmodule, \"send_async_msg_fn\", self.send_cmd)\n\
       \n        self.set_msg_handler(pmt.intern('msg_in'), self.handle_msg)\n\n  \
       \  def handle_msg(self, msg):\n        return self.handle_async_msg_func(msg)\n\
-      \n    def send_cmd(self, msg):\n        return message_port_pub(pmt.intern(\"\
+      \n    def send_cmd(self, msg):\n        return self.message_port_pub(pmt.intern(\"\
       cmd_out\"), msg)\n\n    def work(self, input_items, output_items):\n       \
       \ data = input_items[0]        \n        #print(len(data))\n        self.process_data_func(data)\n\
       \        #print(data[:10])  # do whatever you want\n        return len(data)\n\

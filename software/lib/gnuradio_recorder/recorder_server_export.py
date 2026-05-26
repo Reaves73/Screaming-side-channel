@@ -14,6 +14,23 @@ samprate = None
 
 debug = False
 
+send_async_msg_fn = None
+def send_async_msg(msg):
+    assert send_async_msg_fn is not None
+    send_async_msg_fn(msg)
+
+def set_samplingrate(samp_rate):
+    global samprate
+    if samprate == samp_rate:
+        print(f"USRP: do nothing, samp_rate={samp_rate}")
+        return
+    msg = pmt.make_dict()
+    msg = pmt.dict_add(msg, pmt.intern("rate"), pmt.from_float(samp_rate)) #pmt.from_float(45e6) # pmt.to_pmt(...)
+    send_async_msg(msg)
+    samprate = samp_rate
+    print(f"USRP: updating, samp_rate={samp_rate}")
+    time.sleep(0.5) # pause to let demodulation catch up to the change (hope this is enough and helps)
+
 def send_array(sock, nparr):
     buf = BytesIO()
     np.save(buf, nparr, allow_pickle=False)
@@ -27,8 +44,8 @@ def send_array(sock, nparr):
 CAPTURE_START_CMD="CAP START"
 CAPTURE_STOP_CMD="CAP STOP"
 SAMPRATE_GET_CMD="SAMPRATE GET"
-#SAMPRATE_SET_CMD_PREFIX="SAMPRATE SET:"
-#SAMPRATE_SET_CMD_SUFFIX=":"
+SAMPRATE_SET_CMD_PREFIX="SAMPRATE SET:"
+SAMPRATE_SET_CMD_SUFFIX=":"
 def control_server(host="127.0.0.1", port=9999):
     global exportrunning, samprate
 
@@ -89,8 +106,12 @@ def control_server(host="127.0.0.1", port=9999):
                         print(f"returning samp_rate")
                     conn.sendall(f"OK SAMPRATE GET:{samprate}\n".encode())
 
-                #TODO:
-                #elif data.startswith(SAMPRATE_SET_CMD_PREFIX) and data.endswith(SAMPRATE_SET_CMD_SUFFIX):
+                elif data.startswith(SAMPRATE_SET_CMD_PREFIX) and data.endswith(SAMPRATE_SET_CMD_SUFFIX):
+                    samp_rate = float(data[len(SAMPRATE_SET_CMD_PREFIX):-len(SAMPRATE_SET_CMD_SUFFIX)])
+                    if debug:
+                        print(f"received command to set new sample rate: {samp_rate}")
+                    set_samplingrate(samp_rate)
+                    conn.sendall(b"OK SAMPRATE SET\n")
 
                 else:
                     conn.sendall(b"UNKNOWN CMD\n")
@@ -100,6 +121,7 @@ def control_server(host="127.0.0.1", port=9999):
             print("RECORDER_SERVER error: during socket handling:", e, file=sys.stderr)
         finally:
             conn.close()
+            exportrunning = False
             try:
                 print(f"disconnected: {addr}")
             except BrokenPipeError:
@@ -108,7 +130,7 @@ def control_server(host="127.0.0.1", port=9999):
 def init(samp_rate):
     global samprate
     samprate = samp_rate
-    print(f"initing, samp_rate={samp_rate}")
+    print(f"USRP: initing, samp_rate={samp_rate}")
     threading.Thread(target=control_server, daemon=True).start()
 
 lastbuffer = None
@@ -134,11 +156,35 @@ def export_data(d):
         lastbuffer = None
         exportrunning_onemore = True
     exportbuffers.append(d.copy())
+    if debug:
+        print(".", end="", flush="True")
 
+import pmt
 def handle_async_msg(msg):
+    print("!! USRP: ", type(msg), msg)
     return None
-
-send_async_msg_fn = None
-def send_async_msg(msg):
-    assert send_async_msg_fn is not None
-    send_async_msg_fn(msg)
+    #<class 'pmt.pmt_python.pmt_base'> (uhd_async_msg (overflows . 2))
+    msg_p = pmt.to_python(msg)
+    print(msg_p)
+    if msg_p[0] == "uhd_async_msg":
+        uhd_am_d = msg_p[1]
+        try:
+            n_overflows = uhd_am_d["overflows"]
+            print("Overflows detected:", n_overflows)
+        except:
+            pass
+    #if pmt.is_pair(msg):
+    #    v_l = pmt.car(msg)
+    #    v_r = pmt.cdr(msg)
+    #    if pmt.symbol_to_string(v_l) == "uhd_async_msg":
+    #        #print(v_r)
+    #        #print(pmt.is_pair(v_r))
+    #        #print(pmt.is_dict(v_r))
+    #        if pmt.is_dict(v_r):
+    #            k_uhdam_overflows = pmt.intern("overflows")
+    #            if pmt.dict_has_key(v_r, k_uhdam_overflows):
+    #                n_overflows_pmt = pmt.dict_ref(v_r, k_uhdam_overflows, pmt.PMT_NIL)
+    #                if pmt.is_number(n_overflows_pmt):
+    #                    n_overflows = pmt.to_python(n_overflows_pmt)
+    #                    print("Overflows detected:", n_overflows, type(n_overflows))
+    return None
