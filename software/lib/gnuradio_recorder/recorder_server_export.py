@@ -4,6 +4,7 @@ import numpy as np
 import struct
 from io import BytesIO
 import time
+import sys
 
 exportrunning = False
 exportbuffers = [] # TODO: maybe better to send this in a queue?
@@ -96,10 +97,13 @@ def control_server(host="127.0.0.1", port=9999):
                     print(f"unknown command: {data}")
                     break
         except Exception as e:
-            print("socket error:", e)
+            print("RECORDER_SERVER error: during socket handling:", e, file=sys.stderr)
         finally:
             conn.close()
-            print(f"disconnected: {addr}")
+            try:
+                print(f"disconnected: {addr}")
+            except BrokenPipeError:
+                print("RECORDER_SERVER error: cannot print to stdout, pipe broken (other process died?)", file=sys.stderr)
 
 def init(samp_rate):
     global samprate
