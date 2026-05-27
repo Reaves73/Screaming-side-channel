@@ -37,7 +37,7 @@ def validate_experiment_setup_config(cfg):
     assert type(cfg["sharppeak_on_dac_directly"]) == bool
 
     assert cfg["chipwhisperer_adc_to_target_power"] ^ cfg["chipwhisperer_adc_to_dac"]
-    assert cfg["chipwhisperer_adc_to_dac"] ^ cfg["sharppeak_on_dac_directly"]
+    assert not(cfg["chipwhisperer_adc_to_dac"] and cfg["sharppeak_on_dac_directly"])
 
     assert type(cfg["notes"]) == str
 
@@ -220,6 +220,11 @@ def program_target(PLATFORM, FIRMWARE, hw, compile=True):
     if target_platform != PLATFORM:
         print(f"target reports unexpected id directly after programming: {target_platform}")
         assert False
+
+def finalize_sharpwhisperer():
+    # TODO: set DAC to 0, turn off gate, power off the MCU
+    # TODO: should make sure to not raise Exceptions so that this can be the "finally" cleanup code everywhere
+    pass
 
 # ---------------------------
 
