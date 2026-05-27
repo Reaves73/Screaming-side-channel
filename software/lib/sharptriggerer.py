@@ -10,7 +10,7 @@ def match_filter_convolution(trace, n_width):
 
     return response[n_width:-n_width]
 
-def match_filter_find_trigger(response, n_min_distance, debug=False):
+def match_filter_find_trigger(response, n_min_distance=None, debug=False):
     # find trigger middle (negative response)
     edge_idx = np.argmin(response)
     edge_val = response[edge_idx]
