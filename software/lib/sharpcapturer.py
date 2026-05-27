@@ -223,22 +223,12 @@ def capture_core(config_dict):
                 capture_fun(state, cap_handle=r, gr_fs=gr_fs)
     except KeyboardInterrupt:
         experiment_descr["capture_abort_reason"] = "KeyboardInterrupt"
-        print("Aborting capture.")
-        # reset CW target because we might have disturbed simpleserial
-        sharpwhisperer.init_target(hw)
-    except:
-        experiment_descr["capture_abort_reason"] = "Exception"
-        # reset CW target because the exception might have disturbed simpleserial
-        sharpwhisperer.init_target(hw)
+        print("Capture abort requested by user.")
+    except Exception as e:
+        experiment_descr["capture_abort_reason"] = f"Exception [{e}]"
         raise
     finally:
-        try:
-            sharpwhisperer.set_dac(hw.target, 0)
-            sharpwhisperer.set_gate(hw.target, False)
-            # DISCONNECT
-            hw.disconnect()
-        except:
-            print("ERROR: failed to set DAC, gate and disconnect from target")
+        sharpwhisperer.finalize_sharpwhisperer(hw)
 
         if last_complete_trace_idx[0] == n_traces - 1:
             experiment_descr["capture_complete"] = True
@@ -290,9 +280,7 @@ def capture_random_stuff_core(stuff_id, numtraces=None, fs=None):
                 time.sleep(0.02)
                 traces_l.append(r.record_stop())
     finally:
-        sharpwhisperer.set_dac(hw.target, 0)
-        sharpwhisperer.set_gate(hw.target, False)
-        hw.disconnect()
+        sharpwhisperer.finalize_sharpwhisperer(hw)
     if numtraces is None:
         assert len(traces_l) == 1
         return traces_l[0]

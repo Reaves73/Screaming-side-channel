@@ -120,10 +120,12 @@ def main():
         print("Unknown command.")
         print_usage()
 
+    except KeyboardInterrupt:
+        print()
+        print("Closing console.")
+
     finally:
-      sharpwhisperer.set_dac(hw.target, 0)
-      sharpwhisperer.set_gate(hw.target, False)
-      hw.disconnect()
+        sharpwhisperer.finalize_sharpwhisperer(hw)
 
 
 if __name__ == "__main__":

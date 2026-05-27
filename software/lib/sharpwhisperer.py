@@ -177,8 +177,10 @@ def get_platform_id(target):
 def get_firmware(PLATFORM, FIRMWARE):
     return f'{REPOPATH}/firmware/{FIRMWARE}/{FIRMWARE}-{PLATFORM}.hex'
 
-def set_target_power(scope, on):
+def set_target_power(scope, on, do_print=False):
     scope.io.target_pwr = on
+    if do_print:
+        print(f"Target turned {'on' if on else 'off'}")
 
 def reset_target(scope):
     set_target_power(scope, False)
@@ -221,10 +223,28 @@ def program_target(PLATFORM, FIRMWARE, hw, compile=True):
         print(f"target reports unexpected id directly after programming: {target_platform}")
         assert False
 
-def finalize_sharpwhisperer():
-    # TODO: set DAC to 0, turn off gate, power off the MCU
-    # TODO: should make sure to not raise Exceptions so that this can be the "finally" cleanup code everywhere
-    pass
+# TODO: should probably implement this and the locking as a context manager
+def finalize_sharpwhisperer(hw):
+    # TODO: there might be a better way to just resynchronize simpserial communication
+    # first determine if simpserial is still functional, if not init the target again to bring it into a defined state
+    try:
+        # probe if simpserial communication is usable, this call should always succeed in this case
+        assert get_platform_id(hw.target) == hw.platform
+    except:
+        # reset CW target because the exception might have disturbed simpleserial
+        print("INFO: resetting target to reenable simpserial")
+        init_target(hw)
+    # make sure to not raise Exceptions so that this can be the "finally" cleanup code everywhere
+    try:
+        # set DAC to 0, turn off gate, power off the MCU
+        set_dac(hw.target, 0)
+        set_gate(hw.target, False)
+        set_target_power(hw.scope, False, do_print=True)
+        # DISCONNECT
+        hw.disconnect()
+    except Exception as e:
+        print("ERROR: failed to zero DAC, disable gate, turn off MCU power, and disconnect from target")
+        print(f"ERROR: uncaught exception when finalizing!!! {e}")
 
 # ---------------------------
 
