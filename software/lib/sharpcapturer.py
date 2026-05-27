@@ -103,10 +103,13 @@ def capture_core(config_dict):
 
     sharpwhisperer.init_target(hw)
     #sharpwhisperer.program_target(PLATFORM, FIRMWARE, hw)
-    if include_trace_gnuradio:
+    if config_dict["include_trace_gnuradio"] or config_dict["force_dac"]:
         sharpwhisperer.set_dac(hw.target, 0)
         sharpwhisperer.set_gate(hw.target, True)
-        sharpwhisperer.init_sharppeak(hw.target, PLATFORM)
+        if config_dict["force_dac"]:
+            sharpwhisperer.set_dac(hw.target, 700)
+        else:
+            sharpwhisperer.init_sharppeak(hw.target, PLATFORM)
     else:
         # TODO: this is maybe not ideal, but it preserves the poor-man's error handling as endless loop in dacadc driver's dac_trigger function
         sharpwhisperer.set_gate(hw.target, False)

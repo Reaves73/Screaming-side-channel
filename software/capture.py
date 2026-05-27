@@ -25,6 +25,7 @@ parser.add_argument("--cw_n_decimate", help="chipwhisperer decimate (default: 1)
 parser.add_argument("--gr_samprate", help="gnuradio sample rate (default: 5e6)", type=float, default=5e6)
 
 parser.add_argument("--exclude_gnuradio", help="disable gnuradio trace collection", action="store_true", default=False)
+parser.add_argument("--force_dac", help="force DAC to be used and fix at 0.7 V (even though gnuradio trace collection is disabled)", action="store_true", default=False)
 
 parser.add_argument("--visualize_trace_cw", help="for debugging. after capturing, visualize the first chipwhisperer trace", action="store_true", default=False)
 parser.add_argument("--visualize_trace_gr", help="for debugging. after capturing, visualize the first gnuradio trace", action="store_true", default=False)
@@ -43,6 +44,7 @@ config_dict["n_traces"] = args.n_traces
 #config_dict["n_traces"] = 50
 #config_dict["n_traces"] = 5000
 
+config_dict["force_dac"] = args.force_dac
 config_dict["include_trace_chipwhisperer"] = True
 config_dict["include_trace_gnuradio"] = not args.exclude_gnuradio
 
