@@ -1,19 +1,37 @@
 import numpy as np
 from scipy.signal import find_peaks
 
-oldmode = True
+# 0 - old (stricter)
+# 1 - new (remove close small peaks)
+# 2 - update (remove close peaks from the left)
+trigger_proc_ver = 2
 
 def match_filter_convolution(trace, n_width):
     kernel = np.r_[-np.ones(n_width), np.ones(n_width)]
 
+    pad_width = n_width if trigger_proc_ver == 0 else (n_width*2) # TODO: maybe n_width*1 is enough
+    pad_mode = 'edge' if trigger_proc_ver == 0 else 'mean'
+
     # apply padding to avoid edge artifacts in response
-    tracepad = np.pad(trace, n_width if oldmode else (n_width*2), mode=('edge' if oldmode else 'mean')) # TODO: maybe n_width*1 is enough
+    tracepad = np.pad(trace, pad_width, mode=pad_mode)
     response = np.convolve(tracepad, kernel, mode='same')
 
     return response[n_width:-n_width]
 
+def remove_close_values(values, min_distance):
+    if len(values) == 0:
+        return []
+
+    result = [values[0]]
+
+    for v in values[1:]:
+        if abs(v - result[-1]) >= min_distance:
+            result.append(v)
+
+    return result
+
 def match_filter_find_trigger(response, n_min_distance=None, debug=False):
-    if oldmode:
+    if trigger_proc_ver == 0:
         n_min_distance = None
     # find trigger middle (negative response)
     edge_idx = np.argmin(response)
@@ -38,7 +56,7 @@ def match_filter_find_trigger(response, n_min_distance=None, debug=False):
     # Find positive peaks
     pos_peaks, pos_props = find_peaks(
         response,
-        distance=n_min_distance,
+        distance=n_min_distance if trigger_proc_ver == 1 else None,
         height=positive_threshold
     )
 
@@ -46,9 +64,12 @@ def match_filter_find_trigger(response, n_min_distance=None, debug=False):
     # invert signal so valleys become peaks
     neg_peaks, neg_props = find_peaks(
         -response,
-        distance=n_min_distance,
+        distance=n_min_distance if trigger_proc_ver == 1 else None,
         height=-negative_threshold
     )
+    if trigger_proc_ver == 2:
+        pos_peaks = remove_close_values(pos_peaks, n_min_distance)
+        neg_peaks = remove_close_values(neg_peaks, n_min_distance)
     if debug:
         print("Positive peaks:", pos_peaks)
         print("Negative peaks:", neg_peaks)
