@@ -140,6 +140,12 @@ def capture_core(config_dict):
     def capture_fun(state, cap_handle=None, gr_fs=None):
         print("Capturing traces...")
 
+        experiment_descr["capture_n_traces_complete"] = 0
+        experiment_descr["capture_error_cw_no_trace"] = 0
+        experiment_descr["capture_error_gr_trigger_missing"] = 0
+        experiment_descr["capture_error_gr_trigger_invalid"] = 0
+        experiment_descr["capture_error_gr_trace_incomplete"] = 0
+
         gr_trig_n_width = None
         if cap_handle is not None:
             assert gr_fs is not None
@@ -164,21 +170,26 @@ def capture_core(config_dict):
                     response = sharptriggerer.match_filter_convolution(t_gnuradio, gr_trig_n_width)
                     detected_trigger = sharptriggerer.match_filter_find_trigger(response, gr_trig_n_width)
                     if detected_trigger is None:
+                        experiment_descr["capture_error_gr_trigger_missing"] += 1
                         print("gnuradio trace: trigger not found")
                         continue
                     idx_left_cutoff = sharptriggerer.get_trigger_end(detected_trigger, gr_trig_n_permit_range, gr_trig_n_permit_diff)
                     if idx_left_cutoff is None:
-                        print("gnuradio trace: trigger signal not valid") # NOTE: e.g., not clean enough, overflow has happened so that at least one plateau is compressed
+                        # NOTE: e.g., not clean enough, overflow has happened so that at least one plateau is compressed
+                        experiment_descr["capture_error_gr_trigger_invalid"] += 1
+                        print("gnuradio trace: trigger signal not valid") 
                         continue
                     idx_right_cutoff = idx_left_cutoff + gnuradio_n_samples#round(duration_s*gr_fs)
                     #print(t_gnuradio.size)
                     if t_gnuradio.size <= idx_right_cutoff:
+                        experiment_descr["capture_error_gr_trace_incomplete"] += 1
                         print("gnuradio trace: trace not completely captured")
                         continue
                     t_gnuradio_cut = t_gnuradio[idx_left_cutoff:idx_right_cutoff]
                     #traces_gnuradio_l.append(t_gnuradio_cut)
 
                 if ret is None:
+                    experiment_descr["capture_error_cw_no_trace"] += 1
                     print("chipwhisperer: trace not captured")
                     continue
 
@@ -207,6 +218,7 @@ def capture_core(config_dict):
             
             state = ktp.next()
             last_complete_trace_idx[0] = i
+            experiment_descr["capture_n_traces_complete"] += 1
         return state
 
     try:

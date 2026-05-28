@@ -68,12 +68,20 @@ if cap_res is None:
     sys.exit(-1)
 
 experiment_dir, experiment_descr = cap_res
+
+print()
+print("Capture statistics:")
+print("Total traces collected -", experiment_descr["capture_n_traces_complete"])
+print("CW no trace error -", experiment_descr["capture_error_cw_no_trace"])
+print("GR trigger missing -", experiment_descr["capture_error_gr_trigger_missing"])
+print("GR trigger invalid -", experiment_descr["capture_error_gr_trigger_invalid"])
+print("GR trace incomplete -", experiment_descr["capture_error_gr_trace_incomplete"])
+
 if args.visualize_trace_cw:
     sharpvisualizer.plot_time(np.load(f"{experiment_dir}/traces_chipwhisperer.npy")[0,:], experiment_descr["cw_adc_rate_measured"], title="first trace chipwhisperer", pltmode=None)
 if config_dict["include_trace_gnuradio"] and args.visualize_trace_gr:
     sharpvisualizer.plot_time(np.load(f"{experiment_dir}/traces_gnuradio.npy")[0,:], experiment_descr["gr_samplerate"], title="first trace gnuradio", pltmode=None)
 sharpvisualizer.plot_fun()
-
 
 #plt.plot(np.average(traces, axis=0))
 ##plt.plot(avg)
