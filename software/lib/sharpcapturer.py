@@ -127,6 +127,7 @@ def capture_core(config_dict):
         #traces_gnuradio_l = []
         gnuradio_n_samples = round(duration_s * config_dict["gnuradio_samplerate"])
         traces_gnuradio = np.zeros([n_traces, gnuradio_n_samples], dtype=np.float32)
+        traces_gnuradio_trigdetect = np.zeros([n_traces, 2], dtype=np.uint32)
 
     plaintexts = np.zeros([n_traces, 16], dtype=np.uint8)
     ciphertexts = np.zeros([n_traces, 16], dtype=np.uint8)
@@ -173,12 +174,13 @@ def capture_core(config_dict):
                         experiment_descr["capture_error_gr_trigger_missing"] += 1
                         print("gnuradio trace: trigger not found")
                         continue
-                    idx_left_cutoff = sharptriggerer.get_trigger_end(detected_trigger, gr_trig_n_permit_range, gr_trig_n_permit_diff)
-                    if idx_left_cutoff is None:
+                    trig_end = sharptriggerer.get_trigger_end(detected_trigger, gr_trig_n_permit_range, gr_trig_n_permit_diff)
+                    if trig_end is None:
                         # NOTE: e.g., not clean enough, overflow has happened so that at least one plateau is compressed
                         experiment_descr["capture_error_gr_trigger_invalid"] += 1
                         print("gnuradio trace: trigger signal not valid") 
                         continue
+                    idx_left_cutoff, (samples_left, samples_right) = trig_end
                     idx_right_cutoff = idx_left_cutoff + gnuradio_n_samples#round(duration_s*gr_fs)
                     #print(t_gnuradio.size)
                     if t_gnuradio.size <= idx_right_cutoff:
@@ -211,6 +213,7 @@ def capture_core(config_dict):
                 traces_chipwhisperer[i] = t
             if include_trace_gnuradio:
                 traces_gnuradio[i] = t_gnuradio_cut
+                traces_gnuradio_trigdetect[i] = np.array([samples_left, samples_right])
             #traces[i, :len(seg)] = seg
             plaintexts[i] = p
             ciphertexts[i] = c
@@ -255,6 +258,7 @@ def capture_core(config_dict):
                 np.save(f"{experiment_dir}/traces_chipwhisperer.npy", traces_chipwhisperer[:n_tr,:])
             if include_trace_gnuradio:
                 np.save(f"{experiment_dir}/traces_gnuradio.npy", traces_gnuradio[:n_tr,:]) #tracelist_to_nparray(traces_gnuradio_l)
+                np.save(f"{experiment_dir}/traces_gnuradio_trigdetect.npy", traces_gnuradio_trigdetect[:n_tr,:])
             np.save(f"{experiment_dir}/keys.npy", keys[:n_tr,:])
             np.save(f"{experiment_dir}/plaintexts.npy", plaintexts[:n_tr,:])
             np.save(f"{experiment_dir}/ciphertexts.npy", ciphertexts[:n_tr,:])

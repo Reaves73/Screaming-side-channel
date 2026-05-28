@@ -106,6 +106,5 @@ def get_trigger_end(detected_trigger, n_permit_range, n_permit_diff, fs=None, de
         if debug:
             print("not valid: n_permit_diff")
         return None
-        
 
-    return idx_trig_right + samples_right
+    return idx_trig_right + samples_right, (samples_left, samples_right)
