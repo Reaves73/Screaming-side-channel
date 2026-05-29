@@ -154,7 +154,7 @@ def capture_core(config_dict):
             print("gr_trig_n_width:", gr_trig_n_width)
             gr_trig_n_permit_range = (4e-3 * gr_fs, 15e-3 * gr_fs)
             gr_trig_n_permit_diff = 4e-7 * gr_fs
-            gr_trig_delay_samples= 1e-4 * gr_fs
+            gr_trig_delay_samples = round(1e-4 * gr_fs)
 
         for i in tqdm(range(n_traces)): # NOTE: it is important for last_complete_trace_idx that this index i is starting from 0 and incrementing
             key, text = state
