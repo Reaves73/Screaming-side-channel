@@ -85,7 +85,7 @@ def match_filter_find_trigger(response, n_min_distance=None, debug=False):
 
     return (idx_trig_mid, (idx_trig_left, idx_trig_right))
 
-def get_trigger_end(detected_trigger, n_permit_range, n_permit_diff, fs=None, debug=False):
+def get_trigger_end(detected_trigger, n_permit_range, n_permit_diff, trig_delay_samples=None, fs=None, debug=False):
     (idx_trig_mid, (idx_trig_left, idx_trig_right)) = detected_trigger
 
     samples_left  = (idx_trig_mid - idx_trig_left)
@@ -107,4 +107,4 @@ def get_trigger_end(detected_trigger, n_permit_range, n_permit_diff, fs=None, de
             print("not valid: n_permit_diff")
         return None
 
-    return idx_trig_right + samples_right, (samples_left, samples_right)
+    return idx_trig_right + samples_right - (0 if trig_delay_samples is None else trig_delay_samples), (samples_left, samples_right)

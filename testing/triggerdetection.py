@@ -52,7 +52,8 @@ for trace_idx in range(traces.shape[0]):
 
     n_permit_range = (4e-3 * fs, 15e-3 * fs)
     n_permit_diff = 4e-7 * fs
-    trig_end = sharptriggerer.get_trigger_end(detected_trigger, n_permit_range, n_permit_diff, fs=fs, debug=True)
+    trig_delay_samples = 1e-4 * fs
+    trig_end = sharptriggerer.get_trigger_end(detected_trigger, n_permit_range, n_permit_diff, trig_delay_samples, fs=fs, debug=True)
     if trig_end is None:
         print("trigger signal not valid")
         sharpvisualizer.plot_fun()

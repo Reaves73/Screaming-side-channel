@@ -154,6 +154,7 @@ def capture_core(config_dict):
             print("gr_trig_n_width:", gr_trig_n_width)
             gr_trig_n_permit_range = (4e-3 * gr_fs, 15e-3 * gr_fs)
             gr_trig_n_permit_diff = 4e-7 * gr_fs
+            gr_trig_delay_samples= 1e-4 * gr_fs
 
         for i in tqdm(range(n_traces)): # NOTE: it is important for last_complete_trace_idx that this index i is starting from 0 and incrementing
             key, text = state
@@ -174,7 +175,7 @@ def capture_core(config_dict):
                         experiment_descr["capture_error_gr_trigger_missing"] += 1
                         print("gnuradio trace: trigger not found")
                         continue
-                    trig_end = sharptriggerer.get_trigger_end(detected_trigger, gr_trig_n_permit_range, gr_trig_n_permit_diff)
+                    trig_end = sharptriggerer.get_trigger_end(detected_trigger, gr_trig_n_permit_range, gr_trig_n_permit_diff, gr_trig_delay_samples)
                     if trig_end is None:
                         # NOTE: e.g., not clean enough, overflow has happened so that at least one plateau is compressed
                         experiment_descr["capture_error_gr_trigger_invalid"] += 1
