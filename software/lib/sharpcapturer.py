@@ -132,6 +132,7 @@ def capture_core(config_dict):
     plaintexts = np.zeros([n_traces, 16], dtype=np.uint8)
     ciphertexts = np.zeros([n_traces, 16], dtype=np.uint8)
     keys = np.zeros([n_traces, 16], dtype=np.uint8)
+    capture_numtries = np.zeros([n_traces, 1], dtype=np.uint32)
 
     state = ktp.next()
 
@@ -161,7 +162,9 @@ def capture_core(config_dict):
 
             capture_ok = False
             capture_retries_max = 10
+            capture_tries = 0
             for _ in range(capture_retries_max):
+                capture_tries += 1
                 if cap_handle is not None:
                     cap_handle.record_start()
                 ret = hw.capture(text, key)
@@ -219,6 +222,7 @@ def capture_core(config_dict):
             plaintexts[i] = p
             ciphertexts[i] = c
             keys[i] = k
+            capture_numtries[i] = capture_tries
             
             state = ktp.next()
             last_complete_trace_idx[0] = i
@@ -263,6 +267,7 @@ def capture_core(config_dict):
             np.save(f"{experiment_dir}/keys.npy", keys[:n_tr,:])
             np.save(f"{experiment_dir}/plaintexts.npy", plaintexts[:n_tr,:])
             np.save(f"{experiment_dir}/ciphertexts.npy", ciphertexts[:n_tr,:])
+            np.save(f"{experiment_dir}/capture_numtries.npy", capture_numtries[:n_tr])
 
         save_capture_config(experiment_descr, f"{experiment_dir}/meta/experiment_descr.json")
 
