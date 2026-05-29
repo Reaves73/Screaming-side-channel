@@ -258,8 +258,9 @@ def init_sharppeak(target, PLATFORM, i = 0):
             time.sleep(0.1)
             v -= 50
         if PLATFORM == "CW308_STM32F3":
-            set_dac(target, 363)
-            time.sleep(0.1)
+            #set_dac(target, 363)
+            #time.sleep(0.1)
+            pass
         elif PLATFORM == "CW308_STM32F0":
             # 305 works with VDDA before shunt resistor
             set_dac(target, 324) # 324 works with VDDA and VDDA behind shunt resistor
