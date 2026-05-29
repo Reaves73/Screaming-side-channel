@@ -51,13 +51,15 @@ def plot_fun(pltmode=True):
 def plot_clear_all():
     plt.close('all')
 
-def plot_time(samples, fs, title="Time Domain", vlines=None, pltmode=True):
+def plot_time(samples, fs=None, title="Time Domain", vlines=None, pltmode=True):
+    if fs is None:
+        fs = 1
     #fig, ax = plt.subplots()
     t = np.arange(len(samples)) / fs
     plt.figure(figsize=(10, 4))
     plt.plot(t, samples)
     plt.title(title)
-    plt.xlabel("Time (s)")
+    plt.xlabel("Sample index" if fs is None else "Time (s)")
     plt.ylabel("Amplitude")
     plt.grid(True)
     plt.tight_layout()

@@ -22,6 +22,7 @@ def main():
     parser.add_argument("--duration", help="duration in seconds", type=float, default=None)
 
     parser.add_argument("--averaged_traces", help="how many traces to take and average", type=int, default=1)
+    parser.add_argument("--sample_indexes", help="shows sample indexes instead of time at x axis", action="store_true", default=False)
 
     args = parser.parse_args()
 
@@ -66,7 +67,7 @@ def main():
 
     # plot
     # ---------------------------
-    sharpvisualizer.plot_time(y, fs, title=f"Downsampled Time Domain (factor={args.factor})", pltmode=None)
+    sharpvisualizer.plot_time(y, fs=(None if args.sample_indexes else fs), title=f"Downsampled Time Domain (factor={args.factor})", pltmode=None)
     sharpvisualizer.plot_spectrum(y, fs, title=f"Downsampled Spectrum (factor={args.factor})", pltmode=None)
     sharpvisualizer.plot_fun()
 
