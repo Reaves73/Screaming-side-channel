@@ -55,7 +55,13 @@ def get_experiment_setup_config(experiment_dir=None):
 def get_new_experiment_dir(experiment_name):
     experiments_dir = get_experiments_dir()
     dstr = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    path = f"{experiments_dir}/{dstr}_{experiment_name}"
+    username = os.environ.get("USER")
+    assert username is not None
+    assert username != ""
+    userpath = f"{experiments_dir}/{username}"
+    if (not os.path.isdir(userpath)):
+        os.mkdir(userpath)
+    path = f"{userpath}/{dstr}_{experiment_name}"
     get_experiment_setup_config() # to validate the setup config
     os.mkdir(path)
     os.mkdir(f"{path}/meta")
