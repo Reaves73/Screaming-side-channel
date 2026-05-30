@@ -161,10 +161,11 @@ def get_adc(target):
     
     return int.from_bytes(resp, byteorder='big')
 
-def do_random_stuff(target, stuff_id):
+def do_random_stuff(target, stuff_id, debug=True):
     payload = bytearray([3, stuff_id & 0xFF, 0])
     target.simpleserial_write('u', payload)
-    print(f"doing random stuff {stuff_id} requested.")
+    if debug:
+        print(f"doing random stuff {stuff_id} requested.")
     resp = target.simpleserial_read('g', 1, timeout=10000) # timeout is in ms
     if resp[0] != 1:
         print("random stuff failed")
@@ -249,7 +250,7 @@ def finalize_sharpwhisperer(hw):
         # set DAC to 0, turn off gate, power off the MCU
         set_dac(hw.target, 0)
         set_gate(hw.target, False)
-        set_target_power(hw.scope, False, do_print=True)
+        #set_target_power(hw.scope, False, do_print=True)
         # DISCONNECT
         hw.disconnect()
     except Exception as e:
@@ -268,7 +269,7 @@ def init_sharppeak(target, PLATFORM, i = 0):
             time.sleep(0.1)
             v -= 50
         if PLATFORM == "CW308_STM32F3":
-            #set_dac(target, 363)
+            #set_dac(target, 357)
             #time.sleep(0.1)
             pass
         elif PLATFORM == "CW308_STM32F0":

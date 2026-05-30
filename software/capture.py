@@ -23,7 +23,6 @@ parser.add_argument("--cw_adc_clkgen_x4", help="chipwhisperer adc_src set to clk
 parser.add_argument("--cw_n_decimate", help="chipwhisperer decimate (default: 1)", type=int, default=1)
 
 parser.add_argument("--gr_samprate", help="gnuradio sample rate (default: 5e6)", type=float, default=5e6)
-parser.add_argument("--gr_trig_mode", help="gnuradio trigger detection mode (0-old, 1-new, 2-update; default: 2)", type=int, default=2)
 
 parser.add_argument("--exclude_gnuradio", help="disable gnuradio trace collection", action="store_true", default=False)
 parser.add_argument("--force_dac", help="force DAC to be used and fix at 0.7 V (even though gnuradio trace collection is disabled)", action="store_true", default=False)
@@ -59,7 +58,6 @@ config_dict["chipwhisperer_n_decimate"] = args.cw_n_decimate
 #config_dict["chipwhisperer_n_decimate"] = 4
 
 config_dict["gnuradio_samplerate"] = args.gr_samprate
-config_dict["gnuradio_trigger_detection_mode"] = args.gr_trig_mode
 
 
 # run the capturing function

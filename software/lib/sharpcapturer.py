@@ -8,7 +8,6 @@ import time
 import datetime
 from tqdm import tqdm
 import numpy as np
-import json
 
 def tracelist_to_nparray(traces_l):
     #print(trace_l[0].size)
@@ -92,7 +91,6 @@ def capture_core(config_dict):
         hw.scope.adc.samples = chipwhisperer_n_samples
     
     if include_trace_gnuradio:
-        gr_trig_mode = config_dict["gnuradio_trigger_detection_mode"]
         gr_force_dac = config_dict["force_dac"]
         gr_samprate  = config_dict["gnuradio_samplerate"]
 
@@ -127,7 +125,8 @@ def capture_core(config_dict):
         #traces_gnuradio_l = []
         gnuradio_n_samples = round(duration_s * gr_samprate)
         traces_gnuradio = np.zeros([n_traces, gnuradio_n_samples], dtype=np.float32)
-        traces_gnuradio_trigdetect = np.zeros([n_traces, 2], dtype=np.uint32)
+        traces_gnuradio_trig_quality = np.zeros([n_traces, 2], dtype=np.uint32)
+        traces_gnuradio_numerrtries = np.zeros([n_traces, 3], dtype=np.uint32)
 
     plaintexts = np.zeros([n_traces, 16], dtype=np.uint8)
     ciphertexts = np.zeros([n_traces, 16], dtype=np.uint8)
@@ -172,19 +171,20 @@ def capture_core(config_dict):
                     time.sleep(0.02)
                     t_gnuradio = cap_handle.record_stop()
 
-                    response = sharptriggerer.match_filter_convolution(gr_trig_mode, t_gnuradio, gr_trig_n_width)
-                    detected_trigger = sharptriggerer.match_filter_find_trigger(gr_trig_mode, response, gr_trig_n_width)
+                    response = sharptriggerer.match_filter_convolution(t_gnuradio, gr_trig_n_width)
+                    detected_trigger = sharptriggerer.match_filter_find_trigger(response, gr_trig_n_width)
                     if detected_trigger is None:
                         experiment_descr["capture_error_gr_trigger_missing"] += 1
                         print("gnuradio trace: trigger not found")
                         continue
-                    trig_end = sharptriggerer.get_trigger_end(gr_trig_mode, detected_trigger, gr_trig_n_permit_range, gr_trig_n_permit_diff, gr_trig_delay_samples)
+                    _, _, num_peaks_err = detected_trigger
+                    trig_end = sharptriggerer.get_trigger_end(detected_trigger, gr_trig_n_permit_range, gr_trig_n_permit_diff, gr_trig_delay_samples)
                     if trig_end is None:
                         # NOTE: e.g., not clean enough, overflow has happened so that at least one plateau is compressed
                         experiment_descr["capture_error_gr_trigger_invalid"] += 1
                         print("gnuradio trace: trigger signal not valid") 
                         continue
-                    idx_left_cutoff, (samples_left, samples_right) = trig_end
+                    idx_left_cutoff, samples_left_right_diff = trig_end
                     idx_right_cutoff = idx_left_cutoff + gnuradio_n_samples#round(duration_s*gr_fs)
                     #print(t_gnuradio.size)
                     if t_gnuradio.size <= idx_right_cutoff:
@@ -217,7 +217,11 @@ def capture_core(config_dict):
                 traces_chipwhisperer[i] = t
             if include_trace_gnuradio:
                 traces_gnuradio[i] = t_gnuradio_cut
-                traces_gnuradio_trigdetect[i] = np.array([samples_left, samples_right])
+                traces_gnuradio_trig_quality[i] = np.array([num_peaks_err, samples_left_right_diff])
+                traces_gnuradio_numerrtries[i] = np.array([
+                    experiment_descr["capture_error_gr_trigger_missing"],
+                    experiment_descr["capture_error_gr_trigger_invalid"],
+                    experiment_descr["capture_error_gr_trace_incomplete"]])
             #traces[i, :len(seg)] = seg
             plaintexts[i] = p
             ciphertexts[i] = c
@@ -265,7 +269,8 @@ def capture_core(config_dict):
                 np.save(f"{experiment_dir}/traces_chipwhisperer.npy", traces_chipwhisperer[:n_tr,:])
             if include_trace_gnuradio:
                 np.save(f"{experiment_dir}/traces_gnuradio.npy", traces_gnuradio[:n_tr,:]) #tracelist_to_nparray(traces_gnuradio_l)
-                np.save(f"{experiment_dir}/traces_gnuradio_trigdetect.npy", traces_gnuradio_trigdetect[:n_tr,:])
+                np.save(f"{experiment_dir}/traces_gnuradio_trig_quality.npy", traces_gnuradio_trig_quality[:n_tr,:])
+                np.save(f"{experiment_dir}/traces_gnuradio_numerrtries.npy", traces_gnuradio_numerrtries[:n_tr,:])
             np.save(f"{experiment_dir}/keys.npy", keys[:n_tr,:])
             np.save(f"{experiment_dir}/plaintexts.npy", plaintexts[:n_tr,:])
             np.save(f"{experiment_dir}/ciphertexts.npy", ciphertexts[:n_tr,:])
@@ -297,12 +302,13 @@ def capture_random_stuff_core(stuff_id, numtraces=None, fs=None):
         with Recorder() as r:
             r.set_samprate(fs)
             print(f"samprate={r.get_samprate()}")
-            for _ in range(1 if numtraces is None else numtraces):
+            for _ in tqdm(range(1 if numtraces is None else numtraces)):
                 r.record_start()
                 time.sleep(0.01)
-                sharpwhisperer.do_random_stuff(hw.target, stuff_id)
+                sharpwhisperer.do_random_stuff(hw.target, stuff_id, debug=False)
                 time.sleep(0.02)
                 traces_l.append(r.record_stop())
+                time.sleep(0.2)
     finally:
         sharpwhisperer.finalize_sharpwhisperer(hw)
     if numtraces is None:

@@ -10,6 +10,7 @@ import sharpvisualizer
 
 import argparse
 import numpy as np
+from tqdm import tqdm
 
 # parse arguments
 # ---------------------------
@@ -17,7 +18,10 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-f", "--filepath", help="path to traces file (must be uncut traces with trigger!!!)")
 parser.add_argument("-n", "--n_traces", help="number of traces (default: 1)", type=int, default=1)
 parser.add_argument("-fs", "--samprate", help="sampling rate (default: 5e6)", type=float, default=5e6)
-parser.add_argument("--gr_trig_mode", help="gnuradio trigger detection mode (0-old, 1-new, 2-update; default: 2)", type=int, default=2)
+
+parser.add_argument("-np", "--no_plots", help="disable plots", action="store_true", default=False)
+parser.add_argument("--stop_at_trig_error", help="", action="store_true", default=False)
+parser.add_argument("--stop_at_left_right_eq", help="", action="store_true", default=False)
 
 args = parser.parse_args()
 
@@ -29,42 +33,71 @@ else:
     traces = sharpcapturer.capture_random_stuff(2, numtraces=args.n_traces, fs=fs)
 assert traces is not None
 
-for trace_idx in range(traces.shape[0]):
+trig_err_not_found = 0
+trig_err_not_valid = 0
+samples_left_right_eq = 0
+for trace_idx in tqdm(range(traces.shape[0])):
     print(f"Trace {trace_idx}")
     print("="*20)
     trace = traces[trace_idx,:]
 
-    sharpvisualizer.plot_time(trace, fs, title=f"original trace", pltmode=None)
+    if not args.no_plots:
+        sharpvisualizer.plot_time(trace, fs, title=f"original trace", pltmode=None)
 
     n_width = round(5e-3 * fs / 100)
     print("n_width:", n_width)
-    response = sharptriggerer.match_filter_convolution(args.gr_trig_mode, trace, n_width)
+    response = sharptriggerer.match_filter_convolution(trace, n_width)
 
-    sharpvisualizer.plot_time(response, fs, title=f"trigger edge response", pltmode=None)
+    if not args.no_plots:
+        sharpvisualizer.plot_time(response, fs, title=f"trigger edge response", pltmode=None)
 
-    if sharptriggerer.match_filter_find_trigger(args.gr_trig_mode, response, 1, debug=True) is None:
-        print("trigger distance issue")
-
-    detected_trigger = sharptriggerer.match_filter_find_trigger(args.gr_trig_mode, response, n_width, debug=True)
+    detected_trigger = sharptriggerer.match_filter_find_trigger(response, n_min_distance=n_width, debug=True)
     if detected_trigger is None:
         print("trigger not found")
-        sharpvisualizer.plot_fun()
+        trig_err_not_found += 1
+        if not args.no_plots:
+            sharpvisualizer.plot_fun()
+        if not args.stop_at_trig_error:
+            continue
         assert False
+
+    _, _, num_peaks_err = detected_trigger
+    print(f"NUM_PEAKS_ERR: {num_peaks_err}")
 
     n_permit_range = (4e-3 * fs, 15e-3 * fs)
     n_permit_diff = 4e-7 * fs
     trig_delay_samples = 1e-4 * fs
-    trig_end = sharptriggerer.get_trigger_end(args.gr_trig_mode, detected_trigger, n_permit_range, n_permit_diff, trig_delay_samples, fs=fs, debug=True)
+    print("n_permit_diff:", n_permit_diff)
+    trig_end = sharptriggerer.get_trigger_end(detected_trigger, n_permit_range, n_permit_diff, trig_delay_samples, fs=fs, debug=True)
     if trig_end is None:
         print("trigger signal not valid")
-        sharpvisualizer.plot_fun()
+        trig_err_not_valid += 1
+        if not args.no_plots:
+            sharpvisualizer.plot_fun()
+        if not args.stop_at_trig_error:
+            continue
         assert False
 
     idx_left_cutoff, _ = trig_end
-    sharpvisualizer.plot_time(trace, fs, title=f"original trace with cutoff", vlines=[idx_left_cutoff], pltmode=None)
+    if not args.no_plots:
+        sharpvisualizer.plot_time(trace, fs, title=f"original trace with cutoff", vlines=[idx_left_cutoff], pltmode=None)
+
+    num_peaks_err, samples_left_right_diff = sharptriggerer.get_trigger_quality(detected_trigger, trig_end)
+    print(f"num_peaks_err: {num_peaks_err} ; samples_left_right_diff: {samples_left_right_diff}")
+    if samples_left_right_diff == 0:
+        print("samples_left_right are equal!!!")
+        samples_left_right_eq += 1
+        if args.stop_at_left_right_eq:
+            assert False
 
     if traces.shape[0] > 1:
         print("\n")
-        sharpvisualizer.plot_clear_all()
+        if not args.no_plots:
+            sharpvisualizer.plot_clear_all()
 
-sharpvisualizer.plot_fun()
+if not args.no_plots:
+    sharpvisualizer.plot_fun()
+
+print("trig_err_not_found:", trig_err_not_found)
+print("trig_err_not_valid:", trig_err_not_valid)
+print("samples_left_right_eq:", samples_left_right_eq)
