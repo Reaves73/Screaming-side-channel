@@ -7,11 +7,8 @@ import chipwhisperer as cw
 import time
 import datetime
 from tqdm import tqdm
-import matplotlib.pyplot as plt
 import numpy as np
-import tempfile
 import json
-import os
 
 def save_capture_config(config_dict, path):
     with open(path, 'w') as config_file:
@@ -236,6 +233,7 @@ def capture_core(config_dict):
             experiment_descr["capture_n_traces_complete"] += 1
         return state
 
+    experiment_descr["capture_time_start"] = datetime.datetime.now().isoformat()
     try:
         if not include_trace_gnuradio:
             capture_fun(state)
@@ -255,6 +253,7 @@ def capture_core(config_dict):
         experiment_descr["capture_abort_reason"] = f"Exception [{e}]"
         raise
     finally:
+        experiment_descr["capture_time_end"] = datetime.datetime.now().isoformat()
         sharpwhisperer.finalize_sharpwhisperer(hw)
 
         if last_complete_trace_idx[0] == n_traces - 1:
