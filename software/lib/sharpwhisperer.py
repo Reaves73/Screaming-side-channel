@@ -65,6 +65,7 @@ def get_new_experiment_dir(experiment_name):
     get_experiment_setup_config() # to validate the setup config
     os.mkdir(path)
     os.mkdir(f"{path}/meta")
+    os.mkdir(f"{path}/quality")
     shutil.copyfile(get_experiment_setup_config_path(), get_experiment_setup_config_path(f"{path}/meta"))
     return path
 

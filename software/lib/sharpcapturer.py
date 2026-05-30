@@ -125,13 +125,13 @@ def capture_core(config_dict):
         #traces_gnuradio_l = []
         gnuradio_n_samples = round(duration_s * gr_samprate)
         traces_gnuradio = np.zeros([n_traces, gnuradio_n_samples], dtype=np.float32)
-        traces_gnuradio_trig_quality = np.zeros([n_traces, 2], dtype=np.uint32)
-        traces_gnuradio_numerrtries = np.zeros([n_traces, 3], dtype=np.uint32)
+        q_gnuradio_trig = np.zeros([n_traces, 2], dtype=np.uint32)
+        q_gnuradio_retries = np.zeros([n_traces, 3], dtype=np.uint32)
 
     plaintexts = np.zeros([n_traces, 16], dtype=np.uint8)
     ciphertexts = np.zeros([n_traces, 16], dtype=np.uint8)
     keys = np.zeros([n_traces, 16], dtype=np.uint8)
-    capture_numtries = np.zeros([n_traces, 1], dtype=np.uint32)
+    q_numcaptries = np.zeros([n_traces, 1], dtype=np.uint32)
 
     state = ktp.next()
 
@@ -217,8 +217,8 @@ def capture_core(config_dict):
                 traces_chipwhisperer[i] = t
             if include_trace_gnuradio:
                 traces_gnuradio[i] = t_gnuradio_cut
-                traces_gnuradio_trig_quality[i] = np.array([num_peaks_err, samples_left_right_diff])
-                traces_gnuradio_numerrtries[i] = np.array([
+                q_gnuradio_trig[i] = np.array([num_peaks_err, samples_left_right_diff])
+                q_gnuradio_retries[i] = np.array([
                     experiment_descr["capture_error_gr_trigger_missing"],
                     experiment_descr["capture_error_gr_trigger_invalid"],
                     experiment_descr["capture_error_gr_trace_incomplete"]])
@@ -226,7 +226,7 @@ def capture_core(config_dict):
             plaintexts[i] = p
             ciphertexts[i] = c
             keys[i] = k
-            capture_numtries[i] = capture_tries
+            q_numcaptries[i] = capture_tries
             
             state = ktp.next()
             last_complete_trace_idx[0] = i
@@ -269,12 +269,12 @@ def capture_core(config_dict):
                 np.save(f"{experiment_dir}/traces_chipwhisperer.npy", traces_chipwhisperer[:n_tr,:])
             if include_trace_gnuradio:
                 np.save(f"{experiment_dir}/traces_gnuradio.npy", traces_gnuradio[:n_tr,:]) #tracelist_to_nparray(traces_gnuradio_l)
-                np.save(f"{experiment_dir}/traces_gnuradio_trig_quality.npy", traces_gnuradio_trig_quality[:n_tr,:])
-                np.save(f"{experiment_dir}/traces_gnuradio_numerrtries.npy", traces_gnuradio_numerrtries[:n_tr,:])
+                np.save(f"{experiment_dir}/quality/gnuradio_trig.npy", q_gnuradio_trig[:n_tr,:])
+                np.save(f"{experiment_dir}/quality/gnuradio_retries.npy", q_gnuradio_retries[:n_tr,:])
             np.save(f"{experiment_dir}/keys.npy", keys[:n_tr,:])
             np.save(f"{experiment_dir}/plaintexts.npy", plaintexts[:n_tr,:])
             np.save(f"{experiment_dir}/ciphertexts.npy", ciphertexts[:n_tr,:])
-            np.save(f"{experiment_dir}/capture_numtries.npy", capture_numtries[:n_tr])
+            np.save(f"{experiment_dir}/quality/numcaptries.npy", q_numcaptries[:n_tr])
 
         sharpwhisperer.save_capture_config(experiment_descr, f"{experiment_dir}/meta/experiment_descr.json")
 
