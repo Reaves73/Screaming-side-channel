@@ -4,9 +4,9 @@ from scipy.signal import find_peaks
 # 0 - old (stricter)
 # 1 - new (remove close small peaks)
 # 2 - update (remove close peaks from the left)
-trigger_proc_ver = 2
+#trigger_proc_ver = 2
 
-def match_filter_convolution(trace, n_width):
+def match_filter_convolution(trigger_proc_ver, trace, n_width):
     kernel = np.r_[-np.ones(n_width), np.ones(n_width)]
 
     pad_width = n_width if trigger_proc_ver == 0 else (n_width*2) # TODO: maybe n_width*1 is enough
@@ -30,7 +30,7 @@ def remove_close_values(values, min_distance):
 
     return result
 
-def match_filter_find_trigger(response, n_min_distance=None, debug=False):
+def match_filter_find_trigger(trigger_proc_ver, response, n_min_distance=None, debug=False):
     if trigger_proc_ver == 0:
         n_min_distance = None
     # find trigger middle (negative response)
@@ -85,7 +85,7 @@ def match_filter_find_trigger(response, n_min_distance=None, debug=False):
 
     return (idx_trig_mid, (idx_trig_left, idx_trig_right))
 
-def get_trigger_end(detected_trigger, n_permit_range, n_permit_diff, trig_delay_samples=None, fs=None, debug=False):
+def get_trigger_end(trigger_proc_ver, detected_trigger, n_permit_range, n_permit_diff, trig_delay_samples=None, fs=None, debug=False):
     (idx_trig_mid, (idx_trig_left, idx_trig_right)) = detected_trigger
 
     samples_left  = (idx_trig_mid - idx_trig_left)

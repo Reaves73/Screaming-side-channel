@@ -89,6 +89,7 @@ def capture_core(config_dict):
     # NOTE: could reset cached adc_rate value in CW library, measure again and validate, if we would be interested in that
 
     if include_trace_chipwhisperer:
+        experiment_descr["cw_adc_rate_expected"] = cw_adc_rate_expected
         experiment_descr["cw_adc_rate_measured"] = cw_adc_rate_measured
         print("CW Sampling rate:", cw_adc_rate_measured)
         chipwhisperer_n_samples = round(duration_s * cw_adc_rate_measured)
@@ -96,6 +97,11 @@ def capture_core(config_dict):
         if chipwhisperer_n_samples > 24000: # it should be something like 24573, but I see errors with varying values, as low as 24431, so this seems safe enough
             raise Exception("maximum number of samples allowed is 24000")
         hw.scope.adc.samples = chipwhisperer_n_samples
+    
+    if include_trace_gnuradio:
+        gr_trig_mode = config_dict["gnuradio_trigger_detection_mode"]
+        gr_force_dac = config_dict["force_dac"]
+        gr_samprate  = config_dict["gnuradio_samplerate"]
 
     #
     # INIT
@@ -103,10 +109,11 @@ def capture_core(config_dict):
 
     sharpwhisperer.init_target(hw)
     #sharpwhisperer.program_target(PLATFORM, FIRMWARE, hw)
-    if config_dict["include_trace_gnuradio"] or config_dict["force_dac"]:
+    if include_trace_gnuradio or gr_force_dac:
         sharpwhisperer.set_dac(hw.target, 0)
         sharpwhisperer.set_gate(hw.target, True)
-        if config_dict["force_dac"]:
+        if gr_force_dac:
+            assert not sharpwhisperer.get_experiment_setup_config()["sharppeak_on_dac_directly"] #TODO: untested code, and this option doesn't look future-proof enough for what is needed here
             sharpwhisperer.set_dac(hw.target, 700)
         else:
             sharpwhisperer.init_sharppeak(hw.target, PLATFORM)
@@ -125,7 +132,7 @@ def capture_core(config_dict):
         traces_chipwhisperer = np.zeros([n_traces, chipwhisperer_n_samples], dtype=np.float32)
     if include_trace_gnuradio:
         #traces_gnuradio_l = []
-        gnuradio_n_samples = round(duration_s * config_dict["gnuradio_samplerate"])
+        gnuradio_n_samples = round(duration_s * gr_samprate)
         traces_gnuradio = np.zeros([n_traces, gnuradio_n_samples], dtype=np.float32)
         traces_gnuradio_trigdetect = np.zeros([n_traces, 2], dtype=np.uint32)
 
@@ -172,13 +179,13 @@ def capture_core(config_dict):
                     time.sleep(0.02)
                     t_gnuradio = cap_handle.record_stop()
 
-                    response = sharptriggerer.match_filter_convolution(t_gnuradio, gr_trig_n_width)
-                    detected_trigger = sharptriggerer.match_filter_find_trigger(response, gr_trig_n_width)
+                    response = sharptriggerer.match_filter_convolution(gr_trig_mode, t_gnuradio, gr_trig_n_width)
+                    detected_trigger = sharptriggerer.match_filter_find_trigger(gr_trig_mode, response, gr_trig_n_width)
                     if detected_trigger is None:
                         experiment_descr["capture_error_gr_trigger_missing"] += 1
                         print("gnuradio trace: trigger not found")
                         continue
-                    trig_end = sharptriggerer.get_trigger_end(detected_trigger, gr_trig_n_permit_range, gr_trig_n_permit_diff, gr_trig_delay_samples)
+                    trig_end = sharptriggerer.get_trigger_end(gr_trig_mode, detected_trigger, gr_trig_n_permit_range, gr_trig_n_permit_diff, gr_trig_delay_samples)
                     if trig_end is None:
                         # NOTE: e.g., not clean enough, overflow has happened so that at least one plateau is compressed
                         experiment_descr["capture_error_gr_trigger_invalid"] += 1
@@ -234,11 +241,11 @@ def capture_core(config_dict):
             capture_fun(state)
         else:
             with Recorder() as r:
-                r.set_samprate(config_dict["gnuradio_samplerate"])
+                r.set_samprate(gr_samprate)
                 gr_fs = r.get_samprate()
                 print(f"gnuradio_samplerate={gr_fs}")
                 #NOTE: maybe this is not true later because not arbitrary values are settable and it is up to some signal synthesis like with CW?
-                assert config_dict["gnuradio_samplerate"] == gr_fs
+                assert gr_samprate == gr_fs
                 experiment_descr["gr_samplerate"] = gr_fs
                 capture_fun(state, cap_handle=r, gr_fs=gr_fs)
     except KeyboardInterrupt:
