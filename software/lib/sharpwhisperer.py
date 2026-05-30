@@ -68,6 +68,10 @@ def get_new_experiment_dir(experiment_name):
     shutil.copyfile(get_experiment_setup_config_path(), get_experiment_setup_config_path(f"{path}/meta"))
     return path
 
+def save_capture_config(config_dict, path):
+    with open(path, 'w') as config_file:
+        json.dump(config_dict, config_file, indent=2, sort_keys=True)
+
 # ---------------------------
 
 def write_file(filename, d, binary=False):

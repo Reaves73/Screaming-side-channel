@@ -10,10 +10,6 @@ from tqdm import tqdm
 import numpy as np
 import json
 
-def save_capture_config(config_dict, path):
-    with open(path, 'w') as config_file:
-        json.dump(config_dict, config_file, indent=2)
-
 def tracelist_to_nparray(traces_l):
     #print(trace_l[0].size)
     #print(trace_l[1].size)
@@ -29,7 +25,7 @@ def capture_core(config_dict):
     print(f"CAPTURING: experiment '{experiment_name}' in '{experiment_dir}'")
     #raise Exception()
 
-    save_capture_config(config_dict, f"{experiment_dir}/meta/capture_config.json")
+    sharpwhisperer.save_capture_config(config_dict, f"{experiment_dir}/meta/capture_config.json")
     # save repository commit and diff
     sharpwhisperer.write_git_diff_files(f"{experiment_dir}/meta")
 
@@ -275,7 +271,7 @@ def capture_core(config_dict):
             np.save(f"{experiment_dir}/ciphertexts.npy", ciphertexts[:n_tr,:])
             np.save(f"{experiment_dir}/capture_numtries.npy", capture_numtries[:n_tr])
 
-        save_capture_config(experiment_descr, f"{experiment_dir}/meta/experiment_descr.json")
+        sharpwhisperer.save_capture_config(experiment_descr, f"{experiment_dir}/meta/experiment_descr.json")
 
     return experiment_dir, experiment_descr
 
