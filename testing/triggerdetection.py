@@ -61,8 +61,8 @@ for trace_idx in tqdm(range(traces.shape[0])):
             continue
         assert False
 
-    _, _, num_peaks_err = detected_trigger
-    print(f"NUM_PEAKS_ERR: {num_peaks_err}")
+    _, _, num_peaks_diff = detected_trigger
+    print(f"NUM_PEAKS_DIFF: {num_peaks_diff}")
 
     n_permit_range = (4e-3 * fs, 15e-3 * fs)
     n_permit_diff = 4e-7 * fs
@@ -82,9 +82,9 @@ for trace_idx in tqdm(range(traces.shape[0])):
     if not args.no_plots:
         sharpvisualizer.plot_time(trace, fs, title=f"original trace with cutoff", vlines=[idx_left_cutoff], pltmode=None)
 
-    num_peaks_err, samples_left_right_diff = sharptriggerer.get_trigger_quality(detected_trigger, trig_end)
-    print(f"num_peaks_err: {num_peaks_err} ; samples_left_right_diff: {samples_left_right_diff}")
-    if samples_left_right_diff == 0:
+    num_peaks_diff_q, samples_left_right_diff_q = sharptriggerer.get_trigger_quality(detected_trigger, trig_end)
+    print(f"num_peaks_diff_q: {num_peaks_diff_q} ; samples_left_right_diff_q: {samples_left_right_diff_q}")
+    if samples_left_right_diff_q == 0:
         print("samples_left_right are equal!!!")
         samples_left_right_eq += 1
         if args.stop_at_left_right_eq:

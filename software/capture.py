@@ -10,6 +10,7 @@ import sharpvisualizer
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse
+import os
 
 # parse arguments
 # ---------------------------
@@ -59,6 +60,7 @@ config_dict["chipwhisperer_n_decimate"] = args.cw_n_decimate
 
 config_dict["gnuradio_samplerate"] = args.gr_samprate
 
+config_dict["username"] = os.environ.get("USER")
 
 # run the capturing function
 # ---------------------------

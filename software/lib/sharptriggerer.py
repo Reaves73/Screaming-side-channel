@@ -25,9 +25,15 @@ def remove_close_values(values, min_distance):
 
     return result
 
-def eval_match_filter_find_trigger_num_peaks_err(num_peaks):
+def get_match_filter_find_trigger_num_peaks_diff(num_peaks):
     num_pos_peaks, num_neg_peaks = num_peaks
-    return abs(num_pos_peaks - 2) + abs(num_neg_peaks - 1)
+    num_peaks_diff = num_pos_peaks - 2, num_neg_peaks - 1
+    return num_peaks_diff
+
+def eval_match_filter_find_trigger_num_peaks_diff(num_peaks_diff):
+    num_pos_peaks_diff, num_neg_peaks_diff = num_peaks_diff
+    num_peaks_diff_q = abs(num_pos_peaks_diff) + abs(num_neg_peaks_diff)
+    return num_peaks_diff_q
 
 def match_filter_find_trigger(response, n_min_distance:int=None, debug=False):
     # find trigger middle (negative response)
@@ -74,7 +80,8 @@ def match_filter_find_trigger(response, n_min_distance:int=None, debug=False):
         print("Positive peaks:", pos_peaks)
         print("Negative peaks:", neg_peaks)
 
-    if eval_match_filter_find_trigger_num_peaks_err((len(pos_peaks), len(neg_peaks))) != 0:
+    num_peaks_diff_fixed = get_match_filter_find_trigger_num_peaks_diff((len(pos_peaks), len(neg_peaks)))
+    if eval_match_filter_find_trigger_num_peaks_diff(num_peaks_diff_fixed) != 0:
         return None
 
     idx_trig_mid = neg_peaks[0]
@@ -83,7 +90,8 @@ def match_filter_find_trigger(response, n_min_distance:int=None, debug=False):
     if not(idx_trig_left < idx_trig_mid < idx_trig_right):
         return None
 
-    return (idx_trig_mid, (idx_trig_left, idx_trig_right), eval_match_filter_find_trigger_num_peaks_err(num_peaks))
+    num_peaks_diff = get_match_filter_find_trigger_num_peaks_diff(num_peaks)
+    return (idx_trig_mid, (idx_trig_left, idx_trig_right), num_peaks_diff)
 
 def get_trigger_end(detected_trigger, n_permit_range, n_permit_diff, trig_delay_samples=None, fs=None, debug=False):
     (idx_trig_mid, (idx_trig_left, idx_trig_right), _) = detected_trigger
@@ -102,8 +110,8 @@ def get_trigger_end(detected_trigger, n_permit_range, n_permit_diff, trig_delay_
             print("not valid: n_permit_range")
         return None
 
-    samples_left_right_diff = abs(samples_left - samples_right)
-    if not(samples_left_right_diff < n_permit_diff):
+    samples_left_right_diff = samples_left - samples_right
+    if not(abs(samples_left_right_diff) < n_permit_diff):
         if debug:
             print("not valid: n_permit_diff")
         return None
@@ -111,6 +119,6 @@ def get_trigger_end(detected_trigger, n_permit_range, n_permit_diff, trig_delay_
     return idx_trig_right + samples_right - (0 if trig_delay_samples is None else trig_delay_samples), samples_left_right_diff
 
 def get_trigger_quality(detected_trigger, trig_end):
-    _, _, num_peaks_err = detected_trigger
+    _, _, num_peaks_diff = detected_trigger
     _, samples_left_right_diff = trig_end
-    return num_peaks_err, samples_left_right_diff
+    return eval_match_filter_find_trigger_num_peaks_diff(num_peaks_diff), abs(samples_left_right_diff)

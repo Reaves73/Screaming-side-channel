@@ -125,7 +125,7 @@ def capture_core(config_dict):
         #traces_gnuradio_l = []
         gnuradio_n_samples = round(duration_s * gr_samprate)
         traces_gnuradio = np.zeros([n_traces, gnuradio_n_samples], dtype=np.float32)
-        q_gnuradio_trig = np.zeros([n_traces, 2], dtype=np.uint32)
+        q_gnuradio_trig = np.zeros([n_traces, 3], dtype=np.uint32)
         q_gnuradio_retries = np.zeros([n_traces, 3], dtype=np.uint32)
 
     plaintexts = np.zeros([n_traces, 16], dtype=np.uint8)
@@ -177,7 +177,7 @@ def capture_core(config_dict):
                         experiment_descr["capture_error_gr_trigger_missing"] += 1
                         print("gnuradio trace: trigger not found")
                         continue
-                    _, _, num_peaks_err = detected_trigger
+                    _, _, (num_pos_peaks_diff, num_neg_peaks_diff) = detected_trigger
                     trig_end = sharptriggerer.get_trigger_end(detected_trigger, gr_trig_n_permit_range, gr_trig_n_permit_diff, gr_trig_delay_samples)
                     if trig_end is None:
                         # NOTE: e.g., not clean enough, overflow has happened so that at least one plateau is compressed
@@ -217,7 +217,10 @@ def capture_core(config_dict):
                 traces_chipwhisperer[i] = t
             if include_trace_gnuradio:
                 traces_gnuradio[i] = t_gnuradio_cut
-                q_gnuradio_trig[i] = np.array([num_peaks_err, samples_left_right_diff])
+                q_gnuradio_trig[i] = np.array([
+                    num_pos_peaks_diff,
+                    num_neg_peaks_diff,
+                    samples_left_right_diff])
                 q_gnuradio_retries[i] = np.array([
                     experiment_descr["capture_error_gr_trigger_missing"],
                     experiment_descr["capture_error_gr_trigger_invalid"],
