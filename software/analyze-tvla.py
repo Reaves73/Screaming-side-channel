@@ -82,6 +82,8 @@ def tvla(values, traces, f, pred_1, pred_2):
 parser = argparse.ArgumentParser()
 parser.add_argument("filepath", help="path to traces file in experiment directory with plaintexts and keys")
 
+parser.add_argument("-un", "--use_n_traces", help="only use the first n traces", type=int, default=None)
+
 args = parser.parse_args()
 
 fpath = Path(args.filepath)
@@ -106,6 +108,14 @@ plaintexts = np.load(plaintexts_fname)
 keys = np.load(keys_fname)
 traces = np.load(traces_fname)
 
+# as requested
+N = args.use_n_traces
+if N is not None:
+    print("Reducing number of traces...")
+    traces = traces[:N]
+    plaintexts = plaintexts[:N]
+    keys = keys[:N]
+
 assert(traces.shape[0] == plaintexts.shape[0])
 assert(traces.shape[0] == keys.shape[0])
 assert(len(traces.shape) == 2)
@@ -116,12 +126,6 @@ assert(keys.shape[1] == 16)
 print("n_traces:", traces.shape[0])
 print("n_samples:", traces.shape[-1])
 
-
-N = None
-if N is not None:
-    traces = traces[:N]
-    plaintexts = plaintexts[:N]
-    keys = keys[:N]
 
 labels = aes.get_first_sbox_output(plaintexts, keys)
 

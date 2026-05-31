@@ -62,6 +62,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("filepath", help="path to traces file in experiment directory with plaintexts and keys")
 
+    parser.add_argument("-un", "--use_n_traces", help="only use the first n traces", type=int, default=None)
+
     args = parser.parse_args()
 
     # process path
@@ -87,6 +89,12 @@ def main():
     traces = np.load(traces_f).astype(np.float32)
     pts = np.load(pts_f).astype(np.uint8)
 
+    # as requested
+    if args.use_n_traces is not None:
+        print("Reducing number of traces...")
+        traces = traces[:args.use_n_traces]
+        pts = pts[:args.use_n_traces]
+        
     N, S = traces.shape
     print(f"N traces: {N}, S samples: {S}")
 
@@ -100,7 +108,8 @@ def main():
         keys = np.load(keys_f).astype(np.uint8)
         if keys.ndim == 2 and keys.shape[1] == 16:
             true_key = keys[0].copy()
-            
+            for i in range(keys.shape[0]):
+                assert (true_key == keys[i]).all()
         else:
             print("WARN,shape error")
     except Exception as e:
