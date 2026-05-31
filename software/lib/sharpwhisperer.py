@@ -6,6 +6,7 @@ import datetime
 import shutil
 import json
 import subprocess
+import sys
 
 # ---------------------------
 
@@ -99,13 +100,14 @@ def write_git_diff_files(dirpath):
 
 # ---------------------------
 
+SHARPWHISPERER_LOCKFILE = f"{get_experiments_dir()}/SHARPWHISPERER_LOCK"
+
 # wrapper for procedures that use chipwhisperer HW, or other shared resources; this is to synchronize the users
 import fcntl
 from pwd import getpwuid
 def sync_usage_wrapper(fn):
     def wrapped(*args, **kwargs):
-        LOCKFILE = f"{get_experiments_dir()}/SHARPPEAK_LOCK"
-        lock_fd = os.open(LOCKFILE, os.O_RDWR | os.O_CREAT | os.O_TRUNC)
+        lock_fd = os.open(SHARPWHISPERER_LOCKFILE, os.O_RDWR | os.O_CREAT | os.O_TRUNC)
         locked = False
         try:
             fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -115,8 +117,8 @@ def sync_usage_wrapper(fn):
         except BlockingIOError:
             print("Another process is already occupying the shared sharpwhisperer resource.")
             
-            # show owner of LOCKFILE
-            print("LOCKFILE OWNER:", getpwuid(os.stat(LOCKFILE).st_uid).pw_name)
+            # show owner of SHARPWHISPERER_LOCKFILE
+            print("SHARPWHISPERER_LOCK OWNER:", getpwuid(os.stat(SHARPWHISPERER_LOCKFILE).st_uid).pw_name)
             
             return None
         finally:
@@ -125,9 +127,18 @@ def sync_usage_wrapper(fn):
                     fcntl.flock(lock_fd, fcntl.LOCK_UN)
                     os.close(lock_fd)
                 finally:
-                    if os.path.exists(LOCKFILE):
-                        os.remove(LOCKFILE)
+                    if os.path.exists(SHARPWHISPERER_LOCKFILE):
+                        os.remove(SHARPWHISPERER_LOCKFILE)
     return wrapped
+
+# for CPU intensive scripts, or more generally to notify that there is a capture task running
+def probe_usage_lock():
+    if os.path.exists(SHARPWHISPERER_LOCKFILE):
+        print("SHARPWHISPERER_LOCK TAKEN")
+        print("SHARPWHISPERER_LOCK OWNER:", getpwuid(os.stat(SHARPWHISPERER_LOCKFILE).st_uid).pw_name)
+        if input("Are you sure you want to continue to run this script? (yes/no) ").strip() != "yes":
+            sys.exit(-1)
+
 
 # ---------------------------
 

@@ -1,9 +1,17 @@
 #!/usr/bin/env python3
 
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/lib")
+
+import sharpwhisperer
+
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 import argparse
+
+sharpwhisperer.probe_usage_lock()
 
 # ====== AES SBOX ======
 SBOX = np.array([

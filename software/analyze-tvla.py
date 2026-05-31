@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
 
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/lib")
+
+import sharpwhisperer
+import aes
+
 import numpy as np
 import matplotlib.pyplot as plt
 from numpy.matlib import repmat
-import sys
-import os
 import scipy.stats as st
 from pathlib import Path
 import argparse
 
-sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/lib")
-import aes
-
+sharpwhisperer.probe_usage_lock()
 
 def hamming_weight(n):
     hw = 0
