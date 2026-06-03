@@ -90,6 +90,7 @@ def capture_core(config_dict):
             raise Exception("maximum number of samples allowed is 24000")
         hw.scope.adc.samples = chipwhisperer_n_samples
     
+    gr_force_dac = False
     if include_trace_gnuradio:
         gr_force_dac = config_dict["force_dac"]
         gr_samprate  = config_dict["gnuradio_samplerate"]
