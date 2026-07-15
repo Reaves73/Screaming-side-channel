@@ -92,7 +92,8 @@ def capture_core(config_dict):
     
     gr_force_dac = config_dict["force_dac"]
     if include_trace_gnuradio:
-        gr_samprate  = config_dict["gnuradio_samplerate"]
+        gr_samprate = config_dict["gnuradio_samplerate"]
+        gr_centfreq = sharpwhisperer.get_experiment_setup_centfreq(cfg)
 
     #
     # INIT
@@ -241,7 +242,7 @@ def capture_core(config_dict):
         if not include_trace_gnuradio:
             capture_fun(state)
         else:
-            with Recorder() as r:
+            with Recorder(cent_freq=gr_centfreq) as r:
                 r.set_samprate(gr_samprate)
                 gr_fs = r.get_samprate()
                 print(f"gnuradio_samplerate={gr_fs}")
@@ -302,7 +303,7 @@ def capture_random_stuff_core(stuff_id, numtraces=None, fs=None):
         sharpwhisperer.set_dac(hw.target, 0)
         sharpwhisperer.set_gate(hw.target, True)
         sharpwhisperer.init_sharppeak(hw.target, PLATFORM)
-        with Recorder() as r:
+        with Recorder(cent_freq=sharpwhisperer.get_experiment_setup_centfreq(cfg)) as r:
             r.set_samprate(fs)
             print(f"samprate={r.get_samprate()}")
             for _ in tqdm(range(1 if numtraces is None else numtraces)):

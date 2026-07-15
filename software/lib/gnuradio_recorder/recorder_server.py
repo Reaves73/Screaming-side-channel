@@ -31,7 +31,7 @@ import threading
 
 class recorder_server(gr.top_block, Qt.QWidget):
 
-    def __init__(self):
+    def __init__(self, cent_freq=430.7e6):
         gr.top_block.__init__(self, "recorder_server", catch_exceptions=True)
         Qt.QWidget.__init__(self)
         self.setWindowTitle("recorder_server")
@@ -63,13 +63,17 @@ class recorder_server(gr.top_block, Qt.QWidget):
         self.flowgraph_started = threading.Event()
 
         ##################################################
+        # Parameters
+        ##################################################
+        self.cent_freq = cent_freq
+
+        ##################################################
         # Variables
         ##################################################
         self.volume = volume = 0.500
         self.tx_gain = tx_gain = 10
         self.samp_rate = samp_rate = 5e6
         self.rf_gain = rf_gain = 36
-        self.lsb_freq = lsb_freq = 430.7e6
         self.freq_shift = freq_shift = 12.5e6
 
         ##################################################
@@ -79,9 +83,6 @@ class recorder_server(gr.top_block, Qt.QWidget):
         self._rf_gain_range = qtgui.Range(0, 40, 1, 36, 200)
         self._rf_gain_win = qtgui.RangeWidget(self._rf_gain_range, self.set_rf_gain, "RX Gain", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._rf_gain_win)
-        self._lsb_freq_range = qtgui.Range(425e6, 445e6, 1e6, 430.7e6, 200)
-        self._lsb_freq_win = qtgui.RangeWidget(self._lsb_freq_range, self.set_lsb_freq, "LSB Freq", "counter_slider", float, QtCore.Qt.Horizontal)
-        self.top_layout.addWidget(self._lsb_freq_win)
         self._volume_range = qtgui.Range(0, 100, 0.100, 0.500, 200)
         self._volume_win = qtgui.RangeWidget(self._volume_range, self.set_volume, "Volume", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._volume_win)
@@ -96,7 +97,7 @@ class recorder_server(gr.top_block, Qt.QWidget):
         self.uhd_usrp_source_0.set_samp_rate(samp_rate)
         self.uhd_usrp_source_0.set_time_unknown_pps(uhd.time_spec(0))
 
-        self.uhd_usrp_source_0.set_center_freq(lsb_freq, 0)
+        self.uhd_usrp_source_0.set_center_freq(cent_freq, 0)
         self.uhd_usrp_source_0.set_antenna("TX/RX", 0)
         self.uhd_usrp_source_0.set_gain(rf_gain, 0)
         self._tx_gain_range = qtgui.Range(0, 40, 1, 10, 200)
@@ -122,6 +123,14 @@ class recorder_server(gr.top_block, Qt.QWidget):
         self.wait()
 
         event.accept()
+
+    def get_cent_freq(self):
+        return self.cent_freq
+
+    def set_cent_freq(self, cent_freq):
+        self.cent_freq = cent_freq
+        self.uhd_usrp_source_0.set_center_freq(self.cent_freq, 0)
+        self.uhd_usrp_source_0.set_center_freq(self.cent_freq, 1)
 
     def get_volume(self):
         return self.volume
@@ -150,14 +159,6 @@ class recorder_server(gr.top_block, Qt.QWidget):
         self.uhd_usrp_source_0.set_gain(self.rf_gain, 0)
         self.uhd_usrp_source_0.set_gain(self.rf_gain, 1)
 
-    def get_lsb_freq(self):
-        return self.lsb_freq
-
-    def set_lsb_freq(self, lsb_freq):
-        self.lsb_freq = lsb_freq
-        self.uhd_usrp_source_0.set_center_freq(self.lsb_freq, 0)
-        self.uhd_usrp_source_0.set_center_freq(self.lsb_freq, 1)
-
     def get_freq_shift(self):
         return self.freq_shift
 
@@ -166,12 +167,21 @@ class recorder_server(gr.top_block, Qt.QWidget):
 
 
 
+def argument_parser():
+    parser = ArgumentParser()
+    parser.add_argument(
+        "--cent-freq", dest="cent_freq", type=eng_float, default=eng_notation.num_to_str(float(430.7e6)),
+        help="Set Center frequency [default=%(default)r]")
+    return parser
+
 
 def main(top_block_cls=recorder_server, options=None):
+    if options is None:
+        options = argument_parser().parse_args()
 
     qapp = Qt.QApplication(sys.argv)
 
-    tb = top_block_cls()
+    tb = top_block_cls(cent_freq=options.cent_freq)
 
     tb.start()
     tb.flowgraph_started.set()

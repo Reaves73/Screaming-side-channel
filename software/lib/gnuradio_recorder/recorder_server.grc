@@ -45,27 +45,6 @@ blocks:
     coordinate: [320, 20.0]
     rotation: 0
     state: enabled
-- name: lsb_freq
-  id: variable_qtgui_range
-  parameters:
-    comment: ''
-    gui_hint: ''
-    label: LSB Freq
-    min_len: '200'
-    orient: QtCore.Qt.Horizontal
-    rangeType: float
-    start: 425e6
-    step: 1e6
-    stop: 445e6
-    value: 430.7e6
-    widget: counter_slider
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [704, 20.0]
-    rotation: 0
-    state: true
 - name: rf_gain
   id: variable_qtgui_range
   parameters:
@@ -278,6 +257,23 @@ blocks:
     coordinate: [296, 256.0]
     rotation: 0
     state: disabled
+- name: cent_freq
+  id: parameter
+  parameters:
+    alias: ''
+    comment: ''
+    hide: none
+    label: Center frequency
+    short_id: ''
+    type: eng_float
+    value: 430.7e6
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [712, 36.0]
+    rotation: 0
+    state: enabled
 - name: epy_block_0
   id: epy_block
   parameters:
@@ -711,8 +707,8 @@ blocks:
     bw7: '0'
     bw8: '0'
     bw9: '0'
-    center_freq0: lsb_freq
-    center_freq1: lsb_freq
+    center_freq0: cent_freq
+    center_freq1: cent_freq
     center_freq10: '0'
     center_freq11: '0'
     center_freq12: '0'

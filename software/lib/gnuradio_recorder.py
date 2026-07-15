@@ -10,9 +10,10 @@ def print_recorder_server(p):
     for line in p.stdout:
         print(f"------ {line}", end="", flush=True)
 
-def start_recorder_server():
+def start_recorder_server(cent_freq=None):
     cmd_script = f"{os.path.dirname(os.path.realpath(__file__))}/gnuradio_recorder/recorder_server.py"
-    cmd = ["/usr/bin/python3", "-u", cmd_script]
+    grrec_params = ([] if cent_freq is None else ["--cent-freq", str(cent_freq)])
+    cmd = ["/usr/bin/python3", "-u", cmd_script] + grrec_params
 
     p = None
     try:
@@ -60,10 +61,13 @@ SAMPRATE_GET_CMD="SAMPRATE GET"
 SAMPRATE_SET_CMD_PREFIX="SAMPRATE SET:"
 SAMPRATE_SET_CMD_SUFFIX=":"
 class Recorder:
-    def __init__(self, server=None):
+    def __init__(self, server=None, cent_freq=None):
         if server is None:
             print("running recorder_server in background")
+        else:
+            assert cent_freq is None
         self._server = server
+        self._cent_freq = cent_freq
         self._s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._timeout = 2
         self._s.settimeout(self._timeout)
@@ -75,7 +79,7 @@ class Recorder:
         if server_address is None:
             # start the server in the background
             server_address = "127.0.0.1"
-            self._p = start_recorder_server()
+            self._p = start_recorder_server(self._cent_freq)
         self._s.connect((server_address, 9999))
         assert self._s.gettimeout() == self._timeout
         return self

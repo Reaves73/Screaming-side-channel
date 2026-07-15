@@ -38,7 +38,10 @@ def validate_experiment_setup_config(cfg):
     assert type(cfg["sharppeak_on_dac_directly"]) == bool
 
     assert cfg["chipwhisperer_adc_to_target_power"] ^ cfg["chipwhisperer_adc_to_dac"]
+
     assert not(cfg["chipwhisperer_adc_to_dac"] and cfg["sharppeak_on_dac_directly"])
+    assert not(cfg["chipwhisperer_adc_to_dac"] and cfg["vco_on_dac_directly"])
+    assert not(cfg["sharppeak_on_dac_directly"] and cfg["vco_on_dac_directly"])
 
     assert type(cfg["notes"]) == str
 
@@ -73,6 +76,19 @@ def get_new_experiment_dir(experiment_name):
 def save_capture_config(config_dict, path):
     with open(path, 'w') as config_file:
         json.dump(config_dict, config_file, indent=2, sort_keys=True)
+
+# ---------------------------
+
+def get_experiment_setup_centfreq(exp_config):
+    #exp_config = get_experiment_setup_config()
+    if exp_config["sharppeak_on_dac_directly"]:
+        centfreq = 430.7e6
+    elif exp_config["vco_on_dac_directly"]:
+        centfreq = 839.3e6
+    else:
+        assert False
+    assert centfreq is not None
+    return centfreq
 
 # ---------------------------
 
