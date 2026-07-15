@@ -57,7 +57,7 @@ blocks:
     start: '0'
     step: '1'
     stop: '50'
-    value: '36'
+    value: '8'
     widget: counter_slider
   states:
     bus_sink: false
