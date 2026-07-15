@@ -262,7 +262,7 @@ def finalize_sharpwhisperer(hw):
         # set DAC to 0, turn off gate, power off the MCU
         set_dac(hw.target, 0)
         set_gate(hw.target, False)
-        #set_target_power(hw.scope, False, do_print=True)
+        set_target_power(hw.scope, False, do_print=True)
         # DISCONNECT
         hw.disconnect()
     except Exception as e:
