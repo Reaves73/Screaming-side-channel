@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.signal import find_peaks
 
-def match_filter_convolution(trace, n_width:int, polarity=False):
+def match_filter_convolution(trace, n_width:int):
     kernel = np.r_[-np.ones(n_width), np.ones(n_width)]
 
     pad_width = n_width*2 # TODO: maybe n_width*1 is enough
@@ -11,7 +11,7 @@ def match_filter_convolution(trace, n_width:int, polarity=False):
     tracepad = np.pad(trace, pad_width, mode=pad_mode)
     response = np.convolve(tracepad, kernel, mode='same')
 
-    return response[n_width:-n_width]*(-1 if polarity else 1)
+    return response[n_width:-n_width]*(-1)
 
 def remove_close_values(values, min_distance):
     if len(values) == 0:

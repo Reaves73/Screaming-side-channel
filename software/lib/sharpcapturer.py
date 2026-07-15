@@ -94,6 +94,7 @@ def capture_core(config_dict):
     if include_trace_gnuradio:
         gr_samprate = config_dict["gnuradio_samplerate"]
         gr_centfreq = sharpwhisperer.get_experiment_setup_centfreq(cfg)
+        gr_sigpolarity = sharpwhisperer.get_experiment_setup_sigpolarity(cfg)
 
     #
     # INIT
@@ -170,7 +171,7 @@ def capture_core(config_dict):
                 ret = hw.capture(text, key)
                 if cap_handle is not None:
                     time.sleep(0.02)
-                    t_gnuradio = cap_handle.record_stop()
+                    t_gnuradio = cap_handle.record_stop() * gr_sigpolarity
 
                     response = sharptriggerer.match_filter_convolution(t_gnuradio, gr_trig_n_width)
                     detected_trigger = sharptriggerer.match_filter_find_trigger(response, gr_trig_n_width)
@@ -297,6 +298,8 @@ def capture_random_stuff_core(stuff_id, numtraces=None, fs=None):
     hw.scope.default_setup();
     time.sleep(0.1)
 
+    gr_sigpolarity = sharpwhisperer.get_experiment_setup_sigpolarity(cfg)
+
     sharpwhisperer.init_target(hw)
     traces_l = []
     try:
@@ -311,7 +314,7 @@ def capture_random_stuff_core(stuff_id, numtraces=None, fs=None):
                 time.sleep(0.01)
                 sharpwhisperer.do_random_stuff(hw.target, stuff_id, debug=False)
                 time.sleep(0.02)
-                traces_l.append(r.record_stop())
+                traces_l.append(r.record_stop() * gr_sigpolarity)
                 time.sleep(0.2)
     finally:
         sharpwhisperer.finalize_sharpwhisperer(hw)
