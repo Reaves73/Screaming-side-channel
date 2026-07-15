@@ -9,6 +9,14 @@ import datetime
 from tqdm import tqdm
 import numpy as np
 
+def capture_init_dac(target, PLATFORM, do_sharppeak_init, run_dac_max):
+    sharpwhisperer.set_dac(target, 0)
+    sharpwhisperer.set_gate(target, True)
+    if do_sharppeak_init:
+        sharpwhisperer.init_sharppeak(target, PLATFORM)
+    if run_dac_max:
+        sharpwhisperer.set_dac(target, 700)
+
 def tracelist_to_nparray(traces_l):
     #print(trace_l[0].size)
     #print(trace_l[1].size)
@@ -91,9 +99,13 @@ def capture_core(config_dict):
         hw.scope.adc.samples = chipwhisperer_n_samples
     
     gr_force_dac = config_dict["force_dac"]
+    rundacmax = sharpwhisperer.get_experiment_setup_rundacmax(cfg)
+    assert (not gr_force_dac) or (rundacmax is None)
+    rundacmax = gr_force_dac if rundacmax is None else rundacmax
     if include_trace_gnuradio:
         gr_samprate = config_dict["gnuradio_samplerate"]
         gr_centfreq = sharpwhisperer.get_experiment_setup_centfreq(cfg)
+        gr_rxgain = sharpwhisperer.get_experiment_setup_rxgain(cfg)
         gr_sigpolarity = sharpwhisperer.get_experiment_setup_sigpolarity(cfg)
 
     #
@@ -101,19 +113,17 @@ def capture_core(config_dict):
     #
 
     sharpwhisperer.init_target(hw)
+
     #sharpwhisperer.program_target(PLATFORM, FIRMWARE, hw)
+
+    # TODO: this is maybe not ideal, but it preserves the poor-man's error handling as endless loop in dacadc driver's dac_trigger function
+    sharpwhisperer.set_gate(hw.target, False)
+    sharpwhisperer.set_dac(hw.target, 350)
+
     if include_trace_gnuradio or gr_force_dac:
-        sharpwhisperer.set_dac(hw.target, 0)
-        sharpwhisperer.set_gate(hw.target, True)
-        if gr_force_dac:
+        if rundacmax:
             assert not sharpwhisperer.get_experiment_setup_config()["sharppeak_on_dac_directly"] #TODO: untested code, and this option doesn't look future-proof enough for what is needed here
-            sharpwhisperer.set_dac(hw.target, 700)
-        else:
-            sharpwhisperer.init_sharppeak(hw.target, PLATFORM)
-    else:
-        # TODO: this is maybe not ideal, but it preserves the poor-man's error handling as endless loop in dacadc driver's dac_trigger function
-        sharpwhisperer.set_gate(hw.target, False)
-        sharpwhisperer.set_dac(hw.target, 350)
+        capture_init_dac(hw.target, PLATFORM, do_sharppeak_init=(not rundacmax), run_dac_max=rundacmax)
 
     #
     # CAPTURE
@@ -243,7 +253,7 @@ def capture_core(config_dict):
         if not include_trace_gnuradio:
             capture_fun(state)
         else:
-            with Recorder(cent_freq=gr_centfreq) as r:
+            with Recorder(cent_freq=gr_centfreq, rx_gain=gr_rxgain) as r:
                 r.set_samprate(gr_samprate)
                 gr_fs = r.get_samprate()
                 print(f"gnuradio_samplerate={gr_fs}")
@@ -299,14 +309,18 @@ def capture_random_stuff_core(stuff_id, numtraces=None, fs=None):
     time.sleep(0.1)
 
     gr_sigpolarity = sharpwhisperer.get_experiment_setup_sigpolarity(cfg)
+    rundacmax = sharpwhisperer.get_experiment_setup_rundacmax(cfg)
+    assert rundacmax is not None
 
     sharpwhisperer.init_target(hw)
     traces_l = []
     try:
-        sharpwhisperer.set_dac(hw.target, 0)
-        sharpwhisperer.set_gate(hw.target, True)
-        sharpwhisperer.init_sharppeak(hw.target, PLATFORM)
-        with Recorder(cent_freq=sharpwhisperer.get_experiment_setup_centfreq(cfg)) as r:
+        capture_init_dac(hw.target, PLATFORM, do_sharppeak_init=(not rundacmax), run_dac_max=rundacmax)
+
+        with Recorder(
+            cent_freq=sharpwhisperer.get_experiment_setup_centfreq(cfg),
+            rx_gain=sharpwhisperer.get_experiment_setup_rxgain(cfg)
+        ) as r:
             r.set_samprate(fs)
             print(f"samprate={r.get_samprate()}")
             for _ in tqdm(range(1 if numtraces is None else numtraces)):

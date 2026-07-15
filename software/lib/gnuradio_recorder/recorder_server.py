@@ -10,7 +10,6 @@
 
 from PyQt5 import Qt
 from gnuradio import qtgui
-from PyQt5 import QtCore
 from gnuradio import analog
 import math
 from gnuradio import gr
@@ -31,7 +30,7 @@ import threading
 
 class recorder_server(gr.top_block, Qt.QWidget):
 
-    def __init__(self, cent_freq=430.7e6):
+    def __init__(self, cent_freq=430.7e6, rx_gain=36):
         gr.top_block.__init__(self, "recorder_server", catch_exceptions=True)
         Qt.QWidget.__init__(self)
         self.setWindowTitle("recorder_server")
@@ -66,26 +65,17 @@ class recorder_server(gr.top_block, Qt.QWidget):
         # Parameters
         ##################################################
         self.cent_freq = cent_freq
+        self.rx_gain = rx_gain
 
         ##################################################
         # Variables
         ##################################################
-        self.volume = volume = 0.500
-        self.tx_gain = tx_gain = 10
         self.samp_rate = samp_rate = 5e6
-        self.rf_gain = rf_gain = 36
-        self.freq_shift = freq_shift = 12.5e6
 
         ##################################################
         # Blocks
         ##################################################
 
-        self._rf_gain_range = qtgui.Range(0, 40, 1, 36, 200)
-        self._rf_gain_win = qtgui.RangeWidget(self._rf_gain_range, self.set_rf_gain, "RX Gain", "counter_slider", float, QtCore.Qt.Horizontal)
-        self.top_layout.addWidget(self._rf_gain_win)
-        self._volume_range = qtgui.Range(0, 100, 0.100, 0.500, 200)
-        self._volume_win = qtgui.RangeWidget(self._volume_range, self.set_volume, "Volume", "counter_slider", float, QtCore.Qt.Horizontal)
-        self.top_layout.addWidget(self._volume_win)
         self.uhd_usrp_source_0 = uhd.usrp_source(
             ",".join(("", '')),
             uhd.stream_args(
@@ -98,11 +88,8 @@ class recorder_server(gr.top_block, Qt.QWidget):
         self.uhd_usrp_source_0.set_time_unknown_pps(uhd.time_spec(0))
 
         self.uhd_usrp_source_0.set_center_freq(cent_freq, 0)
-        self.uhd_usrp_source_0.set_antenna("TX/RX", 0)
-        self.uhd_usrp_source_0.set_gain(rf_gain, 0)
-        self._tx_gain_range = qtgui.Range(0, 40, 1, 10, 200)
-        self._tx_gain_win = qtgui.RangeWidget(self._tx_gain_range, self.set_tx_gain, "TX Gain", "counter_slider", float, QtCore.Qt.Horizontal)
-        self.top_layout.addWidget(self._tx_gain_win)
+        self.uhd_usrp_source_0.set_antenna("RX2", 0)
+        self.uhd_usrp_source_0.set_gain(rx_gain, 0)
         self.epy_block_0 = epy_block_0.PythonExportBlock(exportmodulename="recorder_server_export", samp_rate=samp_rate)
         self.analog_quadrature_demod_cf_0 = analog.quadrature_demod_cf(1)
 
@@ -132,17 +119,13 @@ class recorder_server(gr.top_block, Qt.QWidget):
         self.uhd_usrp_source_0.set_center_freq(self.cent_freq, 0)
         self.uhd_usrp_source_0.set_center_freq(self.cent_freq, 1)
 
-    def get_volume(self):
-        return self.volume
+    def get_rx_gain(self):
+        return self.rx_gain
 
-    def set_volume(self, volume):
-        self.volume = volume
-
-    def get_tx_gain(self):
-        return self.tx_gain
-
-    def set_tx_gain(self, tx_gain):
-        self.tx_gain = tx_gain
+    def set_rx_gain(self, rx_gain):
+        self.rx_gain = rx_gain
+        self.uhd_usrp_source_0.set_gain(self.rx_gain, 0)
+        self.uhd_usrp_source_0.set_gain(self.rx_gain, 1)
 
     def get_samp_rate(self):
         return self.samp_rate
@@ -151,20 +134,6 @@ class recorder_server(gr.top_block, Qt.QWidget):
         self.samp_rate = samp_rate
         self.uhd_usrp_source_0.set_samp_rate(self.samp_rate)
 
-    def get_rf_gain(self):
-        return self.rf_gain
-
-    def set_rf_gain(self, rf_gain):
-        self.rf_gain = rf_gain
-        self.uhd_usrp_source_0.set_gain(self.rf_gain, 0)
-        self.uhd_usrp_source_0.set_gain(self.rf_gain, 1)
-
-    def get_freq_shift(self):
-        return self.freq_shift
-
-    def set_freq_shift(self, freq_shift):
-        self.freq_shift = freq_shift
-
 
 
 def argument_parser():
@@ -172,6 +141,9 @@ def argument_parser():
     parser.add_argument(
         "--cent-freq", dest="cent_freq", type=eng_float, default=eng_notation.num_to_str(float(430.7e6)),
         help="Set Center frequency [default=%(default)r]")
+    parser.add_argument(
+        "--rx-gain", dest="rx_gain", type=intx, default=36,
+        help="Set RX Gain [default=%(default)r]")
     return parser
 
 
@@ -181,7 +153,7 @@ def main(top_block_cls=recorder_server, options=None):
 
     qapp = Qt.QApplication(sys.argv)
 
-    tb = top_block_cls(cent_freq=options.cent_freq)
+    tb = top_block_cls(cent_freq=options.cent_freq, rx_gain=options.rx_gain)
 
     tb.start()
     tb.flowgraph_started.set()

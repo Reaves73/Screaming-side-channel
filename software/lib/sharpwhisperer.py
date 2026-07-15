@@ -81,23 +81,33 @@ def save_capture_config(config_dict, path):
 
 def get_experiment_setup_centfreq(exp_config):
     if exp_config["sharppeak_on_dac_directly"]:
-        centfreq = 430.7e6
+        return 430.7e6
     elif exp_config["vco_on_dac_directly"]:
-        centfreq = 839.3e6
-    else:
-        assert False
-    assert centfreq is not None
-    return centfreq
+        return 851.8e6 #839.3e6
+    assert False
+
+def get_experiment_setup_rxgain(exp_config):
+    if exp_config["sharppeak_on_dac_directly"]:
+        return 36
+    elif exp_config["vco_on_dac_directly"]:
+        return 8
+    assert False
+
+def get_experiment_setup_rundacmax(exp_config):
+    if exp_config["sharppeak_on_dac_directly"]:
+        return False
+    elif exp_config["vco_on_dac_directly"]:
+        return True
+    elif exp_config["chipwhisperer_adc_to_dac"]:
+        return True
+    assert False
 
 def get_experiment_setup_sigpolarity(exp_config):
     if exp_config["sharppeak_on_dac_directly"]:
-        sigpolarity = -1
+        return -1
     elif exp_config["vco_on_dac_directly"]:
-        sigpolarity = 1
-    else:
-        assert False
-    assert sigpolarity is not None
-    return sigpolarity
+        return 1
+    assert False
 
 # ---------------------------
 
