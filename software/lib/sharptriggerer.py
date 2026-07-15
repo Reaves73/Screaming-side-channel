@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.signal import find_peaks
 
-def match_filter_convolution(trace, n_width:int):
+def match_filter_convolution(trace, n_width:int, polarity=False):
     kernel = np.r_[-np.ones(n_width), np.ones(n_width)]
 
     pad_width = n_width*2 # TODO: maybe n_width*1 is enough
@@ -11,7 +11,7 @@ def match_filter_convolution(trace, n_width:int):
     tracepad = np.pad(trace, pad_width, mode=pad_mode)
     response = np.convolve(tracepad, kernel, mode='same')
 
-    return response[n_width:-n_width]
+    return response[n_width:-n_width]*(-1 if polarity else 1)
 
 def remove_close_values(values, min_distance):
     if len(values) == 0:
@@ -113,7 +113,7 @@ def get_trigger_end(detected_trigger, n_permit_range, n_permit_diff, trig_delay_
     samples_left_right_diff = samples_left - samples_right
     if not(abs(samples_left_right_diff) < n_permit_diff):
         if debug:
-            print("not valid: n_permit_diff")
+            print(f"not valid: n_permit_diff - {samples_left_right_diff}")
         return None
 
     return idx_trig_right + samples_right - (0 if trig_delay_samples is None else trig_delay_samples), samples_left_right_diff
