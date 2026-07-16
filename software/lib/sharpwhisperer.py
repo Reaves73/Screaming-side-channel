@@ -88,7 +88,8 @@ def get_experiment_setup_centfreq(exp_config):
 
 def get_experiment_setup_rxgain(exp_config):
     if exp_config["sharppeak_on_dac_directly"]:
-        return 8
+        return 8 # maybe good value for coax cable connection, same as VCO
+        #return 46 # experiment with bad antennas close to each other
     elif exp_config["vco_on_dac_directly"]:
         return 8
     assert False
