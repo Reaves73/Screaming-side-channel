@@ -99,7 +99,7 @@ def get_experiment_setup_rundacmax(exp_config):
     elif exp_config["vco_on_dac_directly"]:
         return True
     elif exp_config["chipwhisperer_adc_to_dac"]:
-        return True
+        return None
     assert False
 
 def get_experiment_setup_sigpolarity(exp_config):
