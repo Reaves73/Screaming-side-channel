@@ -9,11 +9,13 @@ import datetime
 from tqdm import tqdm
 import numpy as np
 
-def capture_init_dac(target, PLATFORM, do_sharppeak_init, run_dac_max):
+def capture_init_dac(target, PLATFORM, do_sharppeak_init, run_dac_max):#, sharppeak_connected=True):
     sharpwhisperer.set_dac(target, 0)
     sharpwhisperer.set_gate(target, True)
     if do_sharppeak_init:
         sharpwhisperer.init_sharppeak(target, PLATFORM)
+        #if sharppeak_connected:
+        #    input("waiting. press enter when sharppeak_dac is plugged")
     if run_dac_max:
         sharpwhisperer.set_dac(target, 700)
 
