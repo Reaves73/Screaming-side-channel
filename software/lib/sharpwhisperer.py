@@ -88,7 +88,7 @@ def get_experiment_setup_centfreq(exp_config):
 
 def get_experiment_setup_rxgain(exp_config):
     if exp_config["sharppeak_on_dac_directly"]:
-        return 8 # could try 20   # old value with wrong SMA port: 36
+        return 8
     elif exp_config["vco_on_dac_directly"]:
         return 8
     assert False
