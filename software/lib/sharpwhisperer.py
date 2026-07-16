@@ -39,8 +39,6 @@ def validate_experiment_setup_config(cfg):
 
     assert cfg["chipwhisperer_adc_to_target_power"] ^ cfg["chipwhisperer_adc_to_dac"]
 
-    assert not(cfg["chipwhisperer_adc_to_dac"] and cfg["sharppeak_on_dac_directly"])
-    assert not(cfg["chipwhisperer_adc_to_dac"] and cfg["vco_on_dac_directly"])
     assert not(cfg["sharppeak_on_dac_directly"] and cfg["vco_on_dac_directly"])
 
     assert type(cfg["notes"]) == str
