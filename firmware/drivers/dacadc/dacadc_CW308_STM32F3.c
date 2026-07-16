@@ -28,7 +28,7 @@ void dac_set(uint16_t value){
         DAC->DHR12R1 = (value & (1024-1)); // 0,75V safety
 }
 
-#define DAC_TRIGGER_OFFSET 40
+#define DAC_TRIGGER_OFFSET 20
 #define DAC_TRIGGER_DELAYCOUNT 5000
 void dac_trigger() {
     volatile uint32_t count;
