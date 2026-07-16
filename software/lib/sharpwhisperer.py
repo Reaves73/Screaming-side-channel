@@ -98,7 +98,7 @@ def get_experiment_setup_rundacmax(exp_config):
         return False
     elif exp_config["vco_on_dac_directly"]:
         return True
-    elif exp_config["chipwhisperer_adc_to_dac"]:
+    elif exp_config["chipwhisperer_adc_to_dac"] or exp_config["chipwhisperer_adc_to_target_power"]:
         return None
     assert False
 
