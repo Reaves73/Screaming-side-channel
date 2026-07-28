@@ -2,10 +2,22 @@
 
 ## Basic usage
 
+1. Basic requirements (once as root):
+```
+apt install libuhd-dev uhd-host
+apt install gnuradio
+apt install make
+apt install gcc-arm-none-eabi
+mkdir sharpwhisperer_experiments
+chmod 777 sharpwhisperer_experiments
+nano /etc/profile.d/uhd_firmware_path_var.sh
+nano /etc/profile.d/sharpwhisperer_path_var.sh
+```
 1. Setup:
 ```
-# as root: ./scripts/env_setup_root.sh
+# once as root: apt install python3-venv
 ./scripts/env_setup.sh
+# once as root: ./scripts/env_setup_root.sh
 ```
 1. Run Jupyter notebook: `./scripts/run_jupyter.sh`
 1. Get chipwhisperer python environment: `source ./scripts/env.sh`
