@@ -30,7 +30,7 @@ import threading
 
 class recorder_server(gr.top_block, Qt.QWidget):
 
-    def __init__(self, cent_freq=430.7e6, rx_gain=36):
+    def __init__(self, cent_freq=430.7e6, rx_gain=8):
         gr.top_block.__init__(self, "recorder_server", catch_exceptions=True)
         Qt.QWidget.__init__(self)
         self.setWindowTitle("recorder_server")
@@ -142,7 +142,7 @@ def argument_parser():
         "--cent-freq", dest="cent_freq", type=eng_float, default=eng_notation.num_to_str(float(430.7e6)),
         help="Set Center frequency [default=%(default)r]")
     parser.add_argument(
-        "--rx-gain", dest="rx_gain", type=intx, default=36,
+        "--rx-gain", dest="rx_gain", type=intx, default=8,
         help="Set RX Gain [default=%(default)r]")
     return parser
 

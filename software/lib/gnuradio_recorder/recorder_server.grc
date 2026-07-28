@@ -251,7 +251,7 @@ blocks:
     alias: ''
     bw: samp_rate
     comment: ''
-    fc: lsb_freq
+    fc: cent_freq
     fftsize: '1024'
     gui_hint: ''
     maxoutbuf: '0'
@@ -282,7 +282,7 @@ blocks:
     label: RX Gain
     short_id: ''
     type: intx
-    value: '36'
+    value: '8'
   states:
     bus_sink: false
     bus_source: false
