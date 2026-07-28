@@ -79,9 +79,10 @@ def save_capture_config(config_dict, path):
 
 def get_experiment_setup_centfreq(exp_config):
     if exp_config["sharppeak_on_dac_directly"]:
-        return 430.0e6 # original with resistor and no lna attached
+        #return 430.0e6 # original with resistor and no lna attached
         #return 438.7e6 # with resistor and lna
         #return 438.2e6 # without resistor, but with lna
+        return 429.5e6
     elif exp_config["vco_on_dac_directly"]:
         return 851.8e6 #839.3e6
     assert False
