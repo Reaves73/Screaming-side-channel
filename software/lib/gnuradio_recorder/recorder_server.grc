@@ -359,7 +359,7 @@ blocks:
     bw7: '0'
     bw8: '0'
     bw9: '0'
-    center_freq0: lsb_freq
+    center_freq0: cent_freq
     center_freq1: '0'
     center_freq10: '0'
     center_freq11: '0'
