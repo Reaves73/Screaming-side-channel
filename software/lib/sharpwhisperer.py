@@ -79,10 +79,9 @@ def save_capture_config(config_dict, path):
 
 def get_experiment_setup_centfreq(exp_config):
     if exp_config["sharppeak_on_dac_directly"]:
-        #return 430.0e6 # original with resistor and no lna attached
+        return 430.02e6 # original with resistor and no lna attached, # value before running for a while: #return 429.5e6
         #return 438.7e6 # with resistor and lna
         #return 438.2e6 # without resistor, but with lna
-        return 429.5e6
     elif exp_config["vco_on_dac_directly"]:
         return 851.8e6 #839.3e6
     assert False
@@ -179,7 +178,7 @@ def probe_usage_lock():
 
 # ---------------------------
 
-# enabled or disables DAC output
+# enables or disables DAC output
 def set_gate(target, enabled):
     if enabled:
         target.simpleserial_write('u', bytearray([0, 1, 0]))
@@ -231,6 +230,17 @@ def get_platform_id(target):
         return "CW308_STM32L4"
     else:
         return "UNKNOWN"
+
+# for debugging: set trigger pin high or low
+def set_trigger_pin(target, value):
+    if value:
+        target.simpleserial_write('u', bytearray([5, 1, 0]))
+    else:
+        target.simpleserial_write('u', bytearray([5, 0, 0]))
+    print(f"Trigger pin set to {'HIGH' if value else 'LOW'}.")
+    resp = target.simpleserial_read('g', 1)
+    assert resp[0] == 1
+    #return resp
 
 # ---------------------------
 

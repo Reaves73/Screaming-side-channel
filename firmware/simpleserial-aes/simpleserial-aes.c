@@ -163,6 +163,12 @@ uint8_t simpserial_sharpwhisperer(uint8_t* d, uint8_t len)
             result_flag = 3;
 #endif
             break;
+        case 5:
+            if (d[1])
+                trigger_high();
+            else
+                trigger_low();
+            break;
         default:
             result_flag = 0;
             break;

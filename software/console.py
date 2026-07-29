@@ -116,7 +116,16 @@ def main():
         if cmd == "p":
             sharpwhisperer.program_target(PLATFORM, FIRMWARE, hw)
             continue
-    
+
+        if cmd == "t":
+            value = input("0 or 1? ").strip()
+            if value not in {"0", "1"}:
+                print("- trigger pin value must be 0 or 1.")
+                continue
+
+            resp = sharpwhisperer.set_trigger_pin(hw.target, value == "1")
+            continue
+
         print("Unknown command.")
         print_usage()
 
