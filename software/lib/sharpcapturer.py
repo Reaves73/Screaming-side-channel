@@ -267,8 +267,8 @@ def capture_core(config_dict):
         if not include_trace_gnuradio:
             capture_fun(state)
         else:
-            with Recorder(cent_freq=gr_centfreq, rx_gain=gr_rxgain) as r:
-                r.set_samprate(gr_samprate)
+            with Recorder(cent_freq=gr_centfreq, rx_gain=gr_rxgain, samp_rate=gr_samprate) as r:
+                #r.set_samprate(gr_samprate)
                 gr_fs = r.get_samprate()
                 print(f"gnuradio_samplerate={gr_fs}")
                 #NOTE: maybe this is not true later because not arbitrary values are settable and it is up to some signal synthesis like with CW?
@@ -333,9 +333,10 @@ def capture_random_stuff_core(stuff_id, numtraces=None, fs=None):
 
         with Recorder(
             cent_freq=sharpwhisperer.get_experiment_setup_centfreq(cfg),
-            rx_gain=sharpwhisperer.get_experiment_setup_rxgain(cfg)
+            rx_gain=sharpwhisperer.get_experiment_setup_rxgain(cfg),
+            samp_rate=fs
         ) as r:
-            r.set_samprate(fs)
+            #r.set_samprate(fs)
             print(f"samprate={r.get_samprate()}")
             for _ in tqdm(range(1 if numtraces is None else numtraces)):
                 r.record_start()

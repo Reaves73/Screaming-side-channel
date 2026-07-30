@@ -33,18 +33,6 @@ options:
     state: enabled
 
 blocks:
-- name: samp_rate
-  id: variable
-  parameters:
-    comment: ''
-    value: 5e6
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [264, 68.0]
-    rotation: 0
-    state: enabled
 - name: analog_noise_source_x_0
   id: analog_noise_source_x
   parameters:
@@ -279,7 +267,7 @@ blocks:
     alias: ''
     comment: ''
     hide: none
-    label: RX Gain
+    label: RX gain
     short_id: ''
     type: intx
     value: '8'
@@ -288,6 +276,23 @@ blocks:
     bus_source: false
     bus_structure: null
     coordinate: [408, 52.0]
+    rotation: 0
+    state: enabled
+- name: samp_rate
+  id: parameter
+  parameters:
+    alias: ''
+    comment: ''
+    hide: none
+    label: Sample rate
+    short_id: ''
+    type: eng_float
+    value: 5e6
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [248, 52.0]
     rotation: 0
     state: enabled
 - name: uhd_usrp_sink_0

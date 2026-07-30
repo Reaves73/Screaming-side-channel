@@ -30,7 +30,7 @@ import threading
 
 class recorder_server(gr.top_block, Qt.QWidget):
 
-    def __init__(self, cent_freq=430.7e6, rx_gain=8):
+    def __init__(self, cent_freq=430.7e6, rx_gain=8, samp_rate=5e6):
         gr.top_block.__init__(self, "recorder_server", catch_exceptions=True)
         Qt.QWidget.__init__(self)
         self.setWindowTitle("recorder_server")
@@ -66,11 +66,7 @@ class recorder_server(gr.top_block, Qt.QWidget):
         ##################################################
         self.cent_freq = cent_freq
         self.rx_gain = rx_gain
-
-        ##################################################
-        # Variables
-        ##################################################
-        self.samp_rate = samp_rate = 5e6
+        self.samp_rate = samp_rate
 
         ##################################################
         # Blocks
@@ -143,7 +139,10 @@ def argument_parser():
         help="Set Center frequency [default=%(default)r]")
     parser.add_argument(
         "--rx-gain", dest="rx_gain", type=intx, default=8,
-        help="Set RX Gain [default=%(default)r]")
+        help="Set RX gain [default=%(default)r]")
+    parser.add_argument(
+        "--samp-rate", dest="samp_rate", type=eng_float, default=eng_notation.num_to_str(float(5e6)),
+        help="Set Sample rate [default=%(default)r]")
     return parser
 
 
@@ -153,7 +152,7 @@ def main(top_block_cls=recorder_server, options=None):
 
     qapp = Qt.QApplication(sys.argv)
 
-    tb = top_block_cls(cent_freq=options.cent_freq, rx_gain=options.rx_gain)
+    tb = top_block_cls(cent_freq=options.cent_freq, rx_gain=options.rx_gain, samp_rate=options.samp_rate)
 
     tb.start()
     tb.flowgraph_started.set()
