@@ -124,7 +124,9 @@ uint8_t do_random_stuff(uint8_t stuff_id)
             break;
         case 3:
             dac_trigger(); // 10ms +dv 10ms -dv 10ms 0dv 10ms
+            trigger_high();
             delay_cycles(50000); // ~50ms delay
+            trigger_low();
             dac_trigger(); // 10ms +dv 10ms -dv 10ms 0dv 10ms
             break;
         default:
