@@ -92,7 +92,7 @@ class recorder_server_2ch(gr.top_block, Qt.QWidget):
         self.uhd_usrp_source_0.set_antenna("RX2", 1)
         self.uhd_usrp_source_0.set_gain(8, 1)
         self.epy_block_0 = epy_block_0.PythonExportBlock(exportmodulename="recorder_server_2ch_export", samp_rate=samp_rate)
-        self.blocks_threshold_ff_0 = blocks.threshold_ff((0.5e-5), (1e-5), 0)
+        self.blocks_threshold_ff_0 = blocks.threshold_ff((1e-3), (3e-3), 0)
         self.blocks_complex_to_mag_squared_0 = blocks.complex_to_mag_squared(1)
         self.analog_quadrature_demod_cf_0 = analog.quadrature_demod_cf(1)
 
