@@ -12,6 +12,7 @@ def print_recorder_server(p):
 
 def start_recorder_server(cent_freq=None, rx_gain=None):
     cmd_script = f"{os.path.dirname(os.path.realpath(__file__))}/gnuradio_recorder/recorder_server.py"
+    #cmd_script = f"{os.path.dirname(os.path.realpath(__file__))}/gnuradio_recorder_2ch/recorder_server_2ch.py"
     grrec_params = (
         ([] if cent_freq is None else ["--cent-freq", str(cent_freq)]) +
         ([] if rx_gain is None else ["--rx-gain", str(rx_gain)])

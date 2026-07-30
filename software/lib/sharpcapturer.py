@@ -16,6 +16,8 @@ def capture_init_dac(target, PLATFORM, do_sharppeak_init, run_dac_max):#, sharpp
         sharpwhisperer.init_sharppeak(target, PLATFORM)
         #if sharppeak_connected:
         #    input("waiting. press enter when sharppeak_dac is plugged")
+        print("15s sharppeak warmup time")
+        time.sleep(15)
     if run_dac_max:
         sharpwhisperer.set_dac(target, 700)
 
@@ -174,7 +176,7 @@ def capture_core(config_dict):
             key, text = state
 
             capture_ok = False
-            capture_retries_max = 10
+            capture_retries_max = 40
             capture_tries = 0
             for _ in range(capture_retries_max):
                 capture_tries += 1
@@ -183,22 +185,32 @@ def capture_core(config_dict):
                 ret = hw.capture(text, key)
                 if cap_handle is not None:
                     time.sleep(0.02)
-                    t_gnuradio = cap_handle.record_stop() * gr_sigpolarity
+                    try:
+                        t_gnuradio = cap_handle.record_stop() * gr_sigpolarity
+                    except Exception as e:
+                        print(f"capture failed: {e}")
+                        continue
 
-                    response = sharptriggerer.match_filter_convolution(t_gnuradio, gr_trig_n_width)
-                    detected_trigger = sharptriggerer.match_filter_find_trigger(response, gr_trig_n_width)
-                    if detected_trigger is None:
-                        experiment_descr["capture_error_gr_trigger_missing"] += 1
-                        print("gnuradio trace: trigger not found")
-                        continue
-                    _, _, (num_pos_peaks_diff, num_neg_peaks_diff) = detected_trigger
-                    trig_end = sharptriggerer.get_trigger_end(detected_trigger, gr_trig_n_permit_range, gr_trig_n_permit_diff, gr_trig_delay_samples)
-                    if trig_end is None:
-                        # NOTE: e.g., not clean enough, overflow has happened so that at least one plateau is compressed
-                        experiment_descr["capture_error_gr_trigger_invalid"] += 1
-                        print("gnuradio trace: trigger signal not valid") 
-                        continue
-                    idx_left_cutoff, samples_left_right_diff = trig_end
+                    trigger_embedded = True
+                    if trigger_embedded:
+                        response = sharptriggerer.match_filter_convolution(t_gnuradio, gr_trig_n_width)
+                        detected_trigger = sharptriggerer.match_filter_find_trigger(response, gr_trig_n_width)
+                        if detected_trigger is None:
+                            experiment_descr["capture_error_gr_trigger_missing"] += 1
+                            print("gnuradio trace: trigger not found")
+                            continue
+                        _, _, (num_pos_peaks_diff, num_neg_peaks_diff) = detected_trigger
+                        trig_end = sharptriggerer.get_trigger_end(detected_trigger, gr_trig_n_permit_range, gr_trig_n_permit_diff, gr_trig_delay_samples)
+                        if trig_end is None:
+                            # NOTE: e.g., not clean enough, overflow has happened so that at least one plateau is compressed
+                            experiment_descr["capture_error_gr_trigger_invalid"] += 1
+                            print("gnuradio trace: trigger signal not valid") 
+                            continue
+                        idx_left_cutoff, samples_left_right_diff = trig_end
+                    else:
+                        idx_left_cutoff = 0
+                        (num_pos_peaks_diff, num_neg_peaks_diff) = (-1, -1)
+                        samples_left_right_diff = -1
                     idx_right_cutoff = idx_left_cutoff + gnuradio_n_samples#round(duration_s*gr_fs)
                     #print(t_gnuradio.size)
                     if t_gnuradio.size <= idx_right_cutoff:
