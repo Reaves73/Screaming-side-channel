@@ -31,4 +31,4 @@ traces_z = sharpanalyzer.get_demeaned_zscore(traces)
 # ---------------------------
 trace_counts, results = sharpanalyzer.run_ge_all_bytes(traces_z, plaintexts, key_full, n_trials=10, n_ge_samples=20)
 
-sharpanalyzer.plot_pge_single(trace_counts, results, savedplots_dir=sharpwhisperer.get_new_plots_dir(expid))
+sharpanalyzer.plot_pge_single(trace_counts, results, expid, save_plots=True)

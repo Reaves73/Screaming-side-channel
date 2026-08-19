@@ -3,6 +3,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 
 import sharpaligner
+import sharpwhisperer
 
 # ====== AES SBOX ======
 SBOX = np.array([
@@ -150,7 +151,11 @@ def run_ge_all_bytes(traces_z, plaintexts, key_full, n_trials=50, trace_counts=N
 
     return trace_counts, results  # results[b] -> (len(trace_counts),) array
 
-def plot_pge_single(trace_counts, results, savedplots_dir=None):
+def plot_pge_single(trace_counts, results, expid, save_plots=False):
+    savedplots_dir = None
+    if save_plots:
+        savedplots_dir = sharpwhisperer.get_new_plots_dir(expid)
+
     # ====== plotting code for the output of run_ge_all_bytes
     # --- all 16 bytes on one plot ---
     plt.figure(figsize=(10, 6))
@@ -170,27 +175,6 @@ def plot_pge_single(trace_counts, results, savedplots_dir=None):
     else:
         plt.savefig(f"{savedplots_dir}/ge_per_byte.png", dpi=150)
 
-    # ====== If 16 overlapping lines are too messy to read, a small-multiples grid is usually clearer:
-    # fig, axes = plt.subplots(4, 4, figsize=(14, 10), sharex=True, sharey=True)
-    # for b in range(16):
-    #     ax = axes[b // 4, b % 4]
-    #     ax.plot(trace_counts, results[b])
-    #     ax.set_title(f"byte {b}", fontsize=9)
-    #     ax.grid(True, alpha=0.3)
-    #     ax.axhline(0, color="black", linewidth=0.5)
-
-    # for ax in axes[-1, :]:
-    #     ax.set_xlabel("N traces")
-    # for ax in axes[:, 0]:
-    #     ax.set_ylabel("GE")
-
-    # fig.suptitle("Per-byte Guessing Entropy")
-    # plt.tight_layout()
-    #if savedplots_dir is None:
-    #    plt.show()
-    #else:
-    # plt.savefig(f"{savedplots_dir}/ge_grid.png", dpi=150)
-
     # ====== average GE across all bytes (a common way to report "how many traces to break the full key" at a glance):
     ge_matrix = np.stack([results[b] for b in range(16)], axis=0)  # (16, len(trace_counts))
     mean_ge = ge_matrix.mean(axis=0)
@@ -206,6 +190,32 @@ def plot_pge_single(trace_counts, results, savedplots_dir=None):
     plt.legend()
     plt.grid(True, alpha=0.3)
     #plt.yscale("log")
+    plt.tight_layout()
+    if savedplots_dir is None:
+        plt.show()
+    else:
+        plt.savefig(f"{savedplots_dir}/ge_summary.png", dpi=150)
+
+def plot_pge_composition(ge_list, save_plots=False):
+    savedplots_dir = None
+    if save_plots:
+        savedplots_dir = sharpwhisperer.get_new_plots_dir("comp_pge")
+
+    # ====== average GE across all bytes (a common way to report "how many traces to break the full key" at a glance):
+    plt.figure(figsize=(8, 5))
+    for label, tc, res in ge_list:
+        ge_matrix = np.stack([res[b] for b in range(16)], axis=0)
+        mean_ge = ge_matrix.mean(axis=0)
+        worst_ge = ge_matrix.max(axis=0)
+
+        line, = plt.plot(tc, mean_ge, linewidth=2, label=label)
+        plt.plot(tc, worst_ge, linestyle="--", linewidth=2, color=line.get_color())
+
+    plt.axhline(0, color="black", linewidth=0.5)
+    plt.xlabel("Number of traces")
+    plt.ylabel("Partial Guessing Entropy")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
     plt.tight_layout()
     if savedplots_dir is None:
         plt.show()
