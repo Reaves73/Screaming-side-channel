@@ -28,6 +28,27 @@ SBOX = np.array([
 
 HW = np.array([bin(i).count("1") for i in range(256)], dtype=np.uint8)
 
+def cpa_byte(traces_z, pt_byte):
+
+    N, S = traces_z.shape
+
+    # generate matrix (256, N) for 256 key guess
+    # hyp[g, i] = HW( SBOX(pt[i] ^ g) )
+    x = pt_byte[None, :] ^ np.arange(256, dtype=np.uint8)[:, None]#for each byte of all plaintexts, arrange different key guess for it.
+    hyp = HW[SBOX[x]].astype(np.float32)  # (256,N)
+
+    hyp -= hyp.mean(axis=1, keepdims=True)
+    hyp_std = hyp.std(axis=1, keepdims=True) + 1e-12
+    hyp /= hyp_std
+
+    # Pearson corr： corr[g, s] = (hyp[g,:] dot traces_z[:,s]) / (N-1)
+    corr = (hyp @ traces_z) / (N - 1)   # (256,S)
+
+    # find the most relevant guess
+    abs_corr = np.abs(corr)
+    g_best, s_best = np.unravel_index(np.argmax(abs_corr), abs_corr.shape)
+    return int(g_best), float(abs_corr[g_best, s_best]), int(s_best), corr[g_best]
+
 def cpa_byte_ge(traces_z, pt_byte):
 
     N, S = traces_z.shape
@@ -136,6 +157,35 @@ def get_demeaned_zscore(traces):
     traces_std = traces.std(axis=0, keepdims=True) + 1e-12
     traces_z = traces / traces_std
     return traces_z
+
+def run_cpa_recovery(traces_z, pts, true_key):
+    recovered = np.zeros(16, dtype=np.uint8)
+    best_curves = []
+
+    for b in range(16):
+        g, score, s_best, curve = cpa_byte(traces_z, pts[:, b])
+        recovered[b] = g
+        best_curves.append((b, curve, s_best, score))
+        if true_key is not None:
+            print(f"byte {b:02d}: guess=0x{g:02x}  highest={score:.4f}  at sample={s_best}  true=0x{true_key[b]:02x}")
+        else:
+            print(f"byte {b:02d}: guess=0x{g:02x}  highest={score:.4f}  at sample={s_best}")
+
+    print("\nRecovered key:", recovered.tolist())
+    if true_key is not None:
+        print("True key:", true_key.tolist())
+        print("Match bytes:", int(np.sum(recovered == true_key)), "/ 16")
+    return best_curves
+
+def plot_cpa_recovery(best_curves):
+    plt.figure()
+    for (b, curve, s_best, score) in best_curves[:8]:  # draw the first 8 bytes
+        plt.plot(np.abs(curve), label=f"b{b} best@{s_best} ({score:.3f})")
+    plt.title(" Correlation curves")
+    plt.xlabel("sample index")
+    plt.ylabel(" Correlation")
+    plt.legend()
+    plt.show()
 
 def run_ge_all_bytes(traces_z, plaintexts, key_full, n_trials=50, trace_counts=None, n_ge_samples=20):
     if trace_counts is None:
