@@ -215,7 +215,7 @@ def find_minnumtraces_where_entropy0(trace_counts, results):
     idx = np.where(all_zero[::-1] == False)[0]
     first_idx = len(all_zero) - idx[0] if len(idx) > 0 else 0
 
-    if all_zero[first_idx:].all():
+    if all_zero[first_idx:].all() and first_idx < trace_counts.shape[0]:
         n_traces_needed = trace_counts[first_idx]
         print(f"index {first_idx}, N={n_traces_needed}")
         return n_traces_needed
