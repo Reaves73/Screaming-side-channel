@@ -324,11 +324,11 @@ def plot_pge_composition(ge_list, metadata_filenames, pge_params, save_plots=Fal
     if savedplots_dir is None:
         plt.show()
     else:
-        plt.savefig(f"{savedplots_dir}/ge_summary.png", dpi=150)
+        plt.savefig(f"{savedplots_dir}/ge_summary_comp.png", dpi=150)
 
 # -------------------------------------------------------
 
-def run_tvla(traces, plaintexts, keys):
+def run_tvla(traces, plaintexts, keys, output=False):
     def hamming_weight(n):
         hw = 0
         while n != 0:
@@ -393,8 +393,9 @@ def run_tvla(traces, plaintexts, keys):
     assert(len(keys.shape) == 2)
     assert(plaintexts.shape[1] == 16)
     assert(keys.shape[1] == 16)
-    print("n_traces:", traces.shape[0])
-    print("n_samples:", traces.shape[-1])
+    if output:
+        print("n_traces:", traces.shape[0])
+        print("n_samples:", traces.shape[-1])
 
 
     labels = aes.get_first_sbox_output(plaintexts, keys)
@@ -409,18 +410,90 @@ def run_tvla(traces, plaintexts, keys):
     for byte_idx in range(16):
         lab = labels[:,byte_idx]
 
-        print(f"TVLA Byte {byte_idx}")
         t = tvla(lab, traces, hamming_weight_class, lambda x: x == -1, lambda x: x == 1)
-        print("t_abs_max:", np.max(np.abs(t)))
+        if output:
+            print(f"TVLA Byte {byte_idx}")
+            print("t_abs_max:", np.max(np.abs(t)))
         t_values[byte_idx] = t
 
     return t_values
 
-def find_t_mean_min_max(t_values):
+def find_t_mean_min_max(t_values, output=False):
     t_abs_max = np.max(np.abs(t_values), axis=1)
     t_max_mean = t_abs_max.mean()
     t_max_min = t_abs_max.min()
     t_max_max = t_abs_max.max()
-    print()
-    print(f"t_abs_max: mean={t_max_mean:.4f} (min={t_max_min:.4f}, max={t_max_max:.4f})")
+    if output:
+        print()
+        print(f"t_abs_max: mean={t_max_mean:.4f} (min={t_max_min:.4f}, max={t_max_max:.4f})")
     return (t_max_mean, t_max_min, t_max_max)
+
+def run_ntvla(traces, plaintexts, keys, n_trials=10, trace_counts=None, n_ge_samples=20):
+    if trace_counts is None:
+        trace_counts = np.unique(np.linspace(10, traces.shape[0], n_ge_samples, dtype=int))
+        #print(len(trace_counts))
+
+    results =[]
+    for N in tqdm(trace_counts):
+        t_max_tuples = []
+        for _ in range(n_trials):
+            idx = np.random.choice(traces.shape[0], N, replace=False)
+            t_values = run_tvla(traces[idx], plaintexts[idx], keys[idx])
+            t_max_vals = find_t_mean_min_max(t_values)
+            t_max_tuples.append(t_max_vals)
+        len(t_max_tuples)
+        results.append(np.mean(t_max_tuples, axis=0))
+        #print(results[len(results) - 1].shape)
+
+    return trace_counts, np.array(results)
+
+def plot_ntvla_single(trace_counts, results, metadata_filename, expid, pge_params, save_plots=False):
+    savedplots_dir = None
+    if save_plots:
+        savedplots_dir = sharpwhisperer.get_new_plots_dir(expid)
+    
+    metadata_text = ""
+    metadata_text += f"filename: {metadata_filename}\n"
+    metadata_text += f"expid: {expid}\n"
+    metadata_text += f"pge_params: {pge_params}\n"
+    print("Plot metadata:")
+    print("="*20)
+    print(metadata_text)
+    print()
+    if savedplots_dir is not None:
+        with open(f"{savedplots_dir}/plot_metadata.txt", "w") as f:
+            f.write(metadata_text)
+
+    # ====== plotting code
+    assert results.shape == (trace_counts.shape[0], 3)
+    mean = results[:, 0]
+    min_vals = results[:, 1]
+    max_vals = results[:, 2]
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+
+    color = 'tab:blue'
+
+    # Shaded band between min and max
+    ax.fill_between(trace_counts, min_vals, max_vals, color=color, alpha=0.2, label='Min–Max range')
+
+    # Optional: thin lines tracing the min and max edges
+    ax.plot(trace_counts, min_vals, color=color, alpha=0.4, linewidth=1)
+    ax.plot(trace_counts, max_vals, color=color, alpha=0.4, linewidth=1)
+
+    # Mean line
+    ax.plot(trace_counts, mean, color=color, linewidth=2, label='Mean')
+
+    ax.set_xlabel('Number of traces')
+    ax.set_ylabel('t value')
+    #ax.set_title('Mean with min–max range')
+    ax.legend(ncol=4, fontsize=8)
+    plt.grid(True, alpha=0.3)
+    plt.axhline(4.5, color="black", linewidth=0.5) # Minimum Traces to Disclosure, significance threshold
+
+    plt.tight_layout()
+    if savedplots_dir is None:
+        plt.show()
+    else:
+        plt.savefig(f"{savedplots_dir}/ntvla.png", dpi=150)
+

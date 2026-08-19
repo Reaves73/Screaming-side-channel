@@ -8,7 +8,6 @@ import sharpwhisperer
 import sharpanalyzer
 
 import numpy as np
-import matplotlib.pyplot as plt
 import argparse
 
 sharpwhisperer.probe_usage_lock()
@@ -22,29 +21,16 @@ parser.add_argument("filepath", help="path to traces file in experiment director
 parser.add_argument("-un", "--use_n_traces", help="only use the first n traces", type=int, default=None)
 
 args = parser.parse_args()
+pge_params = {"n_trials": 10, "n_ge_samples": 20}
 
 
 # load and prepare
 # ---------------------------
-_, traces, plaintexts, keys = sharpanalyzer.load_traces(args.filepath, use_n_traces=args.use_n_traces, expect_single_key=False)
+expid, traces, plaintexts, keys = sharpanalyzer.load_traces(args.filepath, use_n_traces=args.use_n_traces, expect_single_key=False)
 
 
 # run
 # ---------------------------
-t_values = sharpanalyzer.run_tvla(traces, plaintexts, keys, output=True)
-sharpanalyzer.find_t_mean_min_max(t_values, output=True)
+trace_counts, results = sharpanalyzer.run_ntvla(traces, plaintexts, keys, n_trials=pge_params["n_trials"], n_ge_samples=pge_params["n_ge_samples"])
 
-plt.figure(figsize=(8, 5))
-for b in range(16):
-    plt.plot(t_values[b])
-plt.axhline(0, color="black", linewidth=0.5)
-plt.xlabel("Sample index")
-plt.ylabel("t value")
-#plt.title("Overall key recovery: mean vs worst-case byte")
-#plt.legend()
-plt.grid(True, alpha=0.3)
-#plt.yscale("log")
-plt.tight_layout()
-
-plt.show()
-
+sharpanalyzer.plot_ntvla_single(trace_counts, results, args.filepath, expid, pge_params, save_plots=True)
