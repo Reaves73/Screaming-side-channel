@@ -25,7 +25,7 @@ pge_params = {"n_trials": 10, "n_ge_samples": 20}
 
 # load and prepare
 # ---------------------------
-expid, traces, plaintexts, key_full = sharpanalyzer.load_traces(args.filepath, use_n_traces=args.use_n_traces)
+expid, traces, plaintexts, key_full = sharpanalyzer.load_traces(args.filepath, use_n_traces=args.use_n_traces, expect_single_key=True)
 traces_z = sharpanalyzer.get_demeaned_zscore(traces)
 
 # run

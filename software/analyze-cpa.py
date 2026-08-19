@@ -25,7 +25,7 @@ args = parser.parse_args()
 
 # load and prepare
 # ---------------------------
-_, traces, plaintexts, key_full = sharpanalyzer.load_traces(args.filepath, use_n_traces=args.use_n_traces)
+_, traces, plaintexts, key_full = sharpanalyzer.load_traces(args.filepath, use_n_traces=args.use_n_traces, expect_single_key=True)
 traces_z = sharpanalyzer.get_demeaned_zscore(traces)
 
 # run

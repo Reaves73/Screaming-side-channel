@@ -36,7 +36,7 @@ for i in range(len(tracefilepaths)):
 
     # load and prepare
     # ---------------------------
-    expid, traces, plaintexts, key_full = sharpanalyzer.load_traces(tracefilepath)
+    expid, traces, plaintexts, key_full = sharpanalyzer.load_traces(tracefilepath, expect_single_key=True)
     traces_z = sharpanalyzer.get_demeaned_zscore(traces)
 
     # run
