@@ -447,7 +447,7 @@ def run_ntvla(traces, plaintexts, keys, n_trials=10, trace_counts=None, n_ge_sam
 
     return trace_counts, np.array(results)
 
-def plot_ntvla_single(trace_counts, results, metadata_filename, expid, pge_params, save_plots=False):
+def plot_tvla_trace(t_values, metadata_filename, expid, tvla_params, save_plots=False):
     savedplots_dir = None
     if save_plots:
         savedplots_dir = sharpwhisperer.get_new_plots_dir(expid)
@@ -455,7 +455,41 @@ def plot_ntvla_single(trace_counts, results, metadata_filename, expid, pge_param
     metadata_text = ""
     metadata_text += f"filename: {metadata_filename}\n"
     metadata_text += f"expid: {expid}\n"
-    metadata_text += f"pge_params: {pge_params}\n"
+    metadata_text += f"tvla_params: {tvla_params}\n"
+    print("Plot metadata:")
+    print("="*20)
+    print(metadata_text)
+    print()
+    if savedplots_dir is not None:
+        with open(f"{savedplots_dir}/plot_metadata.txt", "w") as f:
+            f.write(metadata_text)
+
+    # ====== plotting code
+    plt.figure(figsize=(8, 5))
+    for b in range(16):
+        plt.plot(t_values[b])
+    plt.axhline(0, color="black", linewidth=0.5)
+    plt.xlabel("Sample index")
+    plt.ylabel("t value")
+    #plt.title("Overall key recovery: mean vs worst-case byte")
+    #plt.legend()
+    plt.grid(True, alpha=0.3)
+    #plt.yscale("log")
+    plt.tight_layout()
+    if savedplots_dir is None:
+        plt.show()
+    else:
+        plt.savefig(f"{savedplots_dir}/tvla.png", dpi=150)
+
+def plot_ntvla_single(trace_counts, results, metadata_filename, expid, ntvla_params, save_plots=False):
+    savedplots_dir = None
+    if save_plots:
+        savedplots_dir = sharpwhisperer.get_new_plots_dir(expid)
+    
+    metadata_text = ""
+    metadata_text += f"filename: {metadata_filename}\n"
+    metadata_text += f"expid: {expid}\n"
+    metadata_text += f"ntvla_params: {ntvla_params}\n"
     print("Plot metadata:")
     print("="*20)
     print(metadata_text)
@@ -475,7 +509,7 @@ def plot_ntvla_single(trace_counts, results, metadata_filename, expid, pge_param
     color = 'tab:blue'
 
     # Shaded band between min and max
-    ax.fill_between(trace_counts, min_vals, max_vals, color=color, alpha=0.2, label='Min–Max range')
+    ax.fill_between(trace_counts, min_vals, max_vals, color=color, alpha=0.2, label='Min–Max')
 
     # Optional: thin lines tracing the min and max edges
     ax.plot(trace_counts, min_vals, color=color, alpha=0.4, linewidth=1)

@@ -21,7 +21,7 @@ parser.add_argument("filepath", help="path to traces file in experiment director
 parser.add_argument("-un", "--use_n_traces", help="only use the first n traces", type=int, default=None)
 
 args = parser.parse_args()
-pge_params = {"n_trials": 10, "n_ge_samples": 20}
+ntvla_params = {"n_trials": 10, "n_ge_samples": 20}
 
 
 # load and prepare
@@ -31,6 +31,6 @@ expid, traces, plaintexts, keys = sharpanalyzer.load_traces(args.filepath, use_n
 
 # run
 # ---------------------------
-trace_counts, results = sharpanalyzer.run_ntvla(traces, plaintexts, keys, n_trials=pge_params["n_trials"], n_ge_samples=pge_params["n_ge_samples"])
+trace_counts, results = sharpanalyzer.run_ntvla(traces, plaintexts, keys, n_trials=ntvla_params["n_trials"], n_ge_samples=ntvla_params["n_ge_samples"])
 
-sharpanalyzer.plot_ntvla_single(trace_counts, results, args.filepath, expid, pge_params, save_plots=True)
+sharpanalyzer.plot_ntvla_single(trace_counts, results, args.filepath, expid, ntvla_params, save_plots=True)
