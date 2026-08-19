@@ -77,6 +77,21 @@ def save_capture_config(config_dict, path):
 
 # ---------------------------
 
+def get_new_plots_dir(expid):
+    experiments_dir = get_experiments_dir()
+    plotspath = f"{experiments_dir}/plots"
+    if (not os.path.isdir(plotspath)):
+        os.mkdir(plotspath)
+    expplotspath = f"{plotspath}/{expid}"
+    if (not os.path.isdir(expplotspath)):
+        os.mkdir(expplotspath)
+    dstr = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    plotsdirpath = f"{expplotspath}/{dstr}"
+    os.mkdir(plotsdirpath)
+    return plotsdirpath
+
+# ---------------------------
+
 def get_experiment_setup_centfreq(exp_config):
     if exp_config["sharppeak_on_dac_directly"]:
         return 430.02e6 # original with resistor and no lna attached, # value before running for a while: #return 429.5e6

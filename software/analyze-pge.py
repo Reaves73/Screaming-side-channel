@@ -1,0 +1,235 @@
+#!/usr/bin/env python3
+
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/lib")
+
+import sharpwhisperer
+import sharpaligner
+
+import numpy as np
+import matplotlib.pyplot as plt
+from pathlib import Path
+import argparse
+
+sharpwhisperer.probe_usage_lock()
+
+# ====== AES SBOX ======
+SBOX = np.array([
+    0x63,0x7c,0x77,0x7b,0xf2,0x6b,0x6f,0xc5,0x30,0x01,0x67,0x2b,0xfe,0xd7,0xab,0x76,
+    0xca,0x82,0xc9,0x7d,0xfa,0x59,0x47,0xf0,0xad,0xd4,0xa2,0xaf,0x9c,0xa4,0x72,0xc0,
+    0xb7,0xfd,0x93,0x26,0x36,0x3f,0xf7,0xcc,0x34,0xa5,0xe5,0xf1,0x71,0xd8,0x31,0x15,
+    0x04,0xc7,0x23,0xc3,0x18,0x96,0x05,0x9a,0x07,0x12,0x80,0xe2,0xeb,0x27,0xb2,0x75,
+    0x09,0x83,0x2c,0x1a,0x1b,0x6e,0x5a,0xa0,0x52,0x3b,0xd6,0xb3,0x29,0xe3,0x2f,0x84,
+    0x53,0xd1,0x00,0xed,0x20,0xfc,0xb1,0x5b,0x6a,0xcb,0xbe,0x39,0x4a,0x4c,0x58,0xcf,
+    0xd0,0xef,0xaa,0xfb,0x43,0x4d,0x33,0x85,0x45,0xf9,0x02,0x7f,0x50,0x3c,0x9f,0xa8,
+    0x51,0xa3,0x40,0x8f,0x92,0x9d,0x38,0xf5,0xbc,0xb6,0xda,0x21,0x10,0xff,0xf3,0xd2,
+    0xcd,0x0c,0x13,0xec,0x5f,0x97,0x44,0x17,0xc4,0xa7,0x7e,0x3d,0x64,0x5d,0x19,0x73,
+    0x60,0x81,0x4f,0xdc,0x22,0x2a,0x90,0x88,0x46,0xee,0xb8,0x14,0xde,0x5e,0x0b,0xdb,
+    0xe0,0x32,0x3a,0x0a,0x49,0x06,0x24,0x5c,0xc2,0xd3,0xac,0x62,0x91,0x95,0xe4,0x79,
+    0xe7,0xc8,0x37,0x6d,0x8d,0xd5,0x4e,0xa9,0x6c,0x56,0xf4,0xea,0x65,0x7a,0xae,0x08,
+    0xba,0x78,0x25,0x2e,0x1c,0xa6,0xb4,0xc6,0xe8,0xdd,0x74,0x1f,0x4b,0xbd,0x8b,0x8a,
+    0x70,0x3e,0xb5,0x66,0x48,0x03,0xf6,0x0e,0x61,0x35,0x57,0xb9,0x86,0xc1,0x1d,0x9e,
+    0xe1,0xf8,0x98,0x11,0x69,0xd9,0x8e,0x94,0x9b,0x1e,0x87,0xe9,0xce,0x55,0x28,0xdf,
+    0x8c,0xa1,0x89,0x0d,0xbf,0xe6,0x42,0x68,0x41,0x99,0x2d,0x0f,0xb0,0x54,0xbb,0x16
+], dtype=np.uint8)
+
+HW = np.array([bin(i).count("1") for i in range(256)], dtype=np.uint8)
+
+def cpa_byte(traces_z, pt_byte):
+
+    N, S = traces_z.shape
+
+    # generate matrix (256, N) for 256 key guess
+    # hyp[g, i] = HW( SBOX(pt[i] ^ g) )
+    x = pt_byte[None, :] ^ np.arange(256, dtype=np.uint8)[:, None]#for each byte of all plaintexts, arrange different key guess for it.
+    hyp = HW[SBOX[x]].astype(np.float32)  # (256,N)
+
+    hyp -= hyp.mean(axis=1, keepdims=True)
+    hyp_std = hyp.std(axis=1, keepdims=True) + 1e-12
+    hyp /= hyp_std
+
+    # Pearson corr： corr[g, s] = (hyp[g,:] dot traces_z[:,s]) / (N-1)
+    corr = (hyp @ traces_z) / (N - 1)   # (256,S)
+
+    # find the most relevant guess
+    abs_corr = np.abs(corr)
+    #g_best, s_best = np.unravel_index(np.argmax(abs_corr), abs_corr.shape)
+    #return int(g_best), float(abs_corr[g_best, s_best]), int(s_best), corr[g_best]
+    best_per_guess = abs_corr.max(axis=1)          # (256,)
+    best_s_per_guess = abs_corr.argmax(axis=1)      # (256,) sample index for each guess
+
+    g_best = int(np.argmax(best_per_guess))
+    s_best = int(best_s_per_guess[g_best])
+
+    return {
+        "scores": best_per_guess,        # (256,) -> what you rank for PGE
+        "corr_matrix": corr,             # (256,S) keep if you want full traceability
+        "g_best": g_best,
+        "s_best": s_best,
+        "max_corr": float(best_per_guess[g_best]),
+    }
+
+def key_rank(scores, correct_key):
+    # descending order rank of the correct key (0 = best guess)
+    order = np.argsort(-scores)
+    rank = int(np.where(order == correct_key)[0][0])
+    return rank
+
+def guessing_entropy(traces_z, pt_byte, correct_key, n_trials, trace_counts):
+    """
+    n_trials: number of repeated experiments per trace count (random trace subsets)
+    trace_counts: list of N values to evaluate PGE at
+    """
+    ge_curve = []
+    for N in trace_counts:
+        ranks = []
+        for _ in range(n_trials):
+            idx = np.random.choice(traces_z.shape[0], N, replace=False)
+            res = cpa_byte(traces_z[idx], pt_byte[idx])
+            ranks.append(key_rank(res["scores"], correct_key))
+        ge_curve.append(np.mean(ranks))
+    return np.array(ge_curve)
+
+def main():
+    # parse arguments
+    # ---------------------------
+    parser = argparse.ArgumentParser()
+    parser.add_argument("filepath", help="path to traces file in experiment directory with plaintexts and keys")
+
+    parser.add_argument("-un", "--use_n_traces", help="only use the first n traces", type=int, default=None)
+
+    args = parser.parse_args()
+
+    # process path
+    # ---------------------------
+    fpath = Path(args.filepath)
+    if not fpath.exists():
+        raise FileNotFoundError(f"path not exist: {args.filepath}")
+    if not fpath.is_file():
+        raise NotADirectoryError(f"path is not a file: {args.filepath}")
+
+    traces_f = fpath
+    path = fpath.parent
+    pts_f = path / "plaintexts.npy"
+    keys_f = path / "keys.npy"
+
+    for f in [traces_f, pts_f, keys_f]:
+        if not f.exists():
+            raise FileNotFoundError(f"file not exist: {f}")
+        if f.stat().st_size == 0:
+            raise ValueError(f"empty file: {f}")
+
+    print("Loading data...")
+    traces = np.load(traces_f).astype(np.float32)
+    pts = np.load(pts_f).astype(np.uint8)
+
+    #traces = sharpaligner.trace_alignment(traces, 5)
+
+    # as requested
+    if args.use_n_traces is not None:
+        print("Reducing number of traces...")
+        traces = traces[:args.use_n_traces]
+        pts = pts[:args.use_n_traces]
+        
+    N, S = traces.shape
+    print(f"N traces: {N}, S samples: {S}")
+    # ---------------------------------------------------------------------
+
+    savedplots_dir = sharpwhisperer.get_new_plots_dir(path.name)
+    # ---------------------------------------------------------------------
+
+    # De-mean and z-score
+    traces = traces - traces.mean(axis=0, keepdims=True)
+    traces_std = traces.std(axis=0, keepdims=True) + 1e-12
+    traces_z = traces / traces_std
+
+    keys = np.load(keys_f).astype(np.uint8)
+    assert np.all(keys == keys[0]), "keys are not fixed"
+    if keys.ndim == 2:
+        assert np.all(keys == keys[0]), "keys vary per trace — fixed-key assumption broken"
+        key_full = keys[0]
+    else:
+        key_full = keys   # already (16,)
+    # ---------------------------------------------------------------------
+    plaintexts = pts
+
+    def run_ge_all_bytes(n_trials=50, trace_counts=None, n_ge_samples=20):
+        if trace_counts is None:
+            trace_counts = np.unique(np.linspace(10, traces_z.shape[0], n_ge_samples, dtype=int))
+            #print(len(trace_counts))
+
+        results = {}
+        for b in range(16):
+            pt_byte = plaintexts[:, b].astype(np.uint8)
+            correct_key = int(key_full[b])
+            ge_curve = guessing_entropy(traces_z, pt_byte, correct_key, n_trials, trace_counts)
+            results[b] = ge_curve
+            print(f"byte {b:2d} done — GE at max N: {ge_curve[-1]:.2f}")
+
+        return trace_counts, results  # results[b] -> (len(trace_counts),) array
+    # ---------------------------------------------------------------------
+
+
+    import matplotlib.pyplot as plt
+
+    trace_counts, results = run_ge_all_bytes(n_trials=10, n_ge_samples=20)
+
+    # ====== plotting code for the output of run_ge_all_bytes
+    # --- all 16 bytes on one plot ---
+    plt.figure(figsize=(10, 6))
+    for b in range(16):
+        plt.plot(trace_counts, results[b], label=f"byte {b}", alpha=0.7)
+
+    plt.xlabel("Number of traces")
+    plt.ylabel("Guessing Entropy (rank of correct key)")
+    plt.title("Partial Guessing Entropy per key byte")
+    #plt.legend(ncol=4, fontsize=8)
+    plt.grid(True, alpha=0.3)
+    plt.axhline(0, color="black", linewidth=0.5)
+    plt.tight_layout()
+    plt.savefig(f"{savedplots_dir}/ge_per_byte.png", dpi=150)
+    plt.show()
+
+    # ====== If 16 overlapping lines are too messy to read, a small-multiples grid is usually clearer:
+    # fig, axes = plt.subplots(4, 4, figsize=(14, 10), sharex=True, sharey=True)
+    # for b in range(16):
+    #     ax = axes[b // 4, b % 4]
+    #     ax.plot(trace_counts, results[b])
+    #     ax.set_title(f"byte {b}", fontsize=9)
+    #     ax.grid(True, alpha=0.3)
+    #     ax.axhline(0, color="black", linewidth=0.5)
+
+    # for ax in axes[-1, :]:
+    #     ax.set_xlabel("N traces")
+    # for ax in axes[:, 0]:
+    #     ax.set_ylabel("GE")
+
+    # fig.suptitle("Per-byte Guessing Entropy")
+    # plt.tight_layout()
+    # plt.savefig(f"{savedplots_dir}/ge_grid.png", dpi=150)
+    # plt.show()
+
+    # ====== average GE across all bytes (a common way to report "how many traces to break the full key" at a glance):
+    ge_matrix = np.stack([results[b] for b in range(16)], axis=0)  # (16, len(trace_counts))
+    mean_ge = ge_matrix.mean(axis=0)
+    worst_ge = ge_matrix.max(axis=0)   # hardest byte at each N — often more informative
+
+    plt.figure(figsize=(8, 5))
+    plt.plot(trace_counts, mean_ge, label="mean GE across bytes", linewidth=2)
+    plt.plot(trace_counts, worst_ge, label="worst-byte GE", linestyle="--", linewidth=2)
+    plt.axhline(0, color="black", linewidth=0.5)
+    plt.xlabel("Number of traces")
+    plt.ylabel("Guessing Entropy")
+    plt.title("Overall key recovery: mean vs worst-case byte")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(f"{savedplots_dir}/ge_summary.png", dpi=150)
+    plt.show()
+
+
+
+
+if __name__ == "__main__":
+    main()

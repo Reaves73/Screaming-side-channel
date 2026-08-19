@@ -109,6 +109,7 @@ def main():
     true_key = None
     try:
         keys = np.load(keys_f).astype(np.uint8)
+        assert np.all(keys == keys[0]), "keys are not fixed"
         if keys.ndim == 2 and keys.shape[1] == 16:
             true_key = keys[0].copy()
             for i in range(keys.shape[0]):
