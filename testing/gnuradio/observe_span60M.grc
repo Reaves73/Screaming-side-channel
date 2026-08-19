@@ -11,7 +11,7 @@ options:
     gen_linking: dynamic
     generate_options: qt_gui
     hier_block_src_path: '.:'
-    id: observe_840M
+    id: observe_span60M
     max_nouts: '0'
     output_language: python
     placement: (0,0)
@@ -70,7 +70,7 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: 5e6
+    value: 60e6
   states:
     bus_sink: false
     bus_source: false
