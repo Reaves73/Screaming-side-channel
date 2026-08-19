@@ -21,6 +21,7 @@ parser.add_argument("filepath", help="path to traces file in experiment director
 parser.add_argument("-un", "--use_n_traces", help="only use the first n traces", type=int, default=None)
 
 args = parser.parse_args()
+pge_params = {"n_trials": 10, "n_ge_samples": 20}
 
 # load and prepare
 # ---------------------------
@@ -29,6 +30,6 @@ traces_z = sharpanalyzer.get_demeaned_zscore(traces)
 
 # run
 # ---------------------------
-trace_counts, results = sharpanalyzer.run_ge_all_bytes(traces_z, plaintexts, key_full, n_trials=10, n_ge_samples=20)
+trace_counts, results = sharpanalyzer.run_ge_all_bytes(traces_z, plaintexts, key_full, n_trials=pge_params["n_trials"], n_ge_samples=pge_params["n_ge_samples"])
 
-sharpanalyzer.plot_pge_single(trace_counts, results, expid, save_plots=True)
+sharpanalyzer.plot_pge_single(trace_counts, results, args.filepath, expid, pge_params, save_plots=True)

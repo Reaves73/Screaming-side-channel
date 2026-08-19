@@ -20,6 +20,7 @@ parser.add_argument("filepaths", help="path to traces files in experiment direct
 parser.add_argument("labels", help="labels of the data (semicolon separated list)")
 
 args = parser.parse_args()
+pge_params = {"n_trials": 10, "n_ge_samples": 20}
 
 tracefilepaths = args.filepaths.split(";")
 labels = args.labels.split(";")
@@ -40,9 +41,9 @@ for i in range(len(tracefilepaths)):
 
     # run
     # ---------------------------
-    trace_counts, results = sharpanalyzer.run_ge_all_bytes(traces_z, plaintexts, key_full, n_trials=10, n_ge_samples=20)
+    trace_counts, results = sharpanalyzer.run_ge_all_bytes(traces_z, plaintexts, key_full, n_trials=pge_params["n_trials"], n_ge_samples=pge_params["n_ge_samples"])
 
     ge_list.append((labels[i], trace_counts, results))
     print()
 
-sharpanalyzer.plot_pge_composition(ge_list, save_plots=False)
+sharpanalyzer.plot_pge_composition(ge_list, args.filepaths, pge_params, save_plots=True)

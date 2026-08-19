@@ -1,6 +1,7 @@
 import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 import sharpaligner
 import sharpwhisperer
@@ -142,7 +143,7 @@ def run_ge_all_bytes(traces_z, plaintexts, key_full, n_trials=50, trace_counts=N
         #print(len(trace_counts))
 
     results = {}
-    for b in range(16):
+    for b in tqdm(range(16)):
         pt_byte = plaintexts[:, b].astype(np.uint8)
         correct_key = int(key_full[b])
         ge_curve = guessing_entropy(traces_z, pt_byte, correct_key, n_trials, trace_counts)
@@ -151,10 +152,40 @@ def run_ge_all_bytes(traces_z, plaintexts, key_full, n_trials=50, trace_counts=N
 
     return trace_counts, results  # results[b] -> (len(trace_counts),) array
 
-def plot_pge_single(trace_counts, results, expid, save_plots=False):
+def find_minnumtraces_where_entropy0(trace_counts, results):
+    ge_matrix = np.stack([results[b] for b in range(16)], axis=0)  # (16, len(trace_counts))
+    all_zero = np.all(ge_matrix == 0, axis=0)                       # (len(trace_counts),) bool
+
+    # find smallest index where all_zero is True from there to the end
+    idx = np.where(all_zero[::-1] == False)[0]
+    first_idx = len(all_zero) - idx[0] if len(idx) > 0 else 0
+
+    if all_zero[first_idx:].all():
+        n_traces_needed = trace_counts[first_idx]
+        print(f"index {first_idx}, N={n_traces_needed}")
+        return n_traces_needed
+    else:
+        print("never fully converges in this range")
+        return None
+
+def plot_pge_single(trace_counts, results, metadata_filename, expid, pge_params, save_plots=False):
     savedplots_dir = None
     if save_plots:
         savedplots_dir = sharpwhisperer.get_new_plots_dir(expid)
+    
+    minnumtraces = find_minnumtraces_where_entropy0(trace_counts, results)
+    metadata_text = ""
+    metadata_text += f"filename: {metadata_filename}\n"
+    metadata_text += f"expid: {expid}\n"
+    metadata_text += f"pge_params: {pge_params}\n"
+    metadata_text += f"minnumtraces: {minnumtraces}\n"
+    print("Plot metadata:")
+    print("="*20)
+    print(metadata_text)
+    print()
+    if savedplots_dir is not None:
+        with open(f"{savedplots_dir}/plot_metadata.txt", "w") as f:
+            f.write(metadata_text)
 
     # ====== plotting code for the output of run_ge_all_bytes
     # --- all 16 bytes on one plot ---
@@ -181,8 +212,8 @@ def plot_pge_single(trace_counts, results, expid, save_plots=False):
     worst_ge = ge_matrix.max(axis=0)   # hardest byte at each N — often more informative
 
     plt.figure(figsize=(8, 5))
-    plt.plot(trace_counts, mean_ge, label="mean", linewidth=2)
-    plt.plot(trace_counts, worst_ge, label="max", linestyle="--", linewidth=2)
+    line, = plt.plot(trace_counts, mean_ge, label="mean", linewidth=2)
+    plt.plot(trace_counts, worst_ge, label="max", linestyle="--", linewidth=2, color=line.get_color())
     plt.axhline(0, color="black", linewidth=0.5)
     plt.xlabel("Number of traces")
     plt.ylabel("Partial Guessing Entropy")
@@ -196,10 +227,28 @@ def plot_pge_single(trace_counts, results, expid, save_plots=False):
     else:
         plt.savefig(f"{savedplots_dir}/ge_summary.png", dpi=150)
 
-def plot_pge_composition(ge_list, save_plots=False):
+def plot_pge_composition(ge_list, metadata_filenames, pge_params, save_plots=False):
     savedplots_dir = None
     if save_plots:
         savedplots_dir = sharpwhisperer.get_new_plots_dir("comp_pge")
+    
+    metadata_text = ""
+    metadata_text += f"filenames: {metadata_filenames}\n"
+    metadata_text += f"pge_params: {pge_params}\n"
+    metadata_text += "-" * 20
+    metadata_text += "\n"
+    for label, tc, res in ge_list:
+        minnumtraces = find_minnumtraces_where_entropy0(tc, res)
+        metadata_text += f"label {label}\n"
+        metadata_text += f"minnumtraces: {minnumtraces}\n"
+        metadata_text += "\n"
+    print("Plot metadata:")
+    print("="*20)
+    print(metadata_text)
+    print()
+    if savedplots_dir is not None:
+        with open(f"{savedplots_dir}/plot_metadata.txt", "w") as f:
+            f.write(metadata_text)
 
     # ====== average GE across all bytes (a common way to report "how many traces to break the full key" at a glance):
     plt.figure(figsize=(8, 5))
