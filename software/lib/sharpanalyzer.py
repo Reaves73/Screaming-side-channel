@@ -531,3 +531,65 @@ def plot_ntvla_single(trace_counts, results, metadata_filename, expid, ntvla_par
     else:
         plt.savefig(f"{savedplots_dir}/ntvla.png", dpi=150)
 
+def plot_ntvla_composition(ntvla_list, metadata_filenames, ntvla_params, save_plots=False):
+    savedplots_dir = None
+    if save_plots:
+        savedplots_dir = sharpwhisperer.get_new_plots_dir("comp_ntvla")
+    
+    metadata_text = ""
+    metadata_text += f"filenames: {metadata_filenames}\n"
+    metadata_text += f"ntvla_params: {ntvla_params}\n"
+    metadata_text += "-" * 20
+    metadata_text += "\n"
+    for label, tc, res in ntvla_list:
+        metadata_text += f"label {label}\n"
+        #metadata_text += f"minnumtraces: {minnumtraces}\n"
+        metadata_text += "\n"
+    print("Plot metadata:")
+    print("="*20)
+    print(metadata_text)
+    print()
+    if savedplots_dir is not None:
+        with open(f"{savedplots_dir}/plot_metadata.txt", "w") as f:
+            f.write(metadata_text)
+
+    # ====== plotting code
+    fig, ax = plt.subplots(figsize=(8, 5))
+
+    #colors = ['tab:blue','tab:orange','tab:green','tab:red','tab:purple']
+    #assert len(ntvla_list) <= len(colors)
+
+    for label, tc, res in ntvla_list:
+        #assert 0 < len(colors)
+        #color = colors.pop(0)
+        assert res.shape == (tc.shape[0], 3)
+        mean = res[:, 0]
+        min_vals = res[:, 1]
+        max_vals = res[:, 2]
+
+        # Mean line
+        line, = ax.plot(tc, mean, linewidth=2, label=label) #, color=color
+        color = line.get_color()
+
+        # Shaded band between min and max
+        ax.fill_between(tc, min_vals, max_vals, color=color, alpha=0.2)
+        #color = poly.get_facecolor()[0]
+
+        # Optional: thin lines tracing the min and max edges
+        ax.plot(tc, min_vals, color=color, alpha=0.4, linewidth=1)
+        ax.plot(tc, max_vals, color=color, alpha=0.4, linewidth=1)
+
+
+    ax.set_xlabel('Number of traces')
+    ax.set_ylabel('t value')
+    #ax.set_title('Mean with min–max range')
+    ax.legend(ncol=4, fontsize=8)
+    plt.grid(True, alpha=0.3)
+    plt.axhline(4.5, color="black", linewidth=0.5) # Minimum Traces to Disclosure, significance threshold
+
+    plt.tight_layout()
+    if savedplots_dir is None:
+        plt.show()
+    else:
+        plt.savefig(f"{savedplots_dir}/ntvla.png", dpi=150)
+

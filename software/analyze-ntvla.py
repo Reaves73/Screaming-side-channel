@@ -21,12 +21,12 @@ parser.add_argument("filepath", help="path to traces file in experiment director
 parser.add_argument("-un", "--use_n_traces", help="only use the first n traces", type=int, default=None)
 
 args = parser.parse_args()
-ntvla_params = {"n_trials": 10, "n_ge_samples": 20}
+ntvla_params = {"n_trials": 10, "n_ge_samples": 20, "use_n_traces": args.use_n_traces}
 
 
 # load and prepare
 # ---------------------------
-expid, traces, plaintexts, keys = sharpanalyzer.load_traces(args.filepath, use_n_traces=args.use_n_traces, expect_single_key=False)
+expid, traces, plaintexts, keys = sharpanalyzer.load_traces(args.filepath, use_n_traces=ntvla_params["use_n_traces"], expect_single_key=False)
 
 
 # run

@@ -19,8 +19,10 @@ parser = argparse.ArgumentParser()
 parser.add_argument("filepaths", help="path to traces files in experiment directory with plaintexts and keys (semicolon separated list)")
 parser.add_argument("labels", help="labels of the data (semicolon separated list)")
 
+parser.add_argument("-un", "--use_n_traces", help="only use the first n traces", type=int, default=None)
+
 args = parser.parse_args()
-pge_params = {"n_trials": 10, "n_ge_samples": 20}
+ntvla_params = {"n_trials": 10, "n_ge_samples": 20, "use_n_traces": args.use_n_traces}
 
 tracefilepaths = args.filepaths.split(";")
 labels = args.labels.split(";")
@@ -28,7 +30,7 @@ assert len(tracefilepaths) == len(labels)
 print(f"number of experiments to process: {len(tracefilepaths)}")
 print()
 
-ge_list = []
+ntvla_list = []
 for i in range(len(tracefilepaths)):
     tracefilepath = tracefilepaths[i]
     print(f"RUNNING {tracefilepath}")
@@ -36,14 +38,13 @@ for i in range(len(tracefilepaths)):
 
     # load and prepare
     # ---------------------------
-    _, traces, plaintexts, key_full = sharpanalyzer.load_traces(tracefilepath, expect_single_key=True)
-    traces_z = sharpanalyzer.get_demeaned_zscore(traces)
+    _, traces, plaintexts, keys = sharpanalyzer.load_traces(tracefilepath, use_n_traces=ntvla_params["use_n_traces"], expect_single_key=False)
 
     # run
     # ---------------------------
-    trace_counts, results = sharpanalyzer.run_ge_all_bytes(traces_z, plaintexts, key_full, n_trials=pge_params["n_trials"], n_ge_samples=pge_params["n_ge_samples"])
+    trace_counts, results = sharpanalyzer.run_ntvla(traces, plaintexts, keys, n_trials=ntvla_params["n_trials"], n_ge_samples=ntvla_params["n_ge_samples"])
 
-    ge_list.append((labels[i], trace_counts, results))
+    ntvla_list.append((labels[i], trace_counts, results))
     print()
 
-sharpanalyzer.plot_pge_composition(ge_list, args.filepaths, pge_params, save_plots=True)
+sharpanalyzer.plot_ntvla_composition(ntvla_list, args.filepaths, ntvla_params, save_plots=True)
