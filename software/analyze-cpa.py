@@ -5,6 +5,7 @@ import os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/lib")
 
 import sharpwhisperer
+import sharpaligner
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -88,6 +89,8 @@ def main():
     print("Loading data...")
     traces = np.load(traces_f).astype(np.float32)
     pts = np.load(pts_f).astype(np.uint8)
+
+    #traces = sharpaligner.trace_alignment(traces, 5)
 
     # as requested
     if args.use_n_traces is not None:

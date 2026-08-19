@@ -5,6 +5,7 @@ import os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/lib")
 
 import sharpwhisperer
+import sharpaligner
 import aes
 
 import numpy as np
@@ -66,8 +67,8 @@ def tvla(values, traces, f, pred_1, pred_2):
     traces_1 = traces[idx_1]
     traces_2 = traces[idx_2]
     
-    print("group 1 size:", values_1.size)
-    print("group 2 size:", values_2.size)
+    #print("group 1 size:", values_1.size)
+    #print("group 2 size:", values_2.size)
     
     t_values = ttest(traces_1, traces_2)
     print("t_abs_max:", np.max(np.abs(t_values)))
@@ -107,6 +108,9 @@ print("Reading inputs...")
 plaintexts = np.load(plaintexts_fname)
 keys = np.load(keys_fname)
 traces = np.load(traces_fname)
+
+#traces = sharpaligner.trace_misalignment(traces, 1)
+#traces = sharpaligner.trace_alignment(traces, 5)
 
 # as requested
 N = args.use_n_traces
