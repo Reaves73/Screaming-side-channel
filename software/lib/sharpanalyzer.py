@@ -383,7 +383,6 @@ def run_tvla(traces, plaintexts, keys):
         #print("group 2 size:", values_2.size)
         
         t_values = ttest(traces_1, traces_2)
-        print("t_abs_max:", np.max(np.abs(t_values)))
         
         return t_values
 
@@ -412,6 +411,16 @@ def run_tvla(traces, plaintexts, keys):
 
         print(f"TVLA Byte {byte_idx}")
         t = tvla(lab, traces, hamming_weight_class, lambda x: x == -1, lambda x: x == 1)
+        print("t_abs_max:", np.max(np.abs(t)))
         t_values[byte_idx] = t
 
     return t_values
+
+def find_t_mean_min_max(t_values):
+    t_abs_max = np.max(np.abs(t_values), axis=1)
+    t_max_mean = t_abs_max.mean()
+    t_max_min = t_abs_max.min()
+    t_max_max = t_abs_max.max()
+    print()
+    print(f"t_abs_max: mean={t_max_mean:.4f} (min={t_max_min:.4f}, max={t_max_max:.4f})")
+    return (t_max_mean, t_max_min, t_max_max)

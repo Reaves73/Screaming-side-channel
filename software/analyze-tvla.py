@@ -32,11 +32,19 @@ _, traces, plaintexts, keys = sharpanalyzer.load_traces(args.filepath, use_n_tra
 # run
 # ---------------------------
 t_values = sharpanalyzer.run_tvla(traces, plaintexts, keys)
+sharpanalyzer.find_t_mean_min_max(t_values)
 
-
-plt.figure()
+plt.figure(figsize=(8, 5))
 for b in range(16):
     plt.plot(t_values[b])
+plt.axhline(0, color="black", linewidth=0.5)
+plt.xlabel("Sample index")
+plt.ylabel("t value")
+#plt.title("Overall key recovery: mean vs worst-case byte")
+#plt.legend()
+plt.grid(True, alpha=0.3)
+#plt.yscale("log")
+plt.tight_layout()
 
 plt.show()
 
