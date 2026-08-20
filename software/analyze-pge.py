@@ -21,11 +21,11 @@ parser.add_argument("filepath", help="path to traces file in experiment director
 parser.add_argument("-un", "--use_n_traces", help="only use the first n traces", type=int, default=None)
 
 args = parser.parse_args()
-pge_params = {"n_trials": 10, "n_ge_samples": 20}
+pge_params = {"n_trials": 10, "n_ge_samples": 20, "use_n_traces": args.use_n_traces}
 
 # load and prepare
 # ---------------------------
-expid, traces, plaintexts, key_full = sharpanalyzer.load_traces(args.filepath, use_n_traces=args.use_n_traces, expect_single_key=True)
+expid, traces, plaintexts, key_full = sharpanalyzer.load_traces(args.filepath, use_n_traces=pge_params["use_n_traces"], expect_single_key=True)
 traces_z = sharpanalyzer.get_demeaned_zscore(traces)
 
 # run

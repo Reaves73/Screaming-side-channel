@@ -192,9 +192,12 @@ def plot_cpa_recovery(best_curves):
     plt.legend()
     plt.show()
 
-def run_ge_all_bytes(traces_z, plaintexts, key_full, n_trials=50, trace_counts=None, n_ge_samples=20):
+def run_ge_all_bytes(traces_z, plaintexts, key_full, n_trials=50, trace_counts=None, n_ge_samples=20, use_logscale=False):
     if trace_counts is None:
-        trace_counts = np.unique(np.linspace(10, traces_z.shape[0], n_ge_samples, dtype=int))
+        if use_logscale:
+            trace_counts = np.unique(np.logspace(np.log10(10), np.log10(traces_z.shape[0]), n_ge_samples, dtype=int))
+        else:
+            trace_counts = np.unique(np.linspace(10, traces_z.shape[0], n_ge_samples, dtype=int))
         #print(len(trace_counts))
 
     results = {}
@@ -282,7 +285,7 @@ def plot_pge_single(trace_counts, results, metadata_filename, expid, pge_params,
     else:
         plt.savefig(f"{savedplots_dir}/ge_summary.png", dpi=150)
 
-def plot_pge_composition(ge_list, metadata_filenames, pge_params, save_plots=False):
+def plot_pge_composition(ge_list, metadata_filenames, pge_params, save_plots=False, use_logscale=False):
     savedplots_dir = None
     if save_plots:
         savedplots_dir = sharpwhisperer.get_new_plots_dir("comp_pge")
@@ -320,6 +323,8 @@ def plot_pge_composition(ge_list, metadata_filenames, pge_params, save_plots=Fal
     plt.ylabel("Partial Guessing Entropy")
     plt.legend()
     plt.grid(True, alpha=0.3)
+    if use_logscale:
+        plt.xscale("log")
     plt.tight_layout()
     if savedplots_dir is None:
         plt.show()
@@ -521,7 +526,7 @@ def plot_ntvla_single(trace_counts, results, metadata_filename, expid, ntvla_par
     ax.set_xlabel('Number of traces')
     ax.set_ylabel('t value')
     #ax.set_title('Mean with min–max range')
-    ax.legend(ncol=4, fontsize=8)
+    #ax.legend(ncol=4, fontsize=8)
     plt.grid(True, alpha=0.3)
     plt.axhline(4.5, color="black", linewidth=0.5) # Minimum Traces to Disclosure, significance threshold
 
