@@ -452,7 +452,18 @@ def run_ntvla(traces, plaintexts, keys, n_trials=10, trace_counts=None, n_ge_sam
 
     return trace_counts, np.array(results)
 
-def plot_tvla_trace(t_values, metadata_filename, expid, tvla_params, save_plots=False):
+def plot_tvla_trace(t_values, metadata_filename, expid, tvla_params, s_idx_start=None, s_idx_end=None, save_plots=False):
+    assert t_values.shape[0] == 16
+    lastidx = t_values.shape[1] - 1
+    if s_idx_start is None:
+        s_idx_start = 0
+    assert s_idx_start >= 0
+    assert s_idx_start <= lastidx
+    if s_idx_end is None:
+        s_idx_end = lastidx
+    assert s_idx_end >= 0
+    assert s_idx_end <= lastidx
+
     savedplots_dir = None
     if save_plots:
         savedplots_dir = sharpwhisperer.get_new_plots_dir(expid)
@@ -472,8 +483,8 @@ def plot_tvla_trace(t_values, metadata_filename, expid, tvla_params, save_plots=
     # ====== plotting code
     plt.figure(figsize=(8, 5))
     for b in range(16):
-        plt.plot(t_values[b])
-    plt.axhline(0, color="black", linewidth=0.5)
+        plt.plot(range(s_idx_start, s_idx_end), t_values[b][s_idx_start:s_idx_end])
+    plt.axhline(4.5, color="black", linewidth=0.5)
     plt.xlabel("Sample index")
     plt.ylabel("t value")
     #plt.title("Overall key recovery: mean vs worst-case byte")
