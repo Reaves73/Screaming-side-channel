@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import decimate
 
+import sharpwhisperer
+
 def stream_downsample_average(trace, fs: float, duration_s: float, factor: int):
     total_samples = trace.size
     #total_samples = file_size // 4  # float32
@@ -51,22 +53,55 @@ def plot_fun(pltmode=True):
 def plot_clear_all():
     plt.close('all')
 
-def plot_time(samples, fs=None, title="Time Domain", vlines=None, pltmode=True):
-    if fs is None:
-        fs = 1
+def plot_time(samples, fs=None, title="Time Domain", vlines=None, pltmode=True, s_idx_start=None, s_idx_end=None, save_plots=False, vis_params=None):
+    lastidx = samples.shape[0] - 1
+    if s_idx_start is None:
+        s_idx_start = 0
+    assert s_idx_start >= 0
+    assert s_idx_start <= lastidx
+    if s_idx_end is None:
+        s_idx_end = lastidx
+    assert s_idx_end >= 0
+    assert s_idx_end <= lastidx
+
+    savedplots_dir = None
+    if save_plots:
+        assert vis_params is not None
+        savedplots_dir = sharpwhisperer.get_new_plots_dir(vis_params["expid"], "vis")
+    
+    if vis_params is not None:
+        metadata_text = ""
+        metadata_text += f"filename: {vis_params['metadata_filename']}\n"
+        metadata_text += f"expid: {vis_params['expid']}\n"
+        metadata_text += f"vis_params: {vis_params}\n"
+        print("Plot metadata:")
+        print("="*20)
+        print(metadata_text)
+        print()
+        if savedplots_dir is not None:
+            with open(f"{savedplots_dir}/plot_metadata.txt", "w") as f:
+                f.write(metadata_text)
+
+    fs_v = fs
+    if fs_v is None:
+        fs_v = 1
     #fig, ax = plt.subplots()
-    t = np.arange(len(samples)) / fs
-    plt.figure(figsize=(10, 4))
-    plt.plot(t, samples)
-    plt.title(title)
+    t = (np.arange(len(samples)) / fs_v)
+    plt.figure(figsize=(8, 5))
+    plt.plot(t[s_idx_start:s_idx_end], samples[s_idx_start:s_idx_end])
+    #plt.title(title)
     plt.xlabel("Sample index" if fs is None else "Time (s)")
     plt.ylabel("Amplitude")
-    plt.grid(True)
+    plt.grid(True, alpha=0.3)
     plt.tight_layout()
     if vlines is not None:
         for vline in vlines:
-            plt.axvline(x=vline / fs, color='red', linestyle='--', linewidth=2)
-    plot_fun(pltmode)
+            plt.axvline(x=vline / fs_v, color='red', linestyle='--', linewidth=2)
+
+    if savedplots_dir is None:
+        plot_fun(pltmode)
+    else:
+        plt.savefig(f"{savedplots_dir}/trace.png", dpi=150)
 
 def plot_spectrum(samples, fs, title="Spectrum", pltmode=True):
     n = min(len(samples), 65536)

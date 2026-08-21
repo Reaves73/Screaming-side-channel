@@ -10,67 +10,70 @@ import numpy as np
 from pathlib import Path
 import argparse
 
-def main():
-    # parse arguments
-    # ---------------------------
-    parser = argparse.ArgumentParser()
-    parser.add_argument("filepath", help="path to traces file (or single trace)")
 
-    parser.add_argument("--factor", help="decimation factor", type=int, default=1)
-    
-    parser.add_argument("--fs", help="sampling frequency", type=float, default=None)
-    parser.add_argument("--duration", help="duration in seconds", type=float, default=None)
+# parse arguments
+# ---------------------------
+parser = argparse.ArgumentParser()
+parser.add_argument("filepath", help="path to traces file (or single trace)")
 
-    parser.add_argument("--averaged_traces", help="how many traces to take and average", type=int, default=1)
-    parser.add_argument("--sample_indexes", help="shows sample indexes instead of time at x axis", action="store_true", default=False)
+parser.add_argument("--factor", help="decimation factor", type=int, default=1)
 
-    args = parser.parse_args()
+parser.add_argument("--fs", help="sampling frequency", type=float, default=None)
+parser.add_argument("--duration", help="duration in seconds", type=float, default=None)
 
-    # process
-    # ---------------------------
-    path = Path(args.filepath)
-    if not path.exists():
-        raise FileNotFoundError(f"file not exist: {args.filepath}")
+parser.add_argument("--averaged_traces", help="how many traces to take and average", type=int, default=1)
+parser.add_argument("--sample_indexes", help="shows sample indexes instead of time at x axis", action="store_true", default=False)
 
-    file_size = path.stat().st_size
-    if file_size == 0:
-        raise ValueError("empty file")
+parser.add_argument("--s_idx_start", help="sample index start of plot", type=int, default=None)
+parser.add_argument("--s_idx_end", help="sample index end of plot", type=int, default=None)
 
-    traces = np.load(args.filepath) # might be many traces actually
-    #print(trace.shape)
-    # TODO: fix the case that our file only contains one trace
-    #if len(trace.shape) > 1:
-    #    trace = trace[0,:]
-    #assert len(trace.shape) == 1
-    #print(trace.shape)
+parser.add_argument("--save_plots", help="save the plots instead of showing them", action="store_true", default=False)
 
-    # don't have as many traces as we want to average (the subscription wouldn't break but nice to output for debugging and clarity)
-    if traces.shape[0] < args.averaged_traces:
-        print(traces.shape)
-        raise Exception("not enough traces to average")
-    traces = traces[:args.averaged_traces,:]
-    trace = traces.mean(axis=0)
+args = parser.parse_args()
 
-    # currently can't take fs and duration
-    assert args.fs is None and args.duration is None
-    fs = 500000
+# process
+# ---------------------------
+path = Path(args.filepath)
+if not path.exists():
+    raise FileNotFoundError(f"file not exist: {args.filepath}")
+vis_params = {"metadata_filename": args.filepath, "expid": path.parent.name, "averaged_traces": args.averaged_traces, "s_idx_start": args.s_idx_start, "s_idx_end": args.s_idx_end}
 
-    if args.factor != 1:
-        y, fs_down = sharpvisualizer.stream_downsample_average(trace, args.fs, args.duration, args.factor)
-        fs_down = fs/args.factor
-    else:
-        y, fs_down = trace, args.fs
+file_size = path.stat().st_size
+if file_size == 0:
+    raise ValueError("empty file")
 
-    # 去直流
-    #y = y - np.mean(y)
+traces = np.load(args.filepath) # might be many traces actually
+#print(trace.shape)
+# TODO: fix the case that our file only contains one trace
+#if len(trace.shape) > 1:
+#    trace = trace[0,:]
+#assert len(trace.shape) == 1
+#print(trace.shape)
+
+# don't have as many traces as we want to average (the subscription wouldn't break but nice to output for debugging and clarity)
+if traces.shape[0] < args.averaged_traces:
+    print(traces.shape)
+    raise Exception("not enough traces to average")
+traces = traces[:args.averaged_traces,:]
+trace = traces.mean(axis=0)
+
+# currently can't take fs and duration
+assert args.fs is None and args.duration is None
+fs = 500000
+
+if args.factor != 1:
+    y, fs_down = sharpvisualizer.stream_downsample_average(trace, args.fs, args.duration, args.factor)
+    fs_down = fs/args.factor
+else:
+    y, fs_down = trace, args.fs
+
+# 去直流
+#y = y - np.mean(y)
 
 
-    # plot
-    # ---------------------------
-    sharpvisualizer.plot_time(y, fs=(None if args.sample_indexes else fs), title=f"Downsampled Time Domain (factor={args.factor})", pltmode=None)
-    sharpvisualizer.plot_spectrum(y, fs, title=f"Downsampled Spectrum (factor={args.factor})", pltmode=None)
-    sharpvisualizer.plot_fun()
-
-
-if __name__ == "__main__":
-    main()
+# plot
+# ---------------------------
+sharpvisualizer.plot_time(y, fs=(None if args.sample_indexes else fs), title=f"Downsampled Time Domain (factor={args.factor})",
+    pltmode=None, s_idx_start=args.s_idx_start, s_idx_end=args.s_idx_end, save_plots=args.save_plots, vis_params=vis_params)
+#sharpvisualizer.plot_spectrum(y, fs, title=f"Downsampled Spectrum (factor={args.factor})", pltmode=None)
+sharpvisualizer.plot_fun()
