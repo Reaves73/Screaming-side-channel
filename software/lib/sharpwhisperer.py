@@ -77,7 +77,7 @@ def save_capture_config(config_dict, path):
 
 # ---------------------------
 
-def get_new_plots_dir(expid):
+def get_new_plots_dir(expid, plotdirtext=None):
     experiments_dir = get_experiments_dir()
     plotspath = f"{experiments_dir}/plots"
     if (not os.path.isdir(plotspath)):
@@ -87,6 +87,8 @@ def get_new_plots_dir(expid):
         os.mkdir(expplotspath)
     dstr = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     plotsdirpath = f"{expplotspath}/{dstr}"
+    if plotdirtext is not None:
+        plotsdirpath = f"{plotsdirpath}_{plotdirtext}"
     os.mkdir(plotsdirpath)
     return plotsdirpath
 

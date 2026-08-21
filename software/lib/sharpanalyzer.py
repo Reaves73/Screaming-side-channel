@@ -229,7 +229,7 @@ def find_minnumtraces_where_entropy0(trace_counts, results):
 def plot_pge_single(trace_counts, results, metadata_filename, expid, pge_params, save_plots=False):
     savedplots_dir = None
     if save_plots:
-        savedplots_dir = sharpwhisperer.get_new_plots_dir(expid)
+        savedplots_dir = sharpwhisperer.get_new_plots_dir(expid, "pge")
     
     minnumtraces = find_minnumtraces_where_entropy0(trace_counts, results)
     metadata_text = ""
@@ -466,7 +466,7 @@ def plot_tvla_trace(t_values, metadata_filename, expid, tvla_params, s_idx_start
 
     savedplots_dir = None
     if save_plots:
-        savedplots_dir = sharpwhisperer.get_new_plots_dir(expid)
+        savedplots_dir = sharpwhisperer.get_new_plots_dir(expid, "tvla")
     
     metadata_text = ""
     metadata_text += f"filename: {metadata_filename}\n"
@@ -500,7 +500,7 @@ def plot_tvla_trace(t_values, metadata_filename, expid, tvla_params, s_idx_start
 def plot_ntvla_single(trace_counts, results, metadata_filename, expid, ntvla_params, save_plots=False):
     savedplots_dir = None
     if save_plots:
-        savedplots_dir = sharpwhisperer.get_new_plots_dir(expid)
+        savedplots_dir = sharpwhisperer.get_new_plots_dir(expid, "ntvla")
     
     metadata_text = ""
     metadata_text += f"filename: {metadata_filename}\n"
