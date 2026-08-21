@@ -596,5 +596,5 @@ def plot_ntvla_composition(ntvla_list, metadata_filenames, ntvla_params, save_pl
     if savedplots_dir is None:
         plt.show()
     else:
-        plt.savefig(f"{savedplots_dir}/ntvla.png", dpi=150)
+        plt.savefig(f"{savedplots_dir}/ntvla_comp.png", dpi=150)
 
