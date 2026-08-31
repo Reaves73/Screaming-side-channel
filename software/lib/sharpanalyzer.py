@@ -226,7 +226,29 @@ def find_minnumtraces_where_entropy0(trace_counts, results):
         print("never fully converges in this range")
         return None
 
-def plot_pge_single(trace_counts, results, metadata_filename, expid, pge_params, save_plots=False):
+def get_analysis_params(granularity_level, plot_format_level):
+    plot_format = get_plot_format_tuple(plot_format_level)
+    if granularity_level == 0:
+        return {"n_trials": 1, "n_ge_samples": 10, "plot_format": plot_format}
+    elif granularity_level == 1:
+        return {"n_trials": 10, "n_ge_samples": 20, "plot_format": plot_format}
+    elif granularity_level == 2:
+        return {"n_trials": 30, "n_ge_samples": 30, "plot_format": plot_format}
+    else:
+        assert False, f"unknown granularity_level: {granularity_level}"
+    #analysis_params = {"n_trials": 30, "n_ge_samples": 30, "use_n_traces": args.use_n_traces, }
+
+def get_plot_format_tuple(plot_format_level):
+    if plot_format_level == 0:
+        return (8, 5)
+    elif plot_format_level == 1:
+        return (16, 2.5)
+    elif plot_format_level == 2:
+        return (8, 3)
+    else:
+        assert False, f"unknown plot_format_level: {plot_format_level}"
+
+def plot_pge_single(trace_counts, results, metadata_filename, expid, pge_params, save_plots=False, plot_format=(8, 5)):
     savedplots_dir = None
     if save_plots:
         savedplots_dir = sharpwhisperer.get_new_plots_dir(expid, "pge")
@@ -247,7 +269,7 @@ def plot_pge_single(trace_counts, results, metadata_filename, expid, pge_params,
 
     # ====== plotting code for the output of run_ge_all_bytes
     # --- all 16 bytes on one plot ---
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=plot_format)
     for b in range(16):
         plt.plot(trace_counts, results[b], label=f"byte {b}", alpha=0.7)
 
@@ -269,7 +291,7 @@ def plot_pge_single(trace_counts, results, metadata_filename, expid, pge_params,
     mean_ge = ge_matrix.mean(axis=0)
     worst_ge = ge_matrix.max(axis=0)   # hardest byte at each N — often more informative
 
-    plt.figure(figsize=(8, 5))
+    plt.figure(figsize=plot_format)
     line, = plt.plot(trace_counts, mean_ge, label="mean", linewidth=2)
     plt.plot(trace_counts, worst_ge, label="max", linestyle="--", linewidth=2, color=line.get_color())
     plt.axhline(0, color="black", linewidth=0.5)
@@ -285,7 +307,7 @@ def plot_pge_single(trace_counts, results, metadata_filename, expid, pge_params,
     else:
         plt.savefig(f"{savedplots_dir}/ge_summary.png", dpi=150)
 
-def plot_pge_composition(ge_list, metadata_filenames, pge_params, save_plots=False, use_logscale=False):
+def plot_pge_composition(ge_list, metadata_filenames, pge_params, save_plots=False, use_logscale=False, plot_format=(8, 5)):
     savedplots_dir = None
     if save_plots:
         savedplots_dir = sharpwhisperer.get_new_plots_dir("comp_pge")
@@ -309,7 +331,7 @@ def plot_pge_composition(ge_list, metadata_filenames, pge_params, save_plots=Fal
             f.write(metadata_text)
 
     # ====== average GE across all bytes (a common way to report "how many traces to break the full key" at a glance):
-    plt.figure(figsize=(8, 5))
+    plt.figure(figsize=plot_format)
     for label, tc, res in ge_list:
         ge_matrix = np.stack([res[b] for b in range(16)], axis=0)
         mean_ge = ge_matrix.mean(axis=0)
@@ -452,7 +474,7 @@ def run_ntvla(traces, plaintexts, keys, n_trials=10, trace_counts=None, n_ge_sam
 
     return trace_counts, np.array(results)
 
-def plot_tvla_trace(t_values, metadata_filename, expid, tvla_params, s_idx_start=None, s_idx_end=None, save_plots=False):
+def plot_tvla_trace(t_values, metadata_filename, expid, tvla_params, s_idx_start=None, s_idx_end=None, save_plots=False, plot_format=(8, 5)):
     assert t_values.shape[0] == 16
     lastidx = t_values.shape[1] - 1
     if s_idx_start is None:
@@ -481,7 +503,7 @@ def plot_tvla_trace(t_values, metadata_filename, expid, tvla_params, s_idx_start
             f.write(metadata_text)
 
     # ====== plotting code
-    plt.figure(figsize=(8, 5))
+    plt.figure(figsize=plot_format)
     for b in range(16):
         plt.plot(range(s_idx_start, s_idx_end), t_values[b][s_idx_start:s_idx_end])
     plt.axhline(4.5, color="black", linewidth=0.5)
@@ -497,7 +519,7 @@ def plot_tvla_trace(t_values, metadata_filename, expid, tvla_params, s_idx_start
     else:
         plt.savefig(f"{savedplots_dir}/tvla.png", dpi=150)
 
-def plot_ntvla_single(trace_counts, results, metadata_filename, expid, ntvla_params, save_plots=False):
+def plot_ntvla_single(trace_counts, results, metadata_filename, expid, ntvla_params, save_plots=False, plot_format=(8, 5)):
     savedplots_dir = None
     if save_plots:
         savedplots_dir = sharpwhisperer.get_new_plots_dir(expid, "ntvla")
@@ -520,7 +542,7 @@ def plot_ntvla_single(trace_counts, results, metadata_filename, expid, ntvla_par
     min_vals = results[:, 1]
     max_vals = results[:, 2]
 
-    fig, ax = plt.subplots(figsize=(8, 5))
+    fig, ax = plt.subplots(figsize=plot_format)
 
     color = 'tab:blue'
 
@@ -547,7 +569,7 @@ def plot_ntvla_single(trace_counts, results, metadata_filename, expid, ntvla_par
     else:
         plt.savefig(f"{savedplots_dir}/ntvla.png", dpi=150)
 
-def plot_ntvla_composition(ntvla_list, metadata_filenames, ntvla_params, save_plots=False):
+def plot_ntvla_composition(ntvla_list, metadata_filenames, ntvla_params, save_plots=False, plot_format=(8, 5)):
     savedplots_dir = None
     if save_plots:
         savedplots_dir = sharpwhisperer.get_new_plots_dir("comp_ntvla")
@@ -570,7 +592,7 @@ def plot_ntvla_composition(ntvla_list, metadata_filenames, ntvla_params, save_pl
             f.write(metadata_text)
 
     # ====== plotting code
-    fig, ax = plt.subplots(figsize=(8, 5))
+    fig, ax = plt.subplots(figsize=plot_format)
 
     #colors = ['tab:blue','tab:orange','tab:green','tab:red','tab:purple']
     #assert len(ntvla_list) <= len(colors)

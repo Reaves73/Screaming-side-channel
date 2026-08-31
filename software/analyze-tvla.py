@@ -39,4 +39,4 @@ expid, traces, plaintexts, keys = sharpanalyzer.load_traces(args.filepath, use_n
 t_values = sharpanalyzer.run_tvla(traces, plaintexts, keys, output=True)
 sharpanalyzer.find_t_mean_min_max(t_values, output=True)
 
-sharpanalyzer.plot_tvla_trace(t_values, args.filepath, expid, tvla_params, s_idx_start=tvla_params["s_idx_start"], s_idx_end=tvla_params["s_idx_end"], save_plots=args.save_plots)
+sharpanalyzer.plot_tvla_trace(t_values, args.filepath, expid, tvla_params, s_idx_start=tvla_params["s_idx_start"], s_idx_end=tvla_params["s_idx_end"], save_plots=args.save_plots, plot_format=sharpanalyzer.get_plot_format_tuple(2))
