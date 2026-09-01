@@ -509,6 +509,7 @@ def plot_tvla_trace(t_values, metadata_filename, expid, tvla_params, s_idx_start
     for b in range(16):
         plt.plot(range(s_idx_start, s_idx_end), t_values[b][s_idx_start:s_idx_end])
     plt.axhline(4.5, color="black", linewidth=0.5)
+    plt.axhline(-4.5, color="black", linewidth=0.5)
     plt.xlabel("Sample index")
     plt.ylabel("t value")
     #plt.title("Overall key recovery: mean vs worst-case byte")
