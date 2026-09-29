@@ -22,6 +22,17 @@ add_left_right = (25+5, 7)
 x_window_start = reference_x[0] - add_left_right[0]
 x_window_stop  = reference_x[1] + add_left_right[1]
 
+def extract_traces_ts(traces, cur_reference_x, cur_fs):
+    # cut traces first for performance
+    def translate_index(ref_index):
+        cur_index = cur_reference_x + (ref_index - reference_x[0]) * (cur_fs / reference_fs)
+        return cur_index
+    x_start = round(translate_index(x_window_start) - 0.4)
+    x_stop  = round(translate_index(x_window_stop)  + 0.4)+1
+    traces = traces[:, x_start:x_stop]
+
+    ts = np.arange(x_stop - x_start)/cur_fs + (x_window_start/fs_cw)
+    return (ts, traces)
 
 # ----------------------------------------------------------------------
 # Load all files
@@ -32,20 +43,9 @@ traces_data = []
 for label, filename, y_scale, y_off, cur_reference_x, cur_fs in inputs:
     traces = np.load(filename)
 
-    # cut traces first for performance
-    def translate_index(ref_index):
-        cur_index = cur_reference_x + (ref_index - reference_x[0]) * (cur_fs / reference_fs)
-        return cur_index
-    x_start = round(translate_index(x_window_start) - 0.4)
-    x_stop  = round(translate_index(x_window_stop)  + 0.4)+1
-    traces = traces[:, x_start:x_stop]
+    (ts, traces) = extract_traces_ts(traces, cur_reference_x, cur_fs)
 
-    trace = traces.mean(axis=0)
-
-    trace = trace * y_scale + y_off
-
-    ts = np.arange(x_stop - x_start)/cur_fs + (x_window_start/fs_cw)
-
+    trace = traces.mean(axis=0) * y_scale + y_off
     traces_data.append((label, ts, trace))
 
 
