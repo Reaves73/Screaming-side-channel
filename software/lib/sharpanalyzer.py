@@ -511,7 +511,7 @@ def plot_tvla_trace(t_values, metadata_filename, expid, tvla_params, s_idx_start
     plt.axhline(4.5, color="black", linewidth=0.5)
     plt.axhline(-4.5, color="black", linewidth=0.5)
     plt.xlabel("Sample index")
-    plt.ylabel("t value")
+    plt.ylabel("t-value")
     #plt.title("Overall key recovery: mean vs worst-case byte")
     #plt.legend()
     plt.grid(True, alpha=0.3)
@@ -560,7 +560,7 @@ def plot_ntvla_single(trace_counts, results, metadata_filename, expid, ntvla_par
     ax.plot(trace_counts, mean, color=color, linewidth=2, label='Mean')
 
     ax.set_xlabel('Number of traces')
-    ax.set_ylabel('t value')
+    ax.set_ylabel('t-value')
     #ax.set_title('Mean with min–max range')
     #ax.legend(ncol=4, fontsize=8)
     plt.grid(True, alpha=0.3)
@@ -622,7 +622,7 @@ def plot_ntvla_composition(ntvla_list, metadata_filenames, ntvla_params, save_pl
 
 
     ax.set_xlabel('Number of traces')
-    ax.set_ylabel('t value')
+    ax.set_ylabel('t-value')
     #ax.set_title('Mean with min–max range')
     ax.legend(ncol=4, fontsize=8)
     plt.grid(True, alpha=0.3)
