@@ -59,7 +59,7 @@ for (label, ts, trace) in traces_data:
         label=label,
     )
 
-ax.set_xlabel("Time [s]")
+ax.set_xlabel("Time (s)")
 ax.set_ylabel("Relative Amplitude")
 plt.yticks([])
 
