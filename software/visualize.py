@@ -27,6 +27,8 @@ parser.add_argument("--sample_indexes", help="shows sample indexes instead of ti
 parser.add_argument("--s_idx_start", help="sample index start of plot", type=int, default=None)
 parser.add_argument("--s_idx_end", help="sample index end of plot", type=int, default=None)
 
+parser.add_argument("--invert", help="invert the signal", action="store_true", default=False)
+
 parser.add_argument("--save_plots", help="save the plots instead of showing them", action="store_true", default=False)
 
 args = parser.parse_args()
@@ -69,6 +71,9 @@ else:
 
 # 去直流
 #y = y - np.mean(y)
+
+if args.invert:
+    y *= -1
 
 
 # plot
