@@ -250,7 +250,7 @@ def get_plot_format_tuple(plot_format_level):
     else:
         assert False, f"unknown plot_format_level: {plot_format_level}"
 
-def plot_pge_single(trace_counts, results, metadata_filename, expid, pge_params, save_plots=False, plot_format=(8, 4.5)):
+def plot_pge_single(trace_counts, results, metadata_filename, expid, pge_params, save_plots=False, plot_format=(7, 4)):
     savedplots_dir = None
     if save_plots:
         savedplots_dir = sharpwhisperer.get_new_plots_dir(expid, "pge")
@@ -309,7 +309,7 @@ def plot_pge_single(trace_counts, results, metadata_filename, expid, pge_params,
     else:
         plt.savefig(f"{savedplots_dir}/ge_summary.png", dpi=150)
 
-def plot_pge_composition(ge_list, metadata_filenames, pge_params, save_plots=False, use_logscale=False, plot_format=(8, 4.5)):
+def plot_pge_composition(ge_list, metadata_filenames, pge_params, save_plots=False, use_logscale=False, plot_format=(7, 4)):
     savedplots_dir = None
     if save_plots:
         savedplots_dir = sharpwhisperer.get_new_plots_dir("comp_pge")
@@ -357,7 +357,7 @@ def plot_pge_composition(ge_list, metadata_filenames, pge_params, save_plots=Fal
 
 # -------------------------------------------------------
 
-def run_tvla(traces, plaintexts, keys, output=False):
+def run_tvla(traces, plaintexts, keys, output=False, single_byte_index=None):
     def hamming_weight(n):
         hw = 0
         while n != 0:
@@ -434,16 +434,19 @@ def run_tvla(traces, plaintexts, keys, output=False):
     #
 
     # Wordwise followed by bytewise
-    t_values = np.zeros([16, traces.shape[-1]], dtype=np.float64)
+    t_values = np.zeros([16 if single_byte_index is None else 1, traces.shape[-1]], dtype=np.float64)
 
-    for byte_idx in range(16):
+    for byte_idx in (range(16) if single_byte_index is None else [single_byte_index]):
         lab = labels[:,byte_idx]
 
         t = tvla(lab, traces, hamming_weight_class, lambda x: x == -1, lambda x: x == 1)
         if output:
             print(f"TVLA Byte {byte_idx}")
             print("t_abs_max:", np.max(np.abs(t)))
-        t_values[byte_idx] = t
+        if single_byte_index is None:
+            t_values[byte_idx] = t
+        else:
+            t_values[0] = t
 
     return t_values
 
@@ -522,7 +525,56 @@ def plot_tvla_trace(t_values, metadata_filename, expid, tvla_params, s_idx_start
     else:
         plt.savefig(f"{savedplots_dir}/tvla.png", dpi=150)
 
-def plot_ntvla_single(trace_counts, results, metadata_filename, expid, ntvla_params, save_plots=False, plot_format=(8, 4.5)):
+def plot_tvla_trace_composition(tvla_list, metadata_filenames, analysis_params, save_plots=False, plot_format=(7, 4)):
+    savedplots_dir = None
+    if save_plots:
+        savedplots_dir = sharpwhisperer.get_new_plots_dir("comp_tvla")
+    
+    metadata_text = ""
+    metadata_text += f"filenames: {metadata_filenames}\n"
+    metadata_text += f"analysis_params: {analysis_params}\n"
+    metadata_text += "-" * 20
+    metadata_text += "\n"
+    for label, tc, res in tvla_list:
+        metadata_text += f"label {label}\n"
+        #metadata_text += f"minnumtraces: {minnumtraces}\n"
+        metadata_text += "\n"
+    print("Plot metadata:")
+    print("="*20)
+    print(metadata_text)
+    print()
+    if savedplots_dir is not None:
+        with open(f"{savedplots_dir}/plot_metadata.txt", "w") as f:
+            f.write(metadata_text)
+
+    # ====== plotting code
+    fig, ax = plt.subplots(figsize=plot_format)
+
+    #colors = ['tab:blue','tab:orange','tab:green','tab:red','tab:purple']
+    #assert len(ntvla_list) <= len(colors)
+
+    for label, t_values, ts in tvla_list:
+        assert t_values.shape[0] == 1
+
+        plt.plot(ts, t_values[0], label=label)
+
+    plt.axhline(4.5, color="black", linewidth=0.5)
+    plt.axhline(-4.5, color="black", linewidth=0.5)
+
+    ax.set_xlabel('Time (s)')
+    ax.set_ylabel('t-value')
+    #ax.set_title('Mean with min–max range')
+    ax.legend(ncol=4, fontsize=8)
+    plt.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    if savedplots_dir is None:
+        plt.show()
+    else:
+        plt.savefig(f"{savedplots_dir}/tvla_comp.png", dpi=150)
+
+
+def plot_ntvla_single(trace_counts, results, metadata_filename, expid, ntvla_params, save_plots=False, plot_format=(7, 4)):
     savedplots_dir = None
     if save_plots:
         savedplots_dir = sharpwhisperer.get_new_plots_dir(expid, "ntvla")
@@ -572,7 +624,7 @@ def plot_ntvla_single(trace_counts, results, metadata_filename, expid, ntvla_par
     else:
         plt.savefig(f"{savedplots_dir}/ntvla.png", dpi=150)
 
-def plot_ntvla_composition(ntvla_list, metadata_filenames, ntvla_params, save_plots=False, plot_format=(8, 4.5)):
+def plot_ntvla_composition(ntvla_list, metadata_filenames, ntvla_params, save_plots=False, plot_format=(7, 4)):
     savedplots_dir = None
     if save_plots:
         savedplots_dir = sharpwhisperer.get_new_plots_dir("comp_ntvla")
