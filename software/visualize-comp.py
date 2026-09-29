@@ -44,13 +44,13 @@ for label, filename, y_scale, y_off, cur_reference_x, cur_fs in inputs:
 
     trace = trace * y_scale + y_off
 
-    ts = np.arange(x_stop - x_start)/cur_fs
+    ts = np.arange(x_stop - x_start)/cur_fs + (x_window_start/fs_cw)
 
     traces_data.append((label, ts, trace))
 
 
 
-fig, ax = plt.subplots(figsize=(12, 6))
+fig, ax = plt.subplots(figsize=(7, 4))
 for (label, ts, trace) in traces_data:
 
     ax.plot(

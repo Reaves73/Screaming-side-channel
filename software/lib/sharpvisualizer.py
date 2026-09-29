@@ -53,7 +53,7 @@ def plot_fun(pltmode=True):
 def plot_clear_all():
     plt.close('all')
 
-def plot_time(samples, fs=None, title="Time Domain", vlines=None, pltmode=True, s_idx_start=None, s_idx_end=None, save_plots=False, vis_params=None):
+def plot_time(samples, fs=None, title="Time Domain", vlines=None, pltmode=True, s_idx_start=None, s_idx_end=None, save_plots=False, vis_params=None, plotmodfun=None, figsize=(8, 5)):
     lastidx = samples.shape[0] - 1
     if s_idx_start is None:
         s_idx_start = 0
@@ -87,7 +87,7 @@ def plot_time(samples, fs=None, title="Time Domain", vlines=None, pltmode=True, 
         fs_v = 1
     #fig, ax = plt.subplots()
     t = (np.arange(len(samples)) / fs_v)
-    plt.figure(figsize=(8, 5))
+    plt.figure(figsize=figsize)
     plt.plot(t[s_idx_start:s_idx_end], samples[s_idx_start:s_idx_end])
     #plt.title(title)
     plt.xlabel("Sample index" if fs is None else "Time (s)")
@@ -97,6 +97,9 @@ def plot_time(samples, fs=None, title="Time Domain", vlines=None, pltmode=True, 
     if vlines is not None:
         for vline in vlines:
             plt.axvline(x=vline / fs_v, color='red', linestyle='--', linewidth=2)
+
+    if plotmodfun is not None:
+        plotmodfun()
 
     if savedplots_dir is None:
         plot_fun(pltmode)
