@@ -242,15 +242,15 @@ def get_analysis_params(granularity_level, plot_format_level):
 
 def get_plot_format_tuple(plot_format_level):
     if plot_format_level == 0:
-        return (8, 5)
+        return (7, 4)
     elif plot_format_level == 1:
-        return (16, 2.5)
+        return (14, 2.5)
     elif plot_format_level == 2:
-        return (8, 3)
+        return (7, 2.5)
     else:
         assert False, f"unknown plot_format_level: {plot_format_level}"
 
-def plot_pge_single(trace_counts, results, metadata_filename, expid, pge_params, save_plots=False, plot_format=(8, 5)):
+def plot_pge_single(trace_counts, results, metadata_filename, expid, pge_params, save_plots=False, plot_format=(8, 4.5)):
     savedplots_dir = None
     if save_plots:
         savedplots_dir = sharpwhisperer.get_new_plots_dir(expid, "pge")
@@ -309,7 +309,7 @@ def plot_pge_single(trace_counts, results, metadata_filename, expid, pge_params,
     else:
         plt.savefig(f"{savedplots_dir}/ge_summary.png", dpi=150)
 
-def plot_pge_composition(ge_list, metadata_filenames, pge_params, save_plots=False, use_logscale=False, plot_format=(8, 5)):
+def plot_pge_composition(ge_list, metadata_filenames, pge_params, save_plots=False, use_logscale=False, plot_format=(8, 4.5)):
     savedplots_dir = None
     if save_plots:
         savedplots_dir = sharpwhisperer.get_new_plots_dir("comp_pge")
@@ -476,7 +476,7 @@ def run_ntvla(traces, plaintexts, keys, n_trials=10, trace_counts=None, n_ge_sam
 
     return trace_counts, np.array(results)
 
-def plot_tvla_trace(t_values, metadata_filename, expid, tvla_params, s_idx_start=None, s_idx_end=None, save_plots=False, plot_format=(8, 5)):
+def plot_tvla_trace(t_values, metadata_filename, expid, tvla_params, s_idx_start=None, s_idx_end=None, save_plots=False, plot_format=(7, 4.5)):
     assert t_values.shape[0] == 16
     lastidx = t_values.shape[1] - 1
     if s_idx_start is None:
@@ -522,7 +522,7 @@ def plot_tvla_trace(t_values, metadata_filename, expid, tvla_params, s_idx_start
     else:
         plt.savefig(f"{savedplots_dir}/tvla.png", dpi=150)
 
-def plot_ntvla_single(trace_counts, results, metadata_filename, expid, ntvla_params, save_plots=False, plot_format=(8, 5)):
+def plot_ntvla_single(trace_counts, results, metadata_filename, expid, ntvla_params, save_plots=False, plot_format=(8, 4.5)):
     savedplots_dir = None
     if save_plots:
         savedplots_dir = sharpwhisperer.get_new_plots_dir(expid, "ntvla")
@@ -572,7 +572,7 @@ def plot_ntvla_single(trace_counts, results, metadata_filename, expid, ntvla_par
     else:
         plt.savefig(f"{savedplots_dir}/ntvla.png", dpi=150)
 
-def plot_ntvla_composition(ntvla_list, metadata_filenames, ntvla_params, save_plots=False, plot_format=(8, 5)):
+def plot_ntvla_composition(ntvla_list, metadata_filenames, ntvla_params, save_plots=False, plot_format=(8, 4.5)):
     savedplots_dir = None
     if save_plots:
         savedplots_dir = sharpwhisperer.get_new_plots_dir("comp_ntvla")
