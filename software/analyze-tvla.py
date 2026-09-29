@@ -24,10 +24,12 @@ parser.add_argument("-un", "--use_n_traces", help="only use the first n traces",
 parser.add_argument("--s_idx_start", help="sample index start of plot", type=int, default=None)
 parser.add_argument("--s_idx_end", help="sample index end of plot", type=int, default=None)
 
+parser.add_argument("--fs", help="sample rate", type=float, default=None)
+
 parser.add_argument("--save_plots", help="save the plots instead of showing them", action="store_true", default=False)
 
 args = parser.parse_args()
-tvla_params = {"use_n_traces": args.use_n_traces, "s_idx_start": args.s_idx_start, "s_idx_end": args.s_idx_end}
+tvla_params = {"use_n_traces": args.use_n_traces, "s_idx_start": args.s_idx_start, "s_idx_end": args.s_idx_end, "data_fs": args.fs}
 
 # load and prepare
 # ---------------------------
@@ -39,4 +41,4 @@ expid, traces, plaintexts, keys = sharpanalyzer.load_traces(args.filepath, use_n
 t_values = sharpanalyzer.run_tvla(traces, plaintexts, keys, output=True)
 sharpanalyzer.find_t_mean_min_max(t_values, output=True)
 
-sharpanalyzer.plot_tvla_trace(t_values, args.filepath, expid, tvla_params, s_idx_start=tvla_params["s_idx_start"], s_idx_end=tvla_params["s_idx_end"], save_plots=args.save_plots, plot_format=sharpanalyzer.get_plot_format_tuple(2))
+sharpanalyzer.plot_tvla_trace(t_values, args.filepath, expid, tvla_params, s_idx_start=tvla_params["s_idx_start"], s_idx_end=tvla_params["s_idx_end"], save_plots=args.save_plots, plot_format=sharpanalyzer.get_plot_format_tuple(2), data_fs=args.fs)

@@ -476,7 +476,7 @@ def run_ntvla(traces, plaintexts, keys, n_trials=10, trace_counts=None, n_ge_sam
 
     return trace_counts, np.array(results)
 
-def plot_tvla_trace(t_values, metadata_filename, expid, tvla_params, s_idx_start=None, s_idx_end=None, save_plots=False, plot_format=(7, 4.5)):
+def plot_tvla_trace(t_values, metadata_filename, expid, tvla_params, s_idx_start=None, s_idx_end=None, save_plots=False, plot_format=(7, 4.5), data_fs=None):
     assert t_values.shape[0] == 16
     lastidx = t_values.shape[1] - 1
     if s_idx_start is None:
@@ -507,10 +507,10 @@ def plot_tvla_trace(t_values, metadata_filename, expid, tvla_params, s_idx_start
     # ====== plotting code
     plt.figure(figsize=plot_format)
     for b in range(16):
-        plt.plot(range(s_idx_start, s_idx_end), t_values[b][s_idx_start:s_idx_end])
+        plt.plot(np.arange(s_idx_start, s_idx_end) / (1 if data_fs is None else data_fs), t_values[b][s_idx_start:s_idx_end])
     plt.axhline(4.5, color="black", linewidth=0.5)
     plt.axhline(-4.5, color="black", linewidth=0.5)
-    plt.xlabel("Sample index")
+    plt.xlabel("Sample index" if data_fs is None else "Time (s)")
     plt.ylabel("t-value")
     #plt.title("Overall key recovery: mean vs worst-case byte")
     #plt.legend()
