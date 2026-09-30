@@ -244,7 +244,7 @@ def get_plot_format_tuple(plot_format_level):
     if plot_format_level == 0:
         return (7, 4)
     elif plot_format_level == 1:
-        return (14, 2.5)
+        return (14, 4)
     elif plot_format_level == 2:
         return (7, 2.5)
     else:
@@ -511,8 +511,9 @@ def plot_tvla_trace(t_values, metadata_filename, expid, tvla_params, s_idx_start
     plt.figure(figsize=plot_format)
     for b in range(16):
         plt.plot(np.arange(s_idx_start, s_idx_end) / (1 if data_fs is None else data_fs), t_values[b][s_idx_start:s_idx_end])
-    plt.axhline(4.5, color="black", linewidth=0.5)
-    plt.axhline(-4.5, color="black", linewidth=0.5)
+    #plt.axhline(4.5, color="black", linewidth=0.5)
+    #plt.axhline(-4.5, color="black", linewidth=0.5)
+    plt.axhspan(-4.5, 4.5, color='grey', alpha=0.3)
     plt.xlabel("Sample index" if data_fs is None else "Time (s)")
     plt.ylabel("t-value")
     #plt.title("Overall key recovery: mean vs worst-case byte")
@@ -558,15 +559,18 @@ def plot_tvla_trace_composition(tvla_list, metadata_filenames, analysis_params, 
 
         plt.plot(ts, t_values[0], label=label)
 
-    plt.axhline(4.5, color="black", linewidth=0.5)
-    plt.axhline(-4.5, color="black", linewidth=0.5)
+    #plt.axhline(4.5, color="black", linewidth=0.5)
+    #plt.axhline(-4.5, color="black", linewidth=0.5)
+    plt.axhspan(-4.5, 4.5, color='grey', alpha=0.3)
 
     ax.set_xlabel('Time (s)')
     ax.set_ylabel('t-value')
     #ax.set_title('Mean with min–max range')
-    ax.legend(ncol=4, fontsize=8)
+    ax.legend(ncol=5, fontsize=8)
     plt.grid(True, alpha=0.3)
 
+    #ymin, ymax = ax.get_ylim()
+    #ax.set_ylim(ymin, ymax * 1.10)
     plt.tight_layout()
     if savedplots_dir is None:
         plt.show()
