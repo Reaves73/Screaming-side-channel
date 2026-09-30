@@ -16,6 +16,15 @@ inputs = [
     ("VCO",                "/sharpwhisperer_mirror/safe_2_paper/2026-07-16_11-26-39_vco_10000_30dbattenuator/traces_gnuradio.npy",                  0.5,   -0.15,      378, fs_gr),
 ]
 
+inputs_ = [
+    ("PWR",                "/sharpwhisperer_mirror/safe_2_paper/2026-07-16_16-56-53_stm32f3_cwPWR_1000/traces_chipwhisperer.npy",                   1,      0.2,       184, fs_cw),
+    ("DACwLNA 350",        "/sharpwhisperer_mirror/safe_2_paper/2026-07-16_16-24-09_stm32f3_cwDACwlna_350mV_5000/traces_chipwhisperer.npy",        -2,      0.05-0.08, 184, fs_cw),
+    #("new1",        "/sharpwhisperer_mirror/safe_5_paperfinish/2026-09-29_22-11-05_stm32f3_cwDACwlna_tee_noload_350mV_5000/traces_chipwhisperer.npy",        -2,      0.05-0.08, 184, fs_cw),
+    ("new2",        "/sharpwhisperer_mirror/safe_5_paperfinish/2026-09-29_22-50-57_stm32f3_cwDACwlna_tee_470ohm_350mV_5000/traces_chipwhisperer.npy",        -2,      0.05-0.08, 184, fs_cw),
+    ("new3",        "/sharpwhisperer_mirror/safe_5_paperfinish/2026-09-29_22-40-21_stm32f3_cwDACwlna_tee_470ohm48pF_350mV_5000/traces_chipwhisperer.npy",        -2,      0.05-0.08, 184, fs_cw),
+    ("new4",        "/sharpwhisperer_mirror/safe_5_paperfinish/2026-09-29_23-11-17_stm32f3_cwDACwlna_tee_1500ohm_350mV_5000/traces_chipwhisperer.npy",        -2,      0.05-0.08, 184, fs_cw)
+]
+
 reference_x = (184, 295)
 reference_fs = fs_cw
 add_left_right = (25+5, 7)
