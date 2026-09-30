@@ -34,10 +34,11 @@ def validate_experiment_setup_config(cfg):
     assert type(cfg["shunt_shorted"]) == bool
 
     assert type(cfg["chipwhisperer_adc_to_target_power"]) == bool
+    assert type(cfg["chipwhisperer_adc_to_target_vdda"]) == bool
     assert type(cfg["chipwhisperer_adc_to_dac"]) == bool
     assert type(cfg["sharppeak_on_dac_directly"]) == bool
 
-    assert cfg["chipwhisperer_adc_to_target_power"] ^ cfg["chipwhisperer_adc_to_dac"]
+    assert cfg["chipwhisperer_adc_to_target_power"] + cfg["chipwhisperer_adc_to_dac"] + cfg["chipwhisperer_adc_to_target_vdda"] == 1
 
     assert not(cfg["sharppeak_on_dac_directly"] and cfg["vco_on_dac_directly"])
 
@@ -96,7 +97,9 @@ def get_new_plots_dir(expid, plotdirtext=None):
 
 def get_experiment_setup_centfreq(exp_config):
     if exp_config["sharppeak_on_dac_directly"]:
-        return 430.02e6 # original with resistor and no lna attached, # value before running for a while: #return 429.5e6
+        return 433.9e6
+        #return 430.3e6
+        #return 430.02e6 # original with resistor and no lna attached, # value before running for a while: #return 429.5e6
         #return 438.7e6 # with resistor and lna
         #return 438.2e6 # without resistor, but with lna
     elif exp_config["vco_on_dac_directly"]:
@@ -116,7 +119,7 @@ def get_experiment_setup_rundacmax(exp_config):
         return False
     elif exp_config["vco_on_dac_directly"]:
         return True
-    elif exp_config["chipwhisperer_adc_to_dac"] or exp_config["chipwhisperer_adc_to_target_power"]:
+    elif exp_config["chipwhisperer_adc_to_dac"] or exp_config["chipwhisperer_adc_to_target_power"] or exp_config["chipwhisperer_adc_to_target_vdda"]:
         return None
     assert False
 
