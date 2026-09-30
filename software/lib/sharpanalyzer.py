@@ -244,7 +244,7 @@ def get_plot_format_tuple(plot_format_level):
     if plot_format_level == 0:
         return (7, 4)
     elif plot_format_level == 1:
-        return (14, 4)
+        return (14, 2.5)
     elif plot_format_level == 2:
         return (7, 2.5)
     else:
@@ -340,12 +340,12 @@ def plot_pge_composition(ge_list, metadata_filenames, pge_params, save_plots=Fal
         worst_ge = ge_matrix.max(axis=0)
 
         line, = plt.plot(tc, mean_ge, linewidth=2, label=label)
-        plt.plot(tc, worst_ge, linestyle="--", linewidth=2, color=line.get_color())
+        #plt.plot(tc, worst_ge, linestyle="--", linewidth=2, color=line.get_color())
 
     plt.axhline(0, color="black", linewidth=0.5)
     plt.xlabel("Number of traces")
     plt.ylabel("Partial Guessing Entropy")
-    plt.legend()
+    plt.legend(ncol=4)
     plt.grid(True, alpha=0.3)
     if use_logscale:
         plt.xscale("log")
