@@ -52,4 +52,4 @@ for i in range(len(tracefilepaths)):
     ge_list.append((labels[i], trace_counts, results))
     print()
 
-sharpanalyzer.plot_pge_composition(ge_list, args.filepaths, analysis_params, save_plots=True, use_logscale=analysis_params["use_logscale"], plot_format=analysis_params["plot_format"])
+sharpanalyzer.plot_pge_composition(ge_list, args.filepaths, analysis_params, save_plots=False, use_logscale=analysis_params["use_logscale"], plot_format=analysis_params["plot_format"])

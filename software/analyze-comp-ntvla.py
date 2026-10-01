@@ -50,4 +50,4 @@ for i in range(len(tracefilepaths)):
     ntvla_list.append((labels[i], trace_counts, results))
     print()
 
-sharpanalyzer.plot_ntvla_composition(ntvla_list, args.filepaths, analysis_params, save_plots=True, plot_format=analysis_params["plot_format"])
+sharpanalyzer.plot_ntvla_composition(ntvla_list, args.filepaths, analysis_params, save_plots=False, plot_format=analysis_params["plot_format"])

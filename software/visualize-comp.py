@@ -7,15 +7,15 @@ fs_cw = 7384615.384615385
 fs_gr = 5000000.0
 
 inputs = [
-    ("PWR",                "/sharpwhisperer_mirror/safe_2_paper/2026-07-16_16-56-53_stm32f3_cwPWR_1000/traces_chipwhisperer.npy",                   1,      0.2,       184, fs_cw),
+    ("PWR",       "/sharpwhisperer_mirror/safe_2_paper/2026-07-16_16-56-53_stm32f3_cwPWR_1000/traces_chipwhisperer.npy",                   1,      0.2,       184, fs_cw),
     #DACwLNA 350 noVDDA
     ("DAC oVDDA", "/sharpwhisperer_experiments/2026-06-12_20-35-44_stm32f3_cwDACwlna_vddarevert_500000_truncd2/traces_chipwhisperer.npy", -25,     0.09,      184, fs_cw),
     #DACwLNA 350
-    ("DAC",        "/sharpwhisperer_mirror/safe_2_paper/2026-07-16_16-24-09_stm32f3_cwDACwlna_350mV_5000/traces_chipwhisperer.npy",        -2,      0.05-0.08, 184, fs_cw),
-    #("DAC 350",            "/sharpwhisperer_mirror/safe_2_paper/2026-07-16_15-45-36_stm32f3_cwDAC_350mV_10000/traces_chipwhisperer.npy",           -20,     0-0.08,    184, fs_cw),
-    #("DAC 700",            "/sharpwhisperer_mirror/safe_2_paper/2026-07-16_15-26-08_stm32f3_cwDAC_700mV_2000/traces_chipwhisperer.npy",            -20,     0-0.08,    184, fs_cw),
-    ("SP",                 "/sharpwhisperer_mirror/safe_2_paper/2026-07-16_13-26-25_sharppeak_1000_gain8/traces_gnuradio.npy",                      0.5/3, -0.07,      378, fs_gr),
-    ("VCO",                "/sharpwhisperer_mirror/safe_2_paper/2026-07-16_11-26-39_vco_10000_30dbattenuator/traces_gnuradio.npy",                  0.5,   -0.15,      378, fs_gr),
+    ("DAC",       "/sharpwhisperer_mirror/safe_2_paper/2026-07-16_16-24-09_stm32f3_cwDACwlna_350mV_5000/traces_chipwhisperer.npy",        -2,      0.05-0.08, 184, fs_cw),
+    #("DAC 350",   "/sharpwhisperer_mirror/safe_2_paper/2026-07-16_15-45-36_stm32f3_cwDAC_350mV_10000/traces_chipwhisperer.npy",           -20,     0-0.08,    184, fs_cw),
+    #("DAC 700",   "/sharpwhisperer_mirror/safe_2_paper/2026-07-16_15-26-08_stm32f3_cwDAC_700mV_2000/traces_chipwhisperer.npy",            -20,     0-0.08,    184, fs_cw),
+    ("SP",        "/sharpwhisperer_mirror/safe_2_paper/2026-07-16_13-26-25_sharppeak_1000_gain8/traces_gnuradio.npy",                      0.5/3, -0.07,      378, fs_gr),
+    ("VCO",       "/sharpwhisperer_mirror/safe_2_paper/2026-07-16_11-26-39_vco_10000_30dbattenuator/traces_gnuradio.npy",                  0.5,   -0.15,      378, fs_gr),
 ]
 
 inputs_ = [

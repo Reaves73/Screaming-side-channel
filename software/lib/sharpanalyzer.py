@@ -236,6 +236,8 @@ def get_analysis_params(granularity_level, plot_format_level):
         return {"n_trials": 30, "n_ge_samples": 30, "plot_format": plot_format}
     elif granularity_level == 3:
         return {"n_trials": 30, "n_ge_samples": 50, "plot_format": plot_format}
+    elif granularity_level == 4:
+        return {"n_trials": 1, "n_ge_samples": 6, "plot_format": plot_format}
     else:
         assert False, f"unknown granularity_level: {granularity_level}"
     #analysis_params = {"n_trials": 30, "n_ge_samples": 30, "use_n_traces": args.use_n_traces, }
